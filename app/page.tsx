@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 export default function Page() {
 	return (
 		<>
-			<div className="w-full bg-primary">
+			Hello world
+			{/* <div className="w-full bg-primary">
 				<header className="max-w-7xl mx-auto flex items-center justify-between px-16 py-4">
 					<h1 className="text-4xl font-bold text-primary-foreground">
 						Talk n Share
@@ -18,7 +19,7 @@ export default function Page() {
 					<CreatePost />
 					<Feed />
 				</main>
-			</div>
+			</div> */}
 		</>
 	);
 }
