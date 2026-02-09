@@ -14,13 +14,27 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// To avoid hydration errors with useSearchParams
 function VerifyContent() {
 	const searchParams = useSearchParams();
 	const email = searchParams.get("email") || "your email";
 	const [isLoading, setIsLoading] = useState(false);
 	const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+	const [isChecking, setIsChecking] = useState(true);
 	const router = useRouter();
+
+	// Check for active verification session
+	React.useEffect(() => {
+		const sessionEmail = sessionStorage.getItem("pendingVerificationEmail");
+		if (!sessionEmail) {
+			router.push("/signup");
+		} else {
+			setIsChecking(false);
+		}
+	}, [router]);
+
+	if (isChecking) {
+		return null;
+	}
 
 	const handleVerifyOtp = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -28,7 +42,7 @@ function VerifyContent() {
 		setTimeout(() => {
 			console.log("OTP Verified:", otp.join(""));
 			setIsLoading(false);
-			// Redirect or log in
+			sessionStorage.removeItem("pendingVerificationEmail");
 			alert("Account verified!");
 			router.push("/login");
 		}, 1000);
@@ -97,11 +111,7 @@ function VerifyContent() {
 
 export default function VerifyPage() {
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-			{/* Dynamic Background Effect */}
-			<div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] dark:bg-[radial-gradient(#1f2937_1px,transparent_1px)]"></div>
-			<div className="absolute top-0 z-[-2] h-screen w-screen bg-white dark:bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]"></div>
-
+		<div className="flex min-h-screen items-center justify-center w-full p-4">
 			<Suspense fallback={<div>Loading...</div>}>
 				<VerifyContent />
 			</Suspense>
