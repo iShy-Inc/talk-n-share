@@ -20,7 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 const supabase = createClient();
 
 export default function FeedPage() {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const { posts, fetchNextPage, hasNextPage } = usePosts();
 	const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
@@ -66,12 +66,12 @@ export default function FeedPage() {
 			if (!expandedPostId) return [];
 			const { data } = await supabase
 				.from("comments")
-				.select("*, profiles(username, avatar_url)")
+				.select("*, profiles(display_name, avatar_url)")
 				.eq("post_id", expandedPostId)
 				.order("created_at", { ascending: true });
 			return (data ?? []).map((c: any) => ({
 				id: c.id,
-				authorName: c.profiles?.username ?? c.author_name ?? "Anonymous",
+				authorName: c.profiles?.display_name ?? c.author_name ?? "Anonymous",
 				authorAvatar: c.profiles?.avatar_url ?? c.author_avatar,
 				content: c.content,
 				timeAgo: new Date(c.created_at).toLocaleDateString(),

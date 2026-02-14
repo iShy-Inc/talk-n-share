@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useDashboardUsers } from "@/hooks/useDashboard";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { Profile } from "@/types";
 import {
 	Card,
@@ -32,11 +33,14 @@ import {
 	IconUsers,
 	IconGlobe,
 	IconLock,
+	IconShieldLock,
+	IconLoader2,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 
 export default function UsersPage() {
 	const { usersQuery, updateUser, deleteUser } = useDashboardUsers();
+	const { isAdmin, loading: roleLoading } = useAdminRole();
 	const [search, setSearch] = useState("");
 	const [editingUser, setEditingUser] = useState<Profile | null>(null);
 	const [editForm, setEditForm] = useState({
@@ -49,24 +53,34 @@ export default function UsersPage() {
 	const users = usersQuery.data ?? [];
 	const filteredUsers = users.filter(
 		(user) =>
-			user.username.toLowerCase().includes(search.toLowerCase()) ||
-			(user.region ?? "").toLowerCase().includes(search.toLowerCase()),
+			(user.username ?? user.display_name ?? "")
+				.toLowerCase()
+				.includes(search.toLowerCase()) ||
+			(user.region ?? user.location ?? "")
+				.toLowerCase()
+				.includes(search.toLowerCase()),
 	);
 
 	const handleEdit = (user: Profile) => {
 		setEditingUser(user);
 		setEditForm({
-			username: user.username,
+			username: user.username ?? user.display_name ?? "",
 			gender: user.gender ?? "",
-			region: user.region ?? "",
-			is_public: user.is_public,
+			region: user.region ?? user.location ?? "",
+			is_public: user.is_public ?? true,
 		});
 	};
 
 	const handleSaveEdit = () => {
 		if (!editingUser) return;
 		updateUser.mutate(
-			{ id: editingUser.id, ...editForm },
+			{
+				id: editingUser.id,
+				display_name: editForm.username || null,
+				gender: (editForm.gender || null) as Profile["gender"],
+				location: editForm.region || null,
+				is_public: editForm.is_public,
+			},
 			{
 				onSuccess: () => {
 					toast.success("User updated successfully");
@@ -83,6 +97,31 @@ export default function UsersPage() {
 			onError: () => toast.error("Failed to delete user"),
 		});
 	};
+
+	// Access control check
+	if (roleLoading) {
+		return (
+			<div className="flex h-96 items-center justify-center">
+				<IconLoader2 className="size-8 animate-spin text-primary" />
+			</div>
+		);
+	}
+
+	if (!isAdmin) {
+		return (
+			<div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
+				<div className="flex size-20 items-center justify-center rounded-2xl bg-muted">
+					<IconShieldLock className="size-10 text-muted-foreground" />
+				</div>
+				<div>
+					<h2 className="text-xl font-semibold">Access Restricted</h2>
+					<p className="mt-1 text-sm text-muted-foreground">
+						Only administrators can manage users.
+					</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -168,17 +207,19 @@ export default function UsersPage() {
 													{user.avatar_url ? (
 														<img
 															src={user.avatar_url}
-															alt={user.username}
+															alt={user.username ?? user.display_name ?? "User"}
 															className="size-9 rounded-full object-cover ring-2 ring-border"
 														/>
 													) : (
 														<div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 text-sm font-bold text-white ring-2 ring-border">
-															{user.username[0]?.toUpperCase()}
+															{(user.username ??
+																user.display_name ??
+																"U")[0]?.toUpperCase()}
 														</div>
 													)}
 													<div>
 														<p className="text-sm font-semibold">
-															{user.username}
+															{user.username ?? user.display_name ?? "User"}
 														</p>
 														<p className="text-xs text-muted-foreground">
 															{user.id.slice(0, 8)}...
@@ -190,23 +231,23 @@ export default function UsersPage() {
 												{user.gender ?? "—"}
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{user.region ?? "—"}
+												{user.region ?? user.location ?? "—"}
 											</td>
 											<td className="px-6 py-4">
 												<Badge
 													variant={user.is_public ? "default" : "secondary"}
 													className="gap-1"
 												>
-													{user.is_public ? (
+													{(user.is_public ?? true) ? (
 														<IconGlobe className="size-3" />
 													) : (
 														<IconLock className="size-3" />
 													)}
-													{user.is_public ? "Public" : "Private"}
+													{(user.is_public ?? true) ? "Public" : "Private"}
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{user.birthday ?? "—"}
+												{user.birthday ?? user.birth_date ?? "—"}
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center justify-end gap-1">
@@ -235,7 +276,12 @@ export default function UsersPage() {
 																<AlertDialogTitle>Delete User</AlertDialogTitle>
 																<AlertDialogDescription>
 																	Are you sure you want to delete{" "}
-																	<strong>{user.username}</strong>? This will
+																	<strong>
+																		{user.username ??
+																			user.display_name ??
+																			"this user"}
+																	</strong>
+																	? This will
 																	permanently remove their account and all
 																	associated data.
 																</AlertDialogDescription>

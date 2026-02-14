@@ -24,7 +24,7 @@ const supabase = createClient();
 type Tab = "all" | "posts" | "people";
 
 export default function SearchPage() {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const query = searchParams.get("q") || "";

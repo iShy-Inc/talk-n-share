@@ -21,7 +21,7 @@ const supabase = createClient();
 type MatchStatus = "options" | "loading" | "active";
 
 export default function MatchPage() {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const [status, setStatus] = useState<MatchStatus>("options");
 	const [sessionId, setSessionId] = useState<string | null>(null);
@@ -219,13 +219,13 @@ export default function MatchPage() {
 						currentUserId={user.id}
 						partnerLiked={
 							user.id === sessionData.user1_id
-								? sessionData.user2_liked
-								: sessionData.user1_liked
+								? (sessionData.user2_liked ?? false)
+								: (sessionData.user1_liked ?? false)
 						}
 						userLiked={
 							user.id === sessionData.user1_id
-								? sessionData.user1_liked
-								: sessionData.user2_liked
+								? (sessionData.user1_liked ?? false)
+								: (sessionData.user2_liked ?? false)
 						}
 						isRevealed={sessionData.is_revealed}
 						partnerProfile={partnerProfile}

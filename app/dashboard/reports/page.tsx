@@ -37,14 +37,17 @@ import {
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
-const statusColors: Record<Report["status"], string> = {
+type ReportStatus = NonNullable<Report["status"]>;
+type ReportTargetType = Report["target_type"];
+
+const statusColors: Record<ReportStatus, string> = {
 	pending: "destructive",
 	reviewed: "secondary",
 	resolved: "default",
 	dismissed: "outline",
 };
 
-const targetTypeIcons: Record<Report["target_type"], React.ElementType> = {
+const targetTypeIcons: Record<ReportTargetType, React.ElementType> = {
 	post: IconArticle,
 	comment: IconMessageCircle,
 	user: IconUser,
@@ -53,9 +56,7 @@ const targetTypeIcons: Record<Report["target_type"], React.ElementType> = {
 export default function ReportsPage() {
 	const { reportsQuery, deleteReport, resolveReport } = useDashboardReports();
 	const [search, setSearch] = useState("");
-	const [filter, setFilter] = useState<
-		"all" | "pending" | "reviewed" | "resolved" | "dismissed"
-	>("all");
+	const [filter, setFilter] = useState<"all" | ReportStatus>("all");
 
 	const reports = reportsQuery.data ?? [];
 	const filteredReports = reports.filter((report) => {
@@ -67,7 +68,7 @@ export default function ReportsPage() {
 		return matchesSearch && report.status === filter;
 	});
 
-	const handleResolve = (reportId: string, status: Report["status"]) => {
+	const handleResolve = (reportId: string, status: ReportStatus) => {
 		resolveReport.mutate(
 			{ reportId, status },
 			{
@@ -178,6 +179,8 @@ export default function ReportsPage() {
 								</thead>
 								<tbody className="divide-y divide-border/30">
 									{filteredReports.map((report) => {
+										const safeStatus: ReportStatus =
+											report.status ?? "pending";
 										const TargetIcon = targetTypeIcons[report.target_type];
 										return (
 											<tr
@@ -203,7 +206,9 @@ export default function ReportsPage() {
 														{report.target_type}
 													</Badge>
 													<p className="mt-1 text-xs text-muted-foreground">
-														{report.target_id.slice(0, 8)}...
+														{report.target_id
+															? `${report.target_id.slice(0, 8)}...`
+															: "—"}
 													</p>
 												</td>
 												<td className="max-w-xs px-6 py-4">
@@ -217,7 +222,7 @@ export default function ReportsPage() {
 												<td className="px-6 py-4">
 													<Badge
 														variant={
-															statusColors[report.status] as
+															statusColors[safeStatus] as
 																| "default"
 																| "secondary"
 																| "destructive"
@@ -225,7 +230,7 @@ export default function ReportsPage() {
 														}
 														className="capitalize"
 													>
-														{report.status}
+														{safeStatus}
 													</Badge>
 												</td>
 												<td className="px-6 py-4 text-sm text-muted-foreground">
@@ -233,7 +238,7 @@ export default function ReportsPage() {
 												</td>
 												<td className="px-6 py-4">
 													<div className="flex items-center justify-end gap-1">
-														{report.status === "pending" && (
+														{safeStatus === "pending" && (
 															<>
 																<Button
 																	variant="ghost"

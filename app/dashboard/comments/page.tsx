@@ -44,13 +44,13 @@ export default function CommentsPage() {
 	const comments = commentsQuery.data ?? [];
 	const filteredComments = comments.filter(
 		(comment) =>
-			comment.content.toLowerCase().includes(search.toLowerCase()) ||
-			comment.author_name.toLowerCase().includes(search.toLowerCase()),
+			(comment.content ?? "").toLowerCase().includes(search.toLowerCase()) ||
+			(comment.author_name ?? "").toLowerCase().includes(search.toLowerCase()),
 	);
 
 	const handleEdit = (comment: Comment) => {
 		setEditingComment(comment);
-		setEditContent(comment.content);
+		setEditContent(comment.content ?? "");
 	};
 
 	const handleSaveEdit = () => {
@@ -160,11 +160,11 @@ export default function CommentsPage() {
 														/>
 													) : (
 														<div className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-600 text-[10px] font-bold text-white">
-															{comment.author_name[0]?.toUpperCase()}
+															{(comment.author_name ?? "A")[0]?.toUpperCase()}
 														</div>
 													)}
 													<span className="text-sm font-medium">
-														{comment.author_name}
+														{comment.author_name ?? "Anonymous"}
 													</span>
 												</div>
 											</td>

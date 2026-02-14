@@ -49,7 +49,7 @@ export default function PostsPage() {
 	const posts = postsQuery.data ?? [];
 	const filteredPosts = posts.filter((post) => {
 		const matchesSearch =
-			post.content.toLowerCase().includes(search.toLowerCase()) ||
+			(post.content ?? "").toLowerCase().includes(search.toLowerCase()) ||
 			(post.author_name ?? "").toLowerCase().includes(search.toLowerCase());
 		if (filter === "approved") return matchesSearch && post.is_approved;
 		if (filter === "pending") return matchesSearch && !post.is_approved;
@@ -58,7 +58,7 @@ export default function PostsPage() {
 
 	const handleEdit = (post: Post) => {
 		setEditingPost(post);
-		setEditContent(post.content);
+		setEditContent(post.content ?? "");
 	};
 
 	const handleSaveEdit = () => {

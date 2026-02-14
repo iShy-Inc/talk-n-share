@@ -35,6 +35,7 @@ const navItems = [
 export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 	const pathname = usePathname();
 
+	
 	return (
 		<aside className={cn("hidden lg:block", className)}>
 			<div className="sticky top-6 space-y-4">

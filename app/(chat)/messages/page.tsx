@@ -11,19 +11,58 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { ContactPicker, PickerContact } from "@/components/chat/ContactPicker";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { IconArrowLeft, IconDotsVertical } from "@tabler/icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
+import {
+	AppLeftSidebar,
+	AppRightSidebar,
+	MainLayout,
+	SuggestedFriend,
+} from "@/components/shared";
 
 const supabase = createClient();
 
 export default function MessagesPage() {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 	const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 	const [activeContact, setActiveContact] = useState<ChatContact | null>(null);
 	const [showContactPicker, setShowContactPicker] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
+	// Fetch current user profile
+	const { data: profile } = useQuery({
+		queryKey: ["my-profile", user?.id],
+		queryFn: async () => {
+			if (!user) return null;
+			const { data } = await supabase
+				.from("profiles")
+				.select("*")
+				.eq("id", user.id)
+				.single();
+			return data;
+		},
+		enabled: !!user,
+	});
+
+	// Fetch suggested friends
+	const { data: suggestedFriends = [] } = useQuery({
+		queryKey: ["suggested-friends"],
+		queryFn: async () => {
+			const { data } = await supabase
+				.from("profiles")
+				.select("id, username, avatar_url, region")
+				.neq("id", user?.id ?? "")
+				.limit(4);
+			return (data ?? []).map((u: any) => ({
+				id: u.id,
+				name: u.username ?? "User",
+				title: u.region ?? "Talk N Share Member",
+				avatar: u.avatar_url,
+			})) as SuggestedFriend[];
+		},
+		enabled: !!user,
+	});
 	// Fetch chat sessions for the current user
 	const { data: sessions = [] } = useQuery({
 		queryKey: ["chat-sessions", user?.id],
@@ -127,28 +166,29 @@ export default function MessagesPage() {
 		avatar: u.avatar_url,
 	}));
 
-	return (
-		<div className="mx-auto flex h-[calc(100vh-80px)] max-w-5xl flex-col px-4 pt-6 pb-24 lg:pb-6">
-			<Card className="flex flex-1 overflow-hidden border shadow-lg">
-				{/* Header */}
-				<div className="flex w-full flex-col">
-					<div className="flex items-center justify-between border-b border-border px-5 py-4">
-						<h3 className="text-base font-semibold">Messages</h3>
-						{activeContact && (
-							<div className="flex items-center gap-3">
-								<span className="rounded-full bg-muted px-3 py-1 text-xs">
-									Online
-								</span>
-								<Button className="text-muted-foreground hover:text-foreground">
-									<IconDotsVertical className="size-4" />
-								</Button>
-							</div>
-						)}
-					</div>
+	const activeContactName = activeContact?.name ?? "Conversation";
+	const showConversation = !!activeSessionId && !showContactPicker;
+	const showList = !showConversation && !showContactPicker;
 
-					<div className="flex flex-1 overflow-hidden">
-						{/* Left: Chat list */}
-						<div className="w-72 shrink-0 overflow-y-auto">
+	return (
+		<MainLayout
+			leftSidebar={<AppLeftSidebar profile={profile ?? null} />}
+			rightSidebar={<AppRightSidebar suggestedFriends={suggestedFriends} />}
+		>
+			<Card className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg">
+				<div className="flex h-full">
+					<div
+						className={`h-full border-r border-border/80 bg-card lg:block lg:w-80 ${
+							showList ? "block w-full" : "hidden"
+						}`}
+					>
+						<div className="border-b border-border/80 px-5 py-4">
+							<h3 className="text-base font-semibold">Messages</h3>
+							<p className="mt-0.5 text-xs text-muted-foreground">
+								{contacts.length} conversation{contacts.length !== 1 ? "s" : ""}
+							</p>
+						</div>
+						<div className="h-[calc(100%-65px)] overflow-y-auto">
 							<ChatList
 								contacts={contacts}
 								activeContactId={activeSessionId ?? undefined}
@@ -156,10 +196,15 @@ export default function MessagesPage() {
 								onNewMessage={handleNewMessage}
 							/>
 						</div>
+					</div>
 
-						{/* Right: Chat content or empty state */}
+					<div
+						className={`h-full bg-background/40 lg:flex lg:flex-1 lg:flex-col ${
+							showList ? "hidden lg:flex" : "flex w-full flex-col"
+						}`}
+					>
 						{showContactPicker ? (
-							<div className="flex flex-1 items-center justify-center p-6">
+							<div className="flex h-full flex-col items-center justify-center p-4 sm:p-6">
 								<div className="w-full max-w-md">
 									<Button
 										variant="ghost"
@@ -170,34 +215,55 @@ export default function MessagesPage() {
 										<IconArrowLeft className="mr-2 size-4" />
 										Back
 									</Button>
-									<ContactPicker
-										contacts={pickerContacts}
-										onSelect={handlePickContact}
-									/>
+									<ContactPicker contacts={pickerContacts} onSelect={handlePickContact} />
 								</div>
 							</div>
-						) : activeSessionId ? (
-							<div className="flex flex-1 flex-col">
-								{/* Messages area */}
-								<div className="flex-1 space-y-4 overflow-y-auto p-6">
-									{messages.length === 0 && (
-										<p className="py-12 text-center text-sm text-muted-foreground">
-											No messages yet. Say hello! 👋
+						) : showConversation ? (
+							<div className="flex h-full flex-col">
+								<div className="flex items-center gap-3 border-b border-border/80 bg-card px-4 py-3 sm:px-5">
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										onClick={() => {
+											setActiveSessionId(null);
+											setActiveContact(null);
+										}}
+										className="lg:hidden"
+										id="back-to-conversations"
+									>
+										<IconArrowLeft className="size-4" />
+									</Button>
+									<div>
+										<p className="text-sm font-semibold">{activeContactName}</p>
+										<p className="text-xs text-muted-foreground">
+											{messages.length} message{messages.length !== 1 ? "s" : ""}
 										</p>
+									</div>
+								</div>
+
+								<div className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-background to-muted/20 p-4 sm:p-6">
+									{messages.length === 0 ? (
+										<div className="flex h-full items-center justify-center">
+											<p className="text-center text-sm text-muted-foreground">
+												No messages yet. Start the conversation.
+											</p>
+										</div>
+									) : (
+										messages.map((msg: Message) => (
+											<ChatBubble
+												key={msg.id}
+												content={msg.content}
+												timestamp={format(new Date(msg.created_at), "h:mm a")}
+												variant={msg.sender_id === user?.id ? "sent" : "received"}
+											/>
+										))
 									)}
-									{messages.map((msg: Message) => (
-										<ChatBubble
-											key={msg.id}
-											content={msg.content}
-											timestamp={format(new Date(msg.created_at), "h:mm a")}
-											variant={msg.sender_id === user?.id ? "sent" : "received"}
-										/>
-									))}
 									<div ref={messagesEndRef} />
 								</div>
 
-								{/* Input */}
-								<ChatInput onSend={handleSendMessage} avatarUrl={undefined} />
+								<div className="bg-card">
+									<ChatInput onSend={handleSendMessage} avatarUrl={undefined} />
+								</div>
 							</div>
 						) : (
 							<ChatEmptyState onNewMessage={handleNewMessage} />
@@ -205,6 +271,6 @@ export default function MessagesPage() {
 					</div>
 				</div>
 			</Card>
-		</div>
+		</MainLayout>
 	);
 }

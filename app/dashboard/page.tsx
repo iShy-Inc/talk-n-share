@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useDashboardStats } from "@/hooks/useDashboard";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import {
 	Card,
 	CardContent,
@@ -20,6 +21,7 @@ import {
 
 export default function DashboardPage() {
 	const { data: stats, isLoading } = useDashboardStats();
+	const { isModer } = useAdminRole();
 
 	const statCards = [
 		{
@@ -182,21 +184,27 @@ export default function DashboardPage() {
 								icon: IconFlag,
 								desc: "Review and resolve reports",
 							},
-						].map((action) => (
-							<a
-								key={action.label}
-								href={action.href}
-								className="group flex flex-col gap-2 rounded-2xl border border-border/50 p-4 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
-							>
-								<div className="flex size-10 items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/10">
-									<action.icon className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
-								</div>
-								<div>
-									<p className="text-sm font-semibold">{action.label}</p>
-									<p className="text-xs text-muted-foreground">{action.desc}</p>
-								</div>
-							</a>
-						))}
+						]
+							.filter(
+								(action) => !(isModer && action.href === "/dashboard/users"),
+							)
+							.map((action) => (
+								<a
+									key={action.label}
+									href={action.href}
+									className="group flex flex-col gap-2 rounded-2xl border border-border/50 p-4 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
+								>
+									<div className="flex size-10 items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/10">
+										<action.icon className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
+									</div>
+									<div>
+										<p className="text-sm font-semibold">{action.label}</p>
+										<p className="text-xs text-muted-foreground">
+											{action.desc}
+										</p>
+									</div>
+								</a>
+							))}
 					</div>
 				</CardContent>
 			</Card>

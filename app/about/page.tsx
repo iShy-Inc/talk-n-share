@@ -65,7 +65,7 @@ const techStack = [
 ];
 
 export default function AboutPage() {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 
 	return (
 		<div className="min-h-screen bg-background">

@@ -40,7 +40,7 @@ const settingsMenuItems: SettingsMenuItem[] = [
 ];
 
 export default function ProfilePage() {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 	const queryClient = useQueryClient();
 	const [activeTab, setActiveTab] = useState("my-posts");
 	const [settingsTab, setSettingsTab] = useState("general");

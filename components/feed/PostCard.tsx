@@ -18,7 +18,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
-	const { user } = useAuthStore();
+	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 
 	const handleAuthAction = (e: React.MouseEvent) => {

@@ -1,17 +1,36 @@
 import { User, Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 
+export type AuthStatus = "idle" | "loading" | "authenticated" | "anonymous";
+
 interface AuthState {
 	user: User | null;
 	activeSession: Session | null;
-	setUser: (user: User | null) => void;
-	setActiveSession: (session: Session | null) => void;
+	status: AuthStatus;
+	initialized: boolean;
+	setAuth: (session: Session | null) => void;
+	setLoading: () => void;
+	clearAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
 	user: null,
 	activeSession: null,
-	setUser: (user: User | null) => set({ user }),
-	setActiveSession: (session: Session | null) =>
-		set({ activeSession: session }),
+	status: "idle",
+	initialized: false,
+	setAuth: (session) =>
+		set({
+			activeSession: session,
+			user: session?.user ?? null,
+			status: session ? "authenticated" : "anonymous",
+			initialized: true,
+		}),
+	setLoading: () => set({ status: "loading" }),
+	clearAuth: () =>
+		set({
+			user: null,
+			activeSession: null,
+			status: "anonymous",
+			initialized: true,
+		}),
 }));

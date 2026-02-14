@@ -1,8 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/store/useAuthStore";
-import { useNotificationStore } from "@/store/useNotificationStore";
-import { useRealtimeNotifications } from "@/hooks/useNotifications";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
 	NotificationList,
 	NotificationData,
@@ -20,11 +19,8 @@ import { formatDistanceToNow } from "date-fns";
 const supabase = createClient();
 
 export default function NotifyPage() {
-	const { user } = useAuthStore();
-	const { notifications, markAsRead } = useNotificationStore();
-
-	// Initialize real-time notifications
-	useRealtimeNotifications(user?.id ?? "");
+	const user = useAuthStore((state) => state.user);
+	const { notifications, markOneAsRead } = useNotifications();
 
 	// Fetch current user profile
 	const { data: profile } = useQuery({
@@ -67,12 +63,11 @@ export default function NotifyPage() {
 		timeAgo: formatDistanceToNow(new Date(n.created_at), {
 			addSuffix: true,
 		}),
-		isRead: n.is_read,
+		isRead: n.is_read ?? false,
 	}));
 
 	const handleClickNotification = (id: string) => {
-		// Mark notifications as read when clicking
-		markAsRead();
+		markOneAsRead(id);
 	};
 
 	return (

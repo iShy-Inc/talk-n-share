@@ -5,10 +5,17 @@ import { useAuthStore } from "@/store/useAuthStore";
 const supabase = createClient();
 
 export const useAuth = () => {
-	const { setUser, setActiveSession, user } = useAuthStore();
-	const [loading, setLoading] = useState(true);
+	const setAuth = useAuthStore((state) => state.setAuth);
+	const setAuthLoading = useAuthStore((state) => state.setLoading);
+	const status = useAuthStore((state) => state.status);
+	const initialized = useAuthStore((state) => state.initialized);
+	const user = useAuthStore((state) => state.user);
+	const activeSession = useAuthStore((state) => state.activeSession);
+	const [isHydrating, setIsHydrating] = useState(true);
 
 	useEffect(() => {
+		setAuthLoading();
+
 		// 1. Get initial session
 		const getSession = async () => {
 			const {
@@ -18,11 +25,8 @@ export const useAuth = () => {
 			if (error) {
 				console.error("Error getting session:", error);
 			}
-			if (session) {
-				setUser(session.user);
-				setActiveSession(session);
-			}
-			setLoading(false);
+			setAuth(session);
+			setIsHydrating(false);
 		};
 
 		getSession();
@@ -31,20 +35,21 @@ export const useAuth = () => {
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
-			if (session) {
-				setUser(session.user);
-				setActiveSession(session);
-			} else {
-				setUser(null);
-				setActiveSession(null);
-			}
-			setLoading(false);
+			setAuth(session);
+			setIsHydrating(false);
 		});
 
 		return () => {
 			subscription.unsubscribe();
 		};
-	}, []);
+	}, [setAuth, setAuthLoading]);
 
-	return { user, loading };
+	return {
+		user,
+		activeSession,
+		status,
+		initialized,
+		loading: isHydrating || status === "loading" || !initialized,
+		isAuthenticated: status === "authenticated",
+	};
 };

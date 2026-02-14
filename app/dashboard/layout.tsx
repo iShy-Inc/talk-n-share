@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,10 +17,7 @@ import {
 	IconLoader2,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/useAuthStore";
-import { createClient } from "@/utils/supabase/client";
-
-const supabase = createClient();
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 const sidebarLinks = [
 	{
@@ -57,35 +54,16 @@ export default function DashboardLayout({
 }) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { user } = useAuthStore();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = loading
+	const { hasAccess, isModer, loading } = useAdminRole();
 
-	useEffect(() => {
-		const checkAdminRole = async () => {
-			if (!user) {
-				setIsAdmin(false);
-				return;
-			}
-
-			const { data, error } = await supabase
-				.from("profiles")
-				.select("role")
-				.eq("id", user.id)
-				.single();
-
-			if (error || data?.role !== "admin") {
-				setIsAdmin(false);
-			} else {
-				setIsAdmin(true);
-			}
-		};
-
-		checkAdminRole();
-	}, [user]);
+	const filteredSidebarLinks = sidebarLinks.filter((link) => {
+		if (isModer && link.href === "/dashboard/users") return false;
+		return true;
+	});
 
 	// Loading state
-	if (isAdmin === null) {
+	if (loading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background">
 				<div className="flex flex-col items-center gap-4 text-center">
@@ -104,7 +82,7 @@ export default function DashboardLayout({
 	}
 
 	// Unauthorized state
-	if (!isAdmin) {
+	if (!hasAccess) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background">
 				<div className="flex flex-col items-center gap-6 rounded-3xl border border-border/50 bg-card p-10 text-center shadow-xl">
@@ -114,8 +92,7 @@ export default function DashboardLayout({
 					<div>
 						<h1 className="text-xl font-bold">Access Denied</h1>
 						<p className="mt-2 max-w-sm text-sm text-muted-foreground">
-							You don&apos;t have permission to access the admin dashboard. Only
-							users with the <strong>admin</strong> role can view this page.
+							You don&apos;t have permission to access the dashboard.
 						</p>
 					</div>
 					<Button onClick={() => router.push("/")} variant="default" size="lg">
@@ -167,7 +144,7 @@ export default function DashboardLayout({
 
 				{/* Nav links */}
 				<nav className="flex-1 space-y-1 px-3 py-4">
-					{sidebarLinks.map((link) => {
+					{filteredSidebarLinks.map((link) => {
 						const isActive =
 							pathname === link.href ||
 							(link.href !== "/dashboard" && pathname.startsWith(link.href));

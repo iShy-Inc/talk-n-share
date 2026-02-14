@@ -1,30 +1,44 @@
 import { useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { Notification } from "@/types";
 
 const supabase = createClient();
 
-import { Notification } from "@/types";
-import { useNotificationStore } from "@/store/useNotificationStore";
-
-export const useRealtimeNotifications = (userId: string) => {
-	const { addNotification, setNotifications } = useNotificationStore();
+export const useNotifications = () => {
+	const userId = useAuthStore((state) => state.user?.id ?? "");
+	const notifications = useNotificationStore((state) => state.notifications);
+	const unreadCount = useNotificationStore((state) => state.unreadCount);
+	const addNotification = useNotificationStore((state) => state.addNotification);
+	const setNotifications = useNotificationStore((state) => state.setNotifications);
+	const markAsReadLocal = useNotificationStore((state) => state.markAsRead);
+	const reset = useNotificationStore((state) => state.reset);
 
 	useEffect(() => {
-		if (!userId) return;
+		if (!userId) {
+			reset();
+			return;
+		}
 
-		// 1. Lấy thông báo cũ khi vào app
 		const fetchInitial = async () => {
-			const { data } = await supabase
+			const { data, error } = await supabase
 				.from("notifications")
 				.select("*")
-				.eq("user_id", userId)
+				.eq("recipient_id", userId)
 				.order("created_at", { ascending: false })
-				.limit(20);
-			if (data) setNotifications(data as Notification[]);
+				.limit(50);
+
+			if (error) {
+				console.error("Failed to load notifications:", error.message);
+				return;
+			}
+
+			setNotifications(data ?? []);
 		};
+
 		fetchInitial();
 
-		// 2. Lắng nghe thông báo mới (Real-time)
 		const channel = supabase
 			.channel(`notif:${userId}`)
 			.on(
@@ -33,12 +47,10 @@ export const useRealtimeNotifications = (userId: string) => {
 					event: "INSERT",
 					schema: "public",
 					table: "notifications",
-					filter: `user_id=eq.${userId}`,
+					filter: `recipient_id=eq.${userId}`,
 				},
 				(payload) => {
 					addNotification(payload.new as Notification);
-					// Có thể dùng thư viện react-hot-toast để hiện popup tại đây
-					console.log("Thông báo mới:", payload.new.content);
 				},
 			)
 			.subscribe();
@@ -46,5 +58,36 @@ export const useRealtimeNotifications = (userId: string) => {
 		return () => {
 			supabase.removeChannel(channel);
 		};
-	}, [userId]);
+	}, [userId, addNotification, setNotifications, reset]);
+
+	const markAllAsRead = async () => {
+		if (!userId || unreadCount === 0) return;
+
+		const { error } = await supabase
+			.from("notifications")
+			.update({ is_read: true })
+			.eq("recipient_id", userId)
+			.eq("is_read", false);
+
+		if (!error) markAsReadLocal();
+	};
+
+	const markOneAsRead = async (notificationId: string) => {
+		const { error } = await supabase
+			.from("notifications")
+			.update({ is_read: true })
+			.eq("id", notificationId);
+
+		if (!error) markAsReadLocal(notificationId);
+	};
+
+	return {
+		notifications,
+		unreadCount,
+		markAllAsRead,
+		markOneAsRead,
+	};
 };
+
+// Backward-compatible alias for old call sites.
+export const useRealtimeNotifications = (_userId?: string) => useNotifications();
