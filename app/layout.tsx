@@ -5,8 +5,9 @@ import { Toaster } from "react-hot-toast";
 import Providers from "./providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import siteConfig from "@/configs/site";
+import { MobileDock } from "@/components/shared";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
 				>
 					<Providers>
 						{children}
+						<MobileDock />
 						<Toaster position="bottom-right" />
 					</Providers>
 				</ThemeProvider>

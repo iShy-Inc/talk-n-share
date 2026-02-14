@@ -9,6 +9,7 @@ export interface Message {
 	session_id: string;
 	content: string;
 	msg_type: string;
+	sender_id: string;
 }
 
 export const useChat = (sessionId: string) => {
@@ -25,7 +26,7 @@ export const useChat = (sessionId: string) => {
 				.select("*")
 				.eq("session_id", sessionId)
 				.order("created_at", { ascending: true });
-			setMessages(data || []);
+			setMessages((data as Message[]) || []);
 		};
 
 		fetchMessages();
@@ -53,12 +54,17 @@ export const useChat = (sessionId: string) => {
 	}, [sessionId]);
 
 	// Send message
-	const sendMessage = async (content: string, type = "text") => {
+	const sendMessage = async (
+		content: string,
+		sender_id: string,
+		type = "text",
+	) => {
 		await supabase.from("messages").insert([
 			{
 				session_id: sessionId,
 				content,
 				msg_type: type,
+				sender_id,
 			},
 		]);
 	};

@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Post } from "@/types";
 
 interface PostCardProps {
@@ -16,6 +18,19 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+	const { user } = useAuthStore();
+	const router = useRouter();
+
+	const handleAuthAction = (e: React.MouseEvent) => {
+		if (!user) {
+			e.preventDefault();
+			e.stopPropagation();
+			router.push("/login");
+			return false;
+		}
+		return true;
+	};
+
 	return (
 		<div className="w-full bg-card text-card-foreground border rounded-xl p-4 mb-4 shadow-sm hover:shadow-md transition-shadow duration-200">
 			<div className="flex items-start justify-between mb-3">
@@ -43,7 +58,10 @@ export function PostCard({ post }: PostCardProps) {
 						</p>
 					</div>
 				</div>
-				<button className="text-muted-foreground hover:text-foreground">
+				<button
+					className="text-muted-foreground hover:text-foreground"
+					onClick={handleAuthAction}
+				>
 					<MoreHorizontal size={20} />
 					<span className="sr-only">More</span>
 				</button>
@@ -70,6 +88,7 @@ export function PostCard({ post }: PostCardProps) {
 					<button
 						className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-red-500 transition-colors group"
 						title="Like"
+						onClick={handleAuthAction}
 					>
 						<Heart size={18} className="group-hover:fill-current" />
 						<span>{post.likes_count}</span>
@@ -77,6 +96,7 @@ export function PostCard({ post }: PostCardProps) {
 					<button
 						className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-blue-500 transition-colors"
 						title="Comment"
+						onClick={handleAuthAction}
 					>
 						<MessageSquare size={18} />
 						<span>{post.comments_count}</span>
@@ -86,12 +106,14 @@ export function PostCard({ post }: PostCardProps) {
 					<button
 						className="text-muted-foreground hover:text-foreground"
 						title="Share"
+						onClick={handleAuthAction}
 					>
 						<Share2 size={18} />
 					</button>
 					<button
 						className="text-muted-foreground hover:text-foreground"
 						title="Report"
+						onClick={handleAuthAction}
 					>
 						<Flag size={18} />
 					</button>

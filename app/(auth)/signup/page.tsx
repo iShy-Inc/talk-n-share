@@ -47,6 +47,11 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 	);
 }
 
+import { createClient } from "@/utils/supabase/client";
+import toast from "react-hot-toast";
+
+// ... (GoogleIcon component remains)
+
 export default function SignupPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [displayName, setDisplayName] = useState("");
@@ -55,27 +60,59 @@ export default function SignupPage() {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [agreedToTerms, setAgreedToTerms] = useState(false);
 	const router = useRouter();
+	const supabase = createClient();
 
-	const handleSignup = (e: React.FormEvent) => {
+	const handleSignup = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!agreedToTerms) {
-			alert("You must agree to the Terms and Privacy Policy");
+			toast.error("You must agree to the Terms and Privacy Policy");
 			return;
 		}
 		if (password !== confirmPassword) {
-			alert("Passwords do not match");
+			toast.error("Passwords do not match");
 			return;
 		}
 		setIsLoading(true);
-		// Simulate API call
-		setTimeout(() => {
-			console.log("Signed up:", { displayName, email, password });
+
+		const { error, data } = await supabase.auth.signUp({
+			email,
+			password,
+			options: {
+				data: {
+					display_name: displayName,
+					full_name: displayName,
+				},
+				emailRedirectTo: `${location.origin}/auth/confirm`,
+			},
+		});
+
+		if (error) {
+			toast.error(error.message);
 			setIsLoading(false);
-			// Set verification session flag
+			return;
+		}
+
+		if (data?.user) {
+			toast.success("Account created! Please verify your email.");
 			sessionStorage.setItem("pendingVerificationEmail", email);
-			// Navigate to verify
 			router.push("/verify?email=" + encodeURIComponent(email));
-		}, 1000);
+		}
+		setIsLoading(false);
+	};
+
+	const handleOAuthSignup = async (provider: "google" | "github") => {
+		setIsLoading(true);
+		const { error } = await supabase.auth.signInWithOAuth({
+			provider,
+			options: {
+				redirectTo: `${location.origin}/auth/callback?next=/`,
+			},
+		});
+
+		if (error) {
+			toast.error(error.message);
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -94,7 +131,7 @@ export default function SignupPage() {
 						<Button
 							variant="outline"
 							className="w-full"
-							onClick={() => console.log("Google Signup")}
+							onClick={() => handleOAuthSignup("google")}
 						>
 							<GoogleIcon className="mr-2 h-4 w-4" />
 							Google
@@ -102,7 +139,7 @@ export default function SignupPage() {
 						<Button
 							variant="outline"
 							className="w-full"
-							onClick={() => console.log("Github Signup")}
+							onClick={() => handleOAuthSignup("github")}
 						>
 							<Github className="mr-2 h-4 w-4" />
 							Github

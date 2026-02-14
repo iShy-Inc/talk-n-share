@@ -23,7 +23,11 @@ export const usePosts = () => {
 				.order("created_at", { ascending: false })
 				.range(pageParam as number, (pageParam as number) + 9);
 			if (error) throw error;
-			return data;
+			return (data || []).map((p: any) => ({
+				...p,
+				author_name: p.profiles?.username ?? p.author_name ?? "Anonymous",
+				author_avatar: p.profiles?.avatar_url ?? p.author_avatar,
+			}));
 		},
 		getNextPageParam: (_lastPage, allPages) => allPages.length * 10,
 	});

@@ -47,28 +47,51 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 	);
 }
 
+import { createClient } from "@/utils/supabase/client";
+import toast from "react-hot-toast";
+
+// ... (GoogleIcon component remains)
+
 export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [email, setEmail] = useState("");
-	const [type, setType] = useState("email");
 	const [password, setPassword] = useState("");
 	const [rememberMe, setRememberMe] = useState(false);
 	const router = useRouter();
+	const supabase = createClient();
 
-	const handleLogin = (e: React.FormEvent) => {
+	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
-		if (type === "google") {
-			console.log("Google Login");
-		} else if (type === "github") {
-			console.log("Github Login");
-		} else {
-			console.log("Email Login");
-			setTimeout(() => {
-				console.log("Logged in:", { email, password, rememberMe });
-				setIsLoading(false);
-				router.push("/");
-			}, 1000);
+
+		const { error } = await supabase.auth.signInWithPassword({
+			email,
+			password,
+		});
+
+		if (error) {
+			toast.error(error.message);
+			setIsLoading(false);
+			return;
+		}
+
+		toast.success("Successfully logged in!");
+		router.refresh();
+		router.push("/");
+	};
+
+	const handleOAuthLogin = async (provider: "google" | "github") => {
+		setIsLoading(true);
+		const { error } = await supabase.auth.signInWithOAuth({
+			provider,
+			options: {
+				redirectTo: `${location.origin}/auth/callback?next=/`,
+			},
+		});
+
+		if (error) {
+			toast.error(error.message);
+			setIsLoading(false);
 		}
 	};
 
@@ -88,7 +111,7 @@ export default function LoginPage() {
 						<Button
 							variant="outline"
 							className="w-full"
-							onClick={() => setType("google")}
+							onClick={() => handleOAuthLogin("google")}
 						>
 							<GoogleIcon className="mr-2 h-4 w-4" />
 							Google
@@ -96,7 +119,7 @@ export default function LoginPage() {
 						<Button
 							variant="outline"
 							className="w-full"
-							onClick={() => setType("github")}
+							onClick={() => handleOAuthLogin("github")}
 						>
 							<Github className="mr-2 h-4 w-4" />
 							Github
@@ -158,12 +181,7 @@ export default function LoginPage() {
 								Remember me
 							</Label>
 						</div>
-						<Button
-							type="submit"
-							className="w-full"
-							disabled={isLoading}
-							onClick={() => setType("email")}
-						>
+						<Button type="submit" className="w-full" disabled={isLoading}>
 							{isLoading ? "Signing In..." : "Sign In"}
 						</Button>
 					</form>
