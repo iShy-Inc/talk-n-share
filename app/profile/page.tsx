@@ -23,7 +23,7 @@ import {
 	AppRightSidebar,
 } from "@/components/shared";
 import toast from "react-hot-toast";
-import { Post } from "@/types";
+import { PostWithAuthor } from "@/types/supabase";
 
 const supabase = createClient();
 
@@ -67,10 +67,10 @@ export default function ProfilePage() {
 			if (!user) return [];
 			const { data } = await supabase
 				.from("posts")
-				.select("*, profiles(username, avatar_url)")
+				.select("*, profiles!posts_author_id_fkey(display_name, avatar_url)")
 				.eq("author_id", user.id)
 				.order("created_at", { ascending: false });
-			return (data ?? []) as Post[];
+			return (data ?? []) as PostWithAuthor[];
 		},
 		enabled: !!user && activeTab === "my-posts",
 	});
@@ -82,10 +82,14 @@ export default function ProfilePage() {
 			if (!user) return [];
 			const { data } = await supabase
 				.from("saved_posts")
-				.select("*, posts(*, profiles(username, avatar_url))")
+				.select(
+					"*, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url))",
+				)
 				.eq("user_id", user.id)
 				.order("created_at", { ascending: false });
-			return (data ?? []).map((s: any) => s.posts).filter(Boolean) as Post[];
+			return (data ?? [])
+				.map((s: any) => s.posts)
+				.filter(Boolean) as PostWithAuthor[];
 		},
 		enabled: !!user && activeTab === "saved-posts",
 	});
@@ -96,13 +100,13 @@ export default function ProfilePage() {
 		queryFn: async () => {
 			const { data } = await supabase
 				.from("profiles")
-				.select("id, username, avatar_url, region")
+				.select("id, display_name, avatar_url, location")
 				.neq("id", user?.id ?? "")
 				.limit(4);
 			return (data ?? []).map((u: any) => ({
 				id: u.id,
-				name: u.username ?? "User",
-				title: u.region ?? "Talk N Share Member",
+				name: u.display_name ?? "User",
+				title: u.location ?? "Talk N Share Member",
 				avatar: u.avatar_url,
 			})) as SuggestedFriend[];
 		},
@@ -125,7 +129,7 @@ export default function ProfilePage() {
 		if (!user) return;
 		const { error } = await supabase
 			.from("profiles")
-			.update({ username: values.username })
+			.update({ display_name: values.username })
 			.eq("id", user.id);
 
 		if (error) {
@@ -159,9 +163,17 @@ export default function ProfilePage() {
 		>
 			{/* Profile Header */}
 			<ProfileHeader
-				name={profile?.username ?? "User"}
-				username={profile?.username}
-				title={profile?.region ?? "Talk N Share Member"}
+				name={profile?.display_name ?? "User"}
+				username={profile?.display_name}
+				title={
+					profile?.location
+						? profile?.location
+						: profile?.role === "admin"
+							? "Administrator"
+							: profile?.role === "moder"
+								? "Moderator"
+								: "Talk N Share Member"
+				}
 				avatarUrl={profile?.avatar_url}
 				stats={stats}
 				tabs={profileTabs}
@@ -213,8 +225,8 @@ export default function ProfilePage() {
 					{settingsTab === "general" && (
 						<GeneralSettingsForm
 							initialValues={{
-								fullName: profile?.username ?? "",
-								username: profile?.username ?? "",
+								fullName: profile?.display_name ?? "",
+								username: profile?.display_name ?? "",
 								bio: "",
 							}}
 							onSave={handleSaveGeneral}

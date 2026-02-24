@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useDashboardPosts } from "@/hooks/useDashboard";
-import { Post } from "@/types";
+import { PostWithAuthor } from "@/types/supabase";
 import {
 	Card,
 	CardContent,
@@ -30,7 +30,6 @@ import {
 	IconTrash,
 	IconEdit,
 	IconCheck,
-	IconX,
 	IconPhoto,
 	IconHeart,
 	IconMessage,
@@ -42,21 +41,24 @@ export default function PostsPage() {
 	const { postsQuery, updatePost, deletePost, approvePost } =
 		useDashboardPosts();
 	const [search, setSearch] = useState("");
-	const [editingPost, setEditingPost] = useState<Post | null>(null);
+	const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
 	const [editContent, setEditContent] = useState("");
 	const [filter, setFilter] = useState<"all" | "approved" | "pending">("all");
 
-	const posts = postsQuery.data ?? [];
+	const posts = postsQuery.data?.pages.flat() ?? [];
+
 	const filteredPosts = posts.filter((post) => {
 		const matchesSearch =
 			(post.content ?? "").toLowerCase().includes(search.toLowerCase()) ||
 			(post.author_name ?? "").toLowerCase().includes(search.toLowerCase());
-		if (filter === "approved") return matchesSearch && post.is_approved;
-		if (filter === "pending") return matchesSearch && !post.is_approved;
+		if (filter === "approved")
+			return matchesSearch && post.status === "approved";
+		if (filter === "pending")
+			return matchesSearch && post.status !== "approved";
 		return matchesSearch;
 	});
 
-	const handleEdit = (post: Post) => {
+	const handleEdit = (post: PostWithAuthor) => {
 		setEditingPost(post);
 		setEditContent(post.content ?? "");
 	};
@@ -224,9 +226,13 @@ export default function PostsPage() {
 											</td>
 											<td className="px-6 py-4">
 												<Badge
-													variant={post.is_approved ? "default" : "destructive"}
+													variant={
+														post.status === "approved"
+															? "default"
+															: "destructive"
+													}
 												>
-													{post.is_approved ? "Approved" : "Pending"}
+													{post.status === "approved" ? "Approved" : "Pending"}
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
@@ -234,7 +240,7 @@ export default function PostsPage() {
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center justify-end gap-1">
-													{!post.is_approved && (
+													{post.status !== "approved" && (
 														<Button
 															variant="ghost"
 															size="icon-sm"

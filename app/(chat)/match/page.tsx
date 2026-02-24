@@ -11,7 +11,7 @@ import {
 	MatchCriteria,
 } from "@/components/match";
 import { useChat } from "@/hooks/useChat";
-import { ChatSession } from "@/types";
+import { ChatSession } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
 import { IconMessage } from "@tabler/icons-react";
 import toast from "react-hot-toast";
@@ -74,7 +74,7 @@ export default function MatchPage() {
 			// 2. Create a new chat session
 			// Schema requirements: type, status, is_revealed, user1_liked, user2_liked
 			const { data: session, error: createError } = await supabase
-				.from("chat_sessions")
+				.from("matches")
 				.insert({
 					user1_id: user.id,
 					user2_id: randomPartner.id,
@@ -83,7 +83,6 @@ export default function MatchPage() {
 					is_revealed: false,
 					user1_liked: false,
 					user2_liked: false,
-					match_criteria: criteria,
 				})
 				.select()
 				.single();
@@ -106,7 +105,7 @@ export default function MatchPage() {
 		if (!sessionId) return;
 
 		await supabase
-			.from("chat_sessions")
+			.from("matches")
 			.update({ status: "ended" })
 			.eq("id", sessionId);
 
@@ -139,7 +138,7 @@ export default function MatchPage() {
 		}
 
 		const { data, error } = await supabase
-			.from("chat_sessions")
+			.from("matches")
 			.update(updates)
 			.eq("id", sessionId)
 			.select()
@@ -159,7 +158,7 @@ export default function MatchPage() {
 				{
 					event: "UPDATE",
 					schema: "public",
-					table: "chat_sessions",
+					table: "matches",
 					filter: `id=eq.${sessionId}`,
 				},
 				(payload) => {

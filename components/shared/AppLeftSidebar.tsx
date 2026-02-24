@@ -15,10 +15,11 @@ import {
 
 interface AppLeftSidebarProps {
 	profile: {
-		username?: string;
+		display_name?: string;
 		email?: string;
-		region?: string;
+		location?: string;
 		avatar_url?: string;
+		role?: "admin" | "moder" | "user";
 	} | null;
 	className?: string;
 }
@@ -34,14 +35,21 @@ const navItems = [
 
 export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 	const pathname = usePathname();
-
-	
+	console.log(profile);
 	return (
 		<aside className={cn("hidden lg:block", className)}>
 			<div className="sticky top-6 space-y-4">
 				<SidebarProfileCard
-					name={profile?.username ?? profile?.email ?? "Guest"}
-					title={profile?.region ?? "Talk N Share Member"}
+					displayName={profile?.display_name ?? profile?.email ?? "Guest"}
+					title={
+						profile?.location
+							? profile?.location
+							: profile?.role === "admin"
+								? "Administrator"
+								: profile?.role === "moder"
+									? "Moderator"
+									: "Talk N Share Member"
+					}
 					avatarUrl={profile?.avatar_url}
 				/>
 

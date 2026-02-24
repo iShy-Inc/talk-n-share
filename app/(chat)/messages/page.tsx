@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
-import { useChat, Message } from "@/hooks/useChat";
+import { useChat } from "@/hooks/useChat";
+import type { Message } from "@/types/supabase";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
 import { ChatList, ChatContact } from "@/components/chat/ChatList";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -51,13 +52,13 @@ export default function MessagesPage() {
 		queryFn: async () => {
 			const { data } = await supabase
 				.from("profiles")
-				.select("id, username, avatar_url, region")
+				.select("id, display_name, avatar_url, location")
 				.neq("id", user?.id ?? "")
 				.limit(4);
 			return (data ?? []).map((u: any) => ({
 				id: u.id,
-				name: u.username ?? "User",
-				title: u.region ?? "Talk N Share Member",
+				name: u.display_name ?? "User",
+				title: u.location ?? "Talk N Share Member",
 				avatar: u.avatar_url,
 			})) as SuggestedFriend[];
 		},
@@ -69,10 +70,10 @@ export default function MessagesPage() {
 		queryFn: async () => {
 			if (!user) return [];
 			const { data, error } = await supabase
-				.from("chat_sessions")
+				.from("matches")
 				.select("*, profiles(*)")
 				.or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-				.order("updated_at", { ascending: false });
+				.order("created_at", { ascending: false });
 			if (error) throw error;
 			return data ?? [];
 		},
@@ -85,9 +86,9 @@ export default function MessagesPage() {
 		queryFn: async () => {
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("id, username, avatar_url")
+				.select("id, display_name, avatar_url")
 				.neq("id", user?.id ?? "")
-				.order("username");
+				.order("display_name");
 			if (error) throw error;
 			return data ?? [];
 		},
@@ -102,7 +103,10 @@ export default function MessagesPage() {
 			: session.user1_profile;
 		return {
 			id: session.id,
-			name: otherProfile?.username ?? session.profiles?.username ?? "Unknown",
+			name:
+				otherProfile?.display_name ??
+				session.profiles?.display_name ??
+				"Unknown",
 			avatar: otherProfile?.avatar_url ?? session.profiles?.avatar_url,
 			lastMessage: session.last_message ?? "",
 			isActive: session.id === activeSessionId,
@@ -132,7 +136,7 @@ export default function MessagesPage() {
 		if (!user) return;
 		// Check if session exists
 		const { data: existingSession } = await supabase
-			.from("chat_sessions")
+			.from("matches")
 			.select("id")
 			.or(
 				`and(user1_id.eq.${user.id},user2_id.eq.${contact.id}),and(user1_id.eq.${contact.id},user2_id.eq.${user.id})`,
@@ -144,7 +148,7 @@ export default function MessagesPage() {
 		} else {
 			// Create new session
 			const { data: newSession } = await supabase
-				.from("chat_sessions")
+				.from("matches")
 				.insert({ user1_id: user.id, user2_id: contact.id })
 				.select()
 				.single();
@@ -162,7 +166,7 @@ export default function MessagesPage() {
 
 	const pickerContacts: PickerContact[] = allUsers.map((u: any) => ({
 		id: u.id,
-		name: u.username ?? "User",
+		name: u.display_name ?? "User",
 		avatar: u.avatar_url,
 	}));
 
@@ -215,7 +219,10 @@ export default function MessagesPage() {
 										<IconArrowLeft className="mr-2 size-4" />
 										Back
 									</Button>
-									<ContactPicker contacts={pickerContacts} onSelect={handlePickContact} />
+									<ContactPicker
+										contacts={pickerContacts}
+										onSelect={handlePickContact}
+									/>
 								</div>
 							</div>
 						) : showConversation ? (
@@ -236,7 +243,8 @@ export default function MessagesPage() {
 									<div>
 										<p className="text-sm font-semibold">{activeContactName}</p>
 										<p className="text-xs text-muted-foreground">
-											{messages.length} message{messages.length !== 1 ? "s" : ""}
+											{messages.length} message
+											{messages.length !== 1 ? "s" : ""}
 										</p>
 									</div>
 								</div>
@@ -252,9 +260,11 @@ export default function MessagesPage() {
 										messages.map((msg: Message) => (
 											<ChatBubble
 												key={msg.id}
-												content={msg.content}
+												content={msg.content ?? ""}
 												timestamp={format(new Date(msg.created_at), "h:mm a")}
-												variant={msg.sender_id === user?.id ? "sent" : "received"}
+												variant={
+													msg.sender_id === user?.id ? "sent" : "received"
+												}
 											/>
 										))
 									)}

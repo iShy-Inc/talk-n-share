@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
-import { Notification } from "@/types";
+import { Notification } from "@/types/supabase";
 
 const supabase = createClient();
 
@@ -10,8 +10,12 @@ export const useNotifications = () => {
 	const userId = useAuthStore((state) => state.user?.id ?? "");
 	const notifications = useNotificationStore((state) => state.notifications);
 	const unreadCount = useNotificationStore((state) => state.unreadCount);
-	const addNotification = useNotificationStore((state) => state.addNotification);
-	const setNotifications = useNotificationStore((state) => state.setNotifications);
+	const addNotification = useNotificationStore(
+		(state) => state.addNotification,
+	);
+	const setNotifications = useNotificationStore(
+		(state) => state.setNotifications,
+	);
 	const markAsReadLocal = useNotificationStore((state) => state.markAsRead);
 	const reset = useNotificationStore((state) => state.reset);
 
@@ -90,4 +94,5 @@ export const useNotifications = () => {
 };
 
 // Backward-compatible alias for old call sites.
-export const useRealtimeNotifications = (_userId?: string) => useNotifications();
+export const useRealtimeNotifications = (_userId?: string) =>
+	useNotifications();

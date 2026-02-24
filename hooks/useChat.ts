@@ -1,30 +1,22 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import type { Message } from "@/types/supabase";
 
 const supabase = createClient();
 
-export interface Message {
-	id: string;
-	created_at: string;
-	session_id: string;
-	content: string;
-	msg_type: string;
-	sender_id: string;
-}
-
-export const useChat = (sessionId: string) => {
+export const useChat = (matchId: string) => {
 	const [messages, setMessages] = useState<Message[]>([]);
 
 	// Fetch old messages & Subscribe real-time
 	useEffect(() => {
-		if (!sessionId) return;
+		if (!matchId) return;
 
 		// Fetch old messages
 		const fetchMessages = async () => {
 			const { data } = await supabase
 				.from("messages")
 				.select("*")
-				.eq("session_id", sessionId)
+				.eq("match_id", matchId)
 				.order("created_at", { ascending: true });
 			setMessages((data as Message[]) || []);
 		};
@@ -33,14 +25,14 @@ export const useChat = (sessionId: string) => {
 
 		// Listen to new messages
 		const channel = supabase
-			.channel(`chat:${sessionId}`)
+			.channel(`chat:${matchId}`)
 			.on(
 				"postgres_changes",
 				{
 					event: "INSERT",
 					schema: "public",
 					table: "messages",
-					filter: `session_id=eq.${sessionId}`,
+					filter: `match_id=eq.${matchId}`,
 				},
 				(payload) => {
 					setMessages((prev) => [...prev, payload.new as Message]);
@@ -51,7 +43,7 @@ export const useChat = (sessionId: string) => {
 		return () => {
 			supabase.removeChannel(channel);
 		};
-	}, [sessionId]);
+	}, [matchId]);
 
 	// Send message
 	const sendMessage = async (
@@ -61,9 +53,9 @@ export const useChat = (sessionId: string) => {
 	) => {
 		await supabase.from("messages").insert([
 			{
-				session_id: sessionId,
+				match_id: matchId,
 				content,
-				msg_type: type,
+				type,
 				sender_id,
 			},
 		]);

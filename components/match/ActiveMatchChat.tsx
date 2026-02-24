@@ -21,7 +21,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Message } from "@/hooks/useChat";
+import type { Message } from "@/types/supabase";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +32,9 @@ interface ActiveMatchChatProps {
 	userLiked: boolean;
 	isRevealed: boolean;
 	partnerProfile?: {
-		username: string;
+		display_name: string;
 		avatar_url?: string;
-		region?: string;
+		location?: string;
 	};
 	onSendMessage: (content: string) => void;
 	onLike: () => void;
@@ -62,7 +62,7 @@ export function ActiveMatchChat({
 					{isRevealed && partnerProfile?.avatar_url ? (
 						<img
 							src={partnerProfile.avatar_url}
-							alt={partnerProfile.username}
+							alt={partnerProfile.display_name}
 							className="size-10 rounded-full object-cover"
 						/>
 					) : (
@@ -72,11 +72,11 @@ export function ActiveMatchChat({
 					)}
 					<div>
 						<h3 className="font-semibold">
-							{isRevealed ? partnerProfile?.username : "Anonymous Partner"}
+							{isRevealed ? partnerProfile?.display_name : "Anonymous Partner"}
 						</h3>
 						<p className="text-xs text-muted-foreground">
 							{isRevealed
-								? partnerProfile?.region || "Revealed!"
+								? partnerProfile?.location || "Revealed!"
 								: "Identity hidden"}
 						</p>
 					</div>
@@ -168,7 +168,7 @@ export function ActiveMatchChat({
 				{messages.map((msg) => (
 					<ChatBubble
 						key={msg.id}
-						content={msg.content}
+						content={msg.content ?? ""}
 						timestamp={format(new Date(msg.created_at), "h:mm a")}
 						variant={msg.sender_id === currentUserId ? "sent" : "received"}
 					/>

@@ -3,14 +3,14 @@
 import { Card, CardContent } from "@/components/ui/card";
 
 interface SidebarProfileCardProps {
-	name: string;
+	displayName: string;
 	title?: string;
 	avatarUrl?: string;
 	coverGradient?: string;
 }
 
 export function SidebarProfileCard({
-	name,
+	displayName,
 	title,
 	avatarUrl,
 	coverGradient = "from-muted to-muted/50",
@@ -26,16 +26,16 @@ export function SidebarProfileCard({
 					{avatarUrl ? (
 						<img
 							src={avatarUrl}
-							alt={name}
+							alt={displayName}
 							className="mx-auto size-[72px] rounded-full border-4 border-card object-cover"
 						/>
 					) : (
 						<div className="mx-auto flex size-[72px] items-center justify-center rounded-full border-4 border-card bg-primary/10 text-xl font-bold text-primary">
-							{name[0]?.toUpperCase()}
+							{displayName[0]?.toUpperCase()}
 						</div>
 					)}
 
-					<h3 className="mt-2 text-base font-semibold">{name}</h3>
+					<h3 className="mt-2 text-base font-semibold">{displayName}</h3>
 					{title && <p className="text-sm text-muted-foreground">{title}</p>}
 				</div>
 			</CardContent>

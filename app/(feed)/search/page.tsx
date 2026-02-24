@@ -16,7 +16,7 @@ import {
 	UserResultCard,
 } from "@/components/shared";
 import { PostCard } from "@/components/feed/PostCard";
-import { Post } from "@/types";
+import { PostWithAuthor } from "@/types/supabase";
 import { cn } from "@/lib/utils";
 
 const supabase = createClient();
@@ -58,13 +58,13 @@ export default function SearchPage() {
 		queryFn: async () => {
 			const { data } = await supabase
 				.from("profiles")
-				.select("id, username, avatar_url, region")
+				.select("id, display_name, avatar_url, location")
 				.neq("id", user?.id ?? "")
 				.limit(4);
 			return (data ?? []).map((u: any) => ({
 				id: u.id,
-				name: u.username ?? "User",
-				title: u.region ?? "Talk N Share Member",
+				name: u.display_name ?? "User",
+				title: u.location ?? "Talk N Share Member",
 				avatar: u.avatar_url,
 			})) as SuggestedFriend[];
 		},
@@ -78,16 +78,16 @@ export default function SearchPage() {
 			if (!query.trim()) return [];
 			const { data } = await supabase
 				.from("posts")
-				.select("*, profiles(username, avatar_url)")
+				.select("*, profiles!posts_author_id_fkey(display_name, avatar_url)")
 				.ilike("content", `%${query}%`)
-				.eq("is_approved", true)
+				.eq("status", "approved")
 				.order("created_at", { ascending: false })
 				.limit(20);
 			return (data ?? []).map((p: any) => ({
 				...p,
-				author_name: p.profiles?.username ?? p.author_name,
+				author_name: p.profiles?.display_name ?? p.author_name,
 				author_avatar: p.profiles?.avatar_url ?? p.author_avatar,
-			})) as Post[];
+			})) as PostWithAuthor[];
 		},
 		enabled: !!query && (activeTab === "all" || activeTab === "posts"),
 	});
@@ -100,7 +100,7 @@ export default function SearchPage() {
 			const { data } = await supabase
 				.from("profiles")
 				.select("*")
-				.or(`username.ilike.%${query}%, region.ilike.%${query}%`) // Searching by region as title placeholder
+				.or(`display_name.ilike.%${query}%, location.ilike.%${query}%`) // Searching by location as title placeholder
 				.neq("id", user?.id ?? "")
 				.limit(20);
 			return data ?? [];
@@ -209,8 +209,8 @@ export default function SearchPage() {
 											<UserResultCard
 												key={person.id}
 												id={person.id}
-												username={person.username || "User"}
-												title={person.region} // using region as title/role placeholder
+												username={person.display_name || "User"}
+												title={person.location} // using location as title/role placeholder
 												avatarUrl={person.avatar_url}
 												onFollow={handleFollow}
 											/>

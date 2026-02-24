@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useDashboardComments } from "@/hooks/useDashboard";
-import { Comment } from "@/types";
+import { CommentWithAuthor } from "@/types/supabase";
 import {
 	Card,
 	CardContent,
@@ -38,7 +38,8 @@ export default function CommentsPage() {
 	const { commentsQuery, updateComment, deleteComment } =
 		useDashboardComments();
 	const [search, setSearch] = useState("");
-	const [editingComment, setEditingComment] = useState<Comment | null>(null);
+	const [editingComment, setEditingComment] =
+		useState<CommentWithAuthor | null>(null);
 	const [editContent, setEditContent] = useState("");
 
 	const comments = commentsQuery.data ?? [];
@@ -48,7 +49,7 @@ export default function CommentsPage() {
 			(comment.author_name ?? "").toLowerCase().includes(search.toLowerCase()),
 	);
 
-	const handleEdit = (comment: Comment) => {
+	const handleEdit = (comment: CommentWithAuthor) => {
 		setEditingComment(comment);
 		setEditContent(comment.content ?? "");
 	};

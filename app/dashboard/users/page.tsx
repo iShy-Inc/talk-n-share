@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useDashboardUsers } from "@/hooks/useDashboard";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { Profile } from "@/types";
+import { Profile } from "@/types/supabase";
 import {
 	Card,
 	CardContent,
@@ -44,29 +44,25 @@ export default function UsersPage() {
 	const [search, setSearch] = useState("");
 	const [editingUser, setEditingUser] = useState<Profile | null>(null);
 	const [editForm, setEditForm] = useState({
-		username: "",
+		display_name: "",
 		gender: "",
-		region: "",
+		location: "",
 		is_public: true,
 	});
 
 	const users = usersQuery.data ?? [];
 	const filteredUsers = users.filter(
 		(user) =>
-			(user.username ?? user.display_name ?? "")
-				.toLowerCase()
-				.includes(search.toLowerCase()) ||
-			(user.region ?? user.location ?? "")
-				.toLowerCase()
-				.includes(search.toLowerCase()),
+			(user.display_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+			(user.location ?? "").toLowerCase().includes(search.toLowerCase()),
 	);
 
 	const handleEdit = (user: Profile) => {
 		setEditingUser(user);
 		setEditForm({
-			username: user.username ?? user.display_name ?? "",
+			display_name: user.display_name ?? "",
 			gender: user.gender ?? "",
-			region: user.region ?? user.location ?? "",
+			location: user.location ?? "",
 			is_public: user.is_public ?? true,
 		});
 	};
@@ -76,9 +72,9 @@ export default function UsersPage() {
 		updateUser.mutate(
 			{
 				id: editingUser.id,
-				display_name: editForm.username || null,
-				gender: (editForm.gender || null) as Profile["gender"],
-				location: editForm.region || null,
+				display_name: editForm.display_name || undefined,
+				gender: (editForm.gender || undefined) as Profile["gender"],
+				location: editForm.location || undefined,
 				is_public: editForm.is_public,
 			},
 			{
@@ -207,19 +203,19 @@ export default function UsersPage() {
 													{user.avatar_url ? (
 														<img
 															src={user.avatar_url}
-															alt={user.username ?? user.display_name ?? "User"}
+															alt={user.display_name ?? "User"}
 															className="size-9 rounded-full object-cover ring-2 ring-border"
 														/>
 													) : (
 														<div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 text-sm font-bold text-white ring-2 ring-border">
-															{(user.username ??
+															{(user.display_name ??
 																user.display_name ??
 																"U")[0]?.toUpperCase()}
 														</div>
 													)}
 													<div>
 														<p className="text-sm font-semibold">
-															{user.username ?? user.display_name ?? "User"}
+															{user.display_name ?? "User"}
 														</p>
 														<p className="text-xs text-muted-foreground">
 															{user.id.slice(0, 8)}...
@@ -231,7 +227,7 @@ export default function UsersPage() {
 												{user.gender ?? "—"}
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{user.region ?? user.location ?? "—"}
+												{user.location ?? "—"}
 											</td>
 											<td className="px-6 py-4">
 												<Badge
@@ -247,7 +243,7 @@ export default function UsersPage() {
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{user.birthday ?? user.birth_date ?? "—"}
+												{user.birth_date ?? "—"}
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center justify-end gap-1">
@@ -277,13 +273,10 @@ export default function UsersPage() {
 																<AlertDialogDescription>
 																	Are you sure you want to delete{" "}
 																	<strong>
-																		{user.username ??
-																			user.display_name ??
-																			"this user"}
+																		{user.display_name ?? "this user"}
 																	</strong>
-																	? This will
-																	permanently remove their account and all
-																	associated data.
+																	? This will permanently remove their account
+																	and all associated data.
 																</AlertDialogDescription>
 															</AlertDialogHeader>
 															<AlertDialogFooter>
@@ -325,9 +318,9 @@ export default function UsersPage() {
 							<Label htmlFor="edit-username">Username</Label>
 							<Input
 								id="edit-username"
-								value={editForm.username}
+								value={editForm.display_name}
 								onChange={(e) =>
-									setEditForm({ ...editForm, username: e.target.value })
+									setEditForm({ ...editForm, display_name: e.target.value })
 								}
 							/>
 						</div>
@@ -344,12 +337,12 @@ export default function UsersPage() {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="edit-region">Region</Label>
+								<Label htmlFor="edit-location">Location</Label>
 								<Input
-									id="edit-region"
-									value={editForm.region}
+									id="edit-location"
+									value={editForm.location}
 									onChange={(e) =>
-										setEditForm({ ...editForm, region: e.target.value })
+										setEditForm({ ...editForm, location: e.target.value })
 									}
 								/>
 							</div>

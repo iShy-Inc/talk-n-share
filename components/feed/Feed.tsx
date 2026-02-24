@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { PostCard } from "./PostCard";
-import { Post } from "@/types";
+import { PostWithAuthor } from "@/types/supabase";
 
 // Mock data fetcher for now
-const fetchPosts = async (): Promise<Post[]> => {
+const fetchPosts = async (): Promise<PostWithAuthor[]> => {
 	// Simulate network delay
 	await new Promise((resolve) => setTimeout(resolve, 1000));
 

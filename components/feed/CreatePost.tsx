@@ -2,16 +2,26 @@
 
 import { useState } from "react";
 import { Image as ImageIcon, Send } from "lucide-react";
+import { usePosts } from "@/hooks/usePosts";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export function CreatePost() {
-	const [content, setContent] = useState("");
+	const { user } = useAuthStore();
+	const [post, setPost] = useState({
+		content: "",
+		image_url: null,
+	});
+	const { createPost } = usePosts();
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!content.trim()) return;
-		// TODO: Implement post creation
-		console.log("Create post:", content);
-		setContent("");
+		if (!post.content.trim() || !user) return;
+		console.log(post);
+		createPost.mutate({
+			...post,
+			author_id: user.id,
+		});
+		setPost({ content: "", image_url: null });
 	};
 
 	return (
@@ -23,8 +33,8 @@ export function CreatePost() {
 					</div>
 					<div className="flex-1">
 						<textarea
-							value={content}
-							onChange={(e) => setContent(e.target.value)}
+							value={post.content}
+							onChange={(e) => setPost({ ...post, content: e.target.value })}
 							placeholder="What's on your mind? (Anonymous)"
 							className="w-full bg-transparent border-none focus:ring-0 resize-none min-h-[100px] text-lg placeholder:text-muted-foreground/70"
 						/>
@@ -40,7 +50,7 @@ export function CreatePost() {
 
 							<button
 								type="submit"
-								disabled={!content.trim()}
+								disabled={!post.content.trim()}
 								className="bg-primary text-primary-foreground px-4 py-2 rounded-full font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
 							>
 								<span>Post</span>

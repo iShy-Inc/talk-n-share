@@ -11,10 +11,10 @@ import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Post } from "@/types";
+import { PostWithAuthor } from "@/types/supabase";
 
 interface PostCardProps {
-	post: Post;
+	post: PostWithAuthor;
 }
 
 export function PostCard({ post }: PostCardProps) {

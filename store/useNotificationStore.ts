@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Notification } from "@/types";
+import { Notification } from "@/types/supabase";
 
 interface NotificationState {
 	notifications: Notification[];
@@ -17,9 +17,13 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 	activeRecipientId: null,
 	addNotification: (notif) =>
 		set((state) => ({
-			notifications: [notif, ...state.notifications.filter((n) => n.id !== notif.id)],
+			notifications: [
+				notif,
+				...state.notifications.filter((n) => n.id !== notif.id),
+			],
 			unreadCount:
-				state.unreadCount + (notif.is_read === false || notif.is_read === null ? 1 : 0),
+				state.unreadCount +
+				(notif.is_read === false || notif.is_read === null ? 1 : 0),
 		})),
 	setNotifications: (list) =>
 		set({
@@ -31,7 +35,10 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 		set((state) => {
 			if (!notificationId) {
 				return {
-					notifications: state.notifications.map((n) => ({ ...n, is_read: true })),
+					notifications: state.notifications.map((n) => ({
+						...n,
+						is_read: true,
+					})),
 					unreadCount: 0,
 				};
 			}

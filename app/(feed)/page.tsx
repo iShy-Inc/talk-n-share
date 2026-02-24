@@ -46,13 +46,13 @@ export default function FeedPage() {
 		queryFn: async () => {
 			const { data } = await supabase
 				.from("profiles")
-				.select("id, username, avatar_url, region")
+				.select("id, display_name, avatar_url, location")
 				.neq("id", user?.id ?? "")
 				.limit(4);
 			return (data ?? []).map((u: any) => ({
 				id: u.id,
-				name: u.username ?? "User",
-				title: u.region ?? "Talk N Share Member",
+				name: u.display_name ?? "User",
+				title: u.location ?? "Talk N Share Member",
 				avatar: u.avatar_url,
 			})) as SuggestedFriend[];
 		},
@@ -89,10 +89,11 @@ export default function FeedPage() {
 		await supabase.from("comments").insert({
 			post_id: expandedPostId,
 			content,
-			author_name: profile?.username ?? "Anonymous",
 			author_id: user.id,
 		});
 	};
+
+	if (posts) console.log(posts);
 
 	return (
 		<MainLayout
@@ -146,7 +147,7 @@ export default function FeedPage() {
 								</button>
 							</div>
 						) : (
-							post.comments_count > 0 && (
+							(post.comments_count ?? 0) > 0 && (
 								<button
 									onClick={() => setExpandedPostId(post.id)}
 									className="mt-1 text-xs text-muted-foreground hover:text-foreground"

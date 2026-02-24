@@ -1,60 +1,49 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	useQuery,
+	useMutation,
+	useQueryClient,
+	useInfiniteQuery,
+} from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
-import { Post, Profile, Comment, Report } from "@/types";
+import {
+	PostWithAuthor,
+	Profile,
+	CommentWithAuthor,
+	ReportWithReporter,
+} from "@/types/supabase";
+import { usePosts } from "./usePosts";
 
 const supabase = createClient();
-
+const POSTS_PER_PAGE = 9; // Số lượng tweet mỗi lần tải
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
 export const useDashboardPosts = () => {
-	const queryClient = useQueryClient();
-
-	const postsQuery = useQuery({
-		queryKey: ["dashboard-posts"],
-		queryFn: async () => {
+	const postsQuery = useInfiniteQuery({
+		queryKey: ["dashboard-posts", POSTS_PER_PAGE],
+		initialPageParam: 0,
+		queryFn: async ({ pageParam }) => {
+			const from = pageParam as number;
+			const to = from + POSTS_PER_PAGE - 1;
 			const { data, error } = await supabase
 				.from("posts")
-				.select("*, profiles(username, avatar_url)")
-				.order("created_at", { ascending: false });
+				.select("*, profiles!posts_author_id_fkey(display_name, avatar_url)")
+				.order("created_at", { ascending: false })
+				.range(from, to);
 			if (error) throw error;
-			return (data ?? []) as Post[];
+			return (data || []).map((p: any) => ({
+				...p,
+				author_name: p.profiles?.display_name,
+				author_avatar: p.profiles?.avatar_url,
+			})) as PostWithAuthor[];
+		},
+		getNextPageParam: (lastPage, allPages) => {
+			if (lastPage.length < POSTS_PER_PAGE) return undefined;
+			return allPages.length * POSTS_PER_PAGE;
 		},
 	});
-
-	const updatePost = useMutation({
-		mutationFn: async (post: Partial<Post> & { id: string }) => {
-			const { error } = await supabase
-				.from("posts")
-				.update(post)
-				.eq("id", post.id);
-			if (error) throw error;
-		},
-		onSuccess: () =>
-			queryClient.invalidateQueries({ queryKey: ["dashboard-posts"] }),
-	});
-
-	const deletePost = useMutation({
-		mutationFn: async (postId: string) => {
-			const { error } = await supabase.from("posts").delete().eq("id", postId);
-			if (error) throw error;
-		},
-		onSuccess: () =>
-			queryClient.invalidateQueries({ queryKey: ["dashboard-posts"] }),
-	});
-
-	const approvePost = useMutation({
-		mutationFn: async (postId: string) => {
-			const { error } = await supabase
-				.from("posts")
-				.update({ is_approved: true })
-				.eq("id", postId);
-			if (error) throw error;
-		},
-		onSuccess: () =>
-			queryClient.invalidateQueries({ queryKey: ["dashboard-posts"] }),
-	});
+	const { updatePost, deletePost, approvePost } = usePosts();
 
 	return { postsQuery, updatePost, deletePost, approvePost };
 };
@@ -70,7 +59,7 @@ export const useDashboardUsers = () => {
 			const { data, error } = await supabase
 				.from("profiles")
 				.select("*")
-				.order("username", { ascending: true });
+				.order("display_name", { ascending: true });
 			if (error) throw error;
 			return (data ?? []) as Profile[];
 		},
@@ -116,12 +105,14 @@ export const useDashboardComments = () => {
 				.select("*")
 				.order("created_at", { ascending: false });
 			if (error) throw error;
-			return (data ?? []) as Comment[];
+			return (data ?? []) as CommentWithAuthor[];
 		},
 	});
 
 	const updateComment = useMutation({
-		mutationFn: async (comment: Partial<Comment> & { id: string }) => {
+		mutationFn: async (
+			comment: Partial<CommentWithAuthor> & { id: string },
+		) => {
 			const { error } = await supabase
 				.from("comments")
 				.update(comment)
@@ -160,12 +151,14 @@ export const useDashboardReports = () => {
 				.select("*")
 				.order("created_at", { ascending: false });
 			if (error) throw error;
-			return (data ?? []) as Report[];
+			return (data ?? []) as ReportWithReporter[];
 		},
 	});
 
 	const updateReport = useMutation({
-		mutationFn: async (report: Partial<Report> & { id: string }) => {
+		mutationFn: async (
+			report: Partial<ReportWithReporter> & { id: string },
+		) => {
 			const { error } = await supabase
 				.from("reports")
 				.update(report)
@@ -194,11 +187,11 @@ export const useDashboardReports = () => {
 			status,
 		}: {
 			reportId: string;
-			status: Report["status"];
+			status: ReportWithReporter["status"];
 		}) => {
 			const { error } = await supabase
 				.from("reports")
-				.update({ status, resolved_at: new Date().toISOString() })
+				.update({ status })
 				.eq("id", reportId);
 			if (error) throw error;
 		},
@@ -225,7 +218,7 @@ export const useDashboardStats = () => {
 			const pendingPosts = await supabase
 				.from("posts")
 				.select("id", { count: "exact", head: true })
-				.eq("is_approved", false);
+				.neq("status", "approved");
 
 			const pendingReports = await supabase
 				.from("reports")

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useDashboardReports } from "@/hooks/useDashboard";
-import { Report } from "@/types";
+import { ReportWithReporter } from "@/types/supabase";
 import {
 	Card,
 	CardContent,
@@ -37,8 +37,8 @@ import {
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
-type ReportStatus = NonNullable<Report["status"]>;
-type ReportTargetType = Report["target_type"];
+type ReportStatus = NonNullable<ReportWithReporter["status"]>;
+type ReportTargetType = ReportWithReporter["target_type"];
 
 const statusColors: Record<ReportStatus, string> = {
 	pending: "destructive",
@@ -179,8 +179,7 @@ export default function ReportsPage() {
 								</thead>
 								<tbody className="divide-y divide-border/30">
 									{filteredReports.map((report) => {
-										const safeStatus: ReportStatus =
-											report.status ?? "pending";
+										const safeStatus: ReportStatus = report.status ?? "pending";
 										const TargetIcon = targetTypeIcons[report.target_type];
 										return (
 											<tr
