@@ -4,15 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePosts } from "@/hooks/usePosts";
 import { useAuthStore } from "@/store/useAuthStore";
+import useProfile from "@/hooks/useProfile";
 import { CreatePost } from "@/components/feed/CreatePost";
 import { PostCard } from "@/components/feed/PostCard";
 import { CommentList, CommentData } from "@/components/feed/CommentList";
-import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
-import {
-	MainLayout,
-	AppLeftSidebar,
-	AppRightSidebar,
-} from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -23,41 +18,8 @@ export default function FeedPage() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const { posts, fetchNextPage, hasNextPage } = usePosts();
+	const { profile } = useProfile();
 	const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
-
-	// Fetch current user profile
-	const { data: profile } = useQuery({
-		queryKey: ["my-profile", user?.id],
-		queryFn: async () => {
-			if (!user) return null;
-			const { data } = await supabase
-				.from("profiles")
-				.select("*")
-				.eq("id", user.id)
-				.single();
-			return data;
-		},
-		enabled: !!user,
-	});
-
-	// Fetch suggested friends
-	const { data: suggestedFriends = [] } = useQuery({
-		queryKey: ["suggested-friends"],
-		queryFn: async () => {
-			const { data } = await supabase
-				.from("profiles")
-				.select("id, display_name, avatar_url, location")
-				.neq("id", user?.id ?? "")
-				.limit(4);
-			return (data ?? []).map((u: any) => ({
-				id: u.id,
-				name: u.display_name ?? "User",
-				title: u.location ?? "Talk N Share Member",
-				avatar: u.avatar_url,
-			})) as SuggestedFriend[];
-		},
-		enabled: !!user,
-	});
 
 	// Fetch comments for expanded post
 	const { data: comments = [] } = useQuery({
@@ -93,13 +55,8 @@ export default function FeedPage() {
 		});
 	};
 
-	if (posts) console.log(posts);
-
 	return (
-		<MainLayout
-			leftSidebar={<AppLeftSidebar profile={profile ?? null} />}
-			rightSidebar={<AppRightSidebar suggestedFriends={suggestedFriends} />}
-		>
+		<>
 			{user ? (
 				<CreatePost />
 			) : (
@@ -135,7 +92,7 @@ export default function FeedPage() {
 							<div className="mt-2 rounded-xl border border-border bg-card p-4">
 								<CommentList
 									comments={comments}
-									currentUserAvatar={profile?.avatar_url}
+									currentUserAvatar={profile?.avatar_url ?? undefined}
 									onSubmitComment={handleAddComment}
 									onReply={() => {}}
 								/>
@@ -173,6 +130,6 @@ export default function FeedPage() {
 					</Button>
 				</div>
 			)}
-		</MainLayout>
+		</>
 	);
 }

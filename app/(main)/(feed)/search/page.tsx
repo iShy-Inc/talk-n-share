@@ -8,13 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconSearch, IconX } from "@tabler/icons-react";
-import {
-	MainLayout,
-	AppLeftSidebar,
-	AppRightSidebar,
-	SuggestedFriend,
-	UserResultCard,
-} from "@/components/shared";
+import { UserResultCard } from "@/components/shared";
 import { PostCard } from "@/components/feed/PostCard";
 import { PostWithAuthor } from "@/types/supabase";
 import { cn } from "@/lib/utils";
@@ -36,40 +30,6 @@ export default function SearchPage() {
 	useEffect(() => {
 		setSearchInput(query);
 	}, [query]);
-
-	// Fetch current user profile for layout
-	const { data: profile } = useQuery({
-		queryKey: ["my-profile", user?.id],
-		queryFn: async () => {
-			if (!user) return null;
-			const { data } = await supabase
-				.from("profiles")
-				.select("*")
-				.eq("id", user.id)
-				.single();
-			return data;
-		},
-		enabled: !!user,
-	});
-
-	// Fetch suggested friends for layout
-	const { data: suggestedFriends = [] } = useQuery({
-		queryKey: ["suggested-friends-search"],
-		queryFn: async () => {
-			const { data } = await supabase
-				.from("profiles")
-				.select("id, display_name, avatar_url, location")
-				.neq("id", user?.id ?? "")
-				.limit(4);
-			return (data ?? []).map((u: any) => ({
-				id: u.id,
-				name: u.display_name ?? "User",
-				title: u.location ?? "Talk N Share Member",
-				avatar: u.avatar_url,
-			})) as SuggestedFriend[];
-		},
-		enabled: !!user,
-	});
 
 	// Search Posts
 	const { data: posts = [], isLoading: isLoadingPosts } = useQuery({
@@ -125,10 +85,7 @@ export default function SearchPage() {
 	};
 
 	return (
-		<MainLayout
-			leftSidebar={<AppLeftSidebar profile={profile ?? null} />}
-			rightSidebar={<AppRightSidebar suggestedFriends={suggestedFriends} />}
-		>
+		<>
 			<div className="space-y-6">
 				{/* Search Bar */}
 				<form onSubmit={handleSearch} className="relative">
@@ -269,6 +226,6 @@ export default function SearchPage() {
 					</div>
 				)}
 			</div>
-		</MainLayout>
+		</>
 	);
 }

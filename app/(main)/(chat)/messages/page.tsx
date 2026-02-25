@@ -15,12 +15,6 @@ import { Button } from "@/components/ui/button";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import {
-	AppLeftSidebar,
-	AppRightSidebar,
-	MainLayout,
-	SuggestedFriend,
-} from "@/components/shared";
 
 const supabase = createClient();
 
@@ -31,39 +25,6 @@ export default function MessagesPage() {
 	const [showContactPicker, setShowContactPicker] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	// Fetch current user profile
-	const { data: profile } = useQuery({
-		queryKey: ["my-profile", user?.id],
-		queryFn: async () => {
-			if (!user) return null;
-			const { data } = await supabase
-				.from("profiles")
-				.select("*")
-				.eq("id", user.id)
-				.single();
-			return data;
-		},
-		enabled: !!user,
-	});
-
-	// Fetch suggested friends
-	const { data: suggestedFriends = [] } = useQuery({
-		queryKey: ["suggested-friends"],
-		queryFn: async () => {
-			const { data } = await supabase
-				.from("profiles")
-				.select("id, display_name, avatar_url, location")
-				.neq("id", user?.id ?? "")
-				.limit(4);
-			return (data ?? []).map((u: any) => ({
-				id: u.id,
-				name: u.display_name ?? "User",
-				title: u.location ?? "Talk N Share Member",
-				avatar: u.avatar_url,
-			})) as SuggestedFriend[];
-		},
-		enabled: !!user,
-	});
 	// Fetch chat sessions for the current user
 	const { data: sessions = [] } = useQuery({
 		queryKey: ["chat-sessions", user?.id],
@@ -175,10 +136,7 @@ export default function MessagesPage() {
 	const showList = !showConversation && !showContactPicker;
 
 	return (
-		<MainLayout
-			leftSidebar={<AppLeftSidebar profile={profile ?? null} />}
-			rightSidebar={<AppRightSidebar suggestedFriends={suggestedFriends} />}
-		>
+		<>
 			<Card className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg">
 				<div className="flex h-full">
 					<div
@@ -281,6 +239,6 @@ export default function MessagesPage() {
 					</div>
 				</div>
 			</Card>
-		</MainLayout>
+		</>
 	);
 }

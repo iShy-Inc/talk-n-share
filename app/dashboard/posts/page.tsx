@@ -50,7 +50,9 @@ export default function PostsPage() {
 	const filteredPosts = posts.filter((post) => {
 		const matchesSearch =
 			(post.content ?? "").toLowerCase().includes(search.toLowerCase()) ||
-			(post.author_name ?? "").toLowerCase().includes(search.toLowerCase());
+			(post.profiles?.display_name ?? "")
+				.toLowerCase()
+				.includes(search.toLowerCase());
 		if (filter === "approved")
 			return matchesSearch && post.status === "approved";
 		if (filter === "pending")
@@ -196,19 +198,20 @@ export default function PostsPage() {
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center gap-2">
-													{post.author_avatar ? (
+													{post.profiles?.avatar_url ? (
 														<img
-															src={post.author_avatar}
+															src={post.profiles.avatar_url}
 															alt=""
 															className="size-7 rounded-full object-cover"
 														/>
 													) : (
 														<div className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-primary/50 to-primary text-[10px] font-bold text-white">
-															{(post.author_name ?? "A")[0].toUpperCase()}
+															{(post.profiles?.display_name ??
+																"A")[0].toUpperCase()}
 														</div>
 													)}
 													<span className="text-sm font-medium">
-														{post.author_name ?? "Anonymous"}
+														{post.profiles?.display_name ?? "Anonymous"}
 													</span>
 												</div>
 											</td>

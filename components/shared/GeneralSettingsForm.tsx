@@ -18,12 +18,14 @@ interface GeneralSettingsFormProps {
 		bio: string;
 	}) => void;
 	onAvatarUpload?: () => void;
+	avatarUploading?: boolean;
 }
 
 export function GeneralSettingsForm({
 	initialValues,
 	onSave,
 	onAvatarUpload,
+	avatarUploading = false,
 }: GeneralSettingsFormProps) {
 	const [fullName, setFullName] = useState(initialValues?.fullName ?? "");
 	const [username, setUsername] = useState(initialValues?.username ?? "");
@@ -43,11 +45,12 @@ export function GeneralSettingsForm({
 			<button
 				type="button"
 				onClick={onAvatarUpload}
+				disabled={avatarUploading}
 				className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-5 py-5 text-sm text-muted-foreground transition-colors hover:bg-muted/60"
 				id="upload-avatar-btn"
 			>
 				<IconUpload className="size-4" />
-				Choose an image for avatar
+				{avatarUploading ? "Uploading avatar..." : "Choose an image for avatar"}
 			</button>
 
 			{/* Inputs */}

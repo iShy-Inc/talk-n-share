@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
+import useProfile, { MY_PROFILE_QUERY_KEY } from "@/hooks/useProfile";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,12 +17,7 @@ import {
 import { GeneralSettingsForm } from "@/components/shared/GeneralSettingsForm";
 import { AccountSettings } from "@/components/shared/AccountSettings";
 import { PostCard } from "@/components/feed/PostCard";
-import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
-import {
-	MainLayout,
-	AppLeftSidebar,
-	AppRightSidebar,
-} from "@/components/shared";
+import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import toast from "react-hot-toast";
 import { PostWithAuthor } from "@/types/supabase";
 
@@ -44,21 +40,9 @@ export default function ProfilePage() {
 	const queryClient = useQueryClient();
 	const [activeTab, setActiveTab] = useState("my-posts");
 	const [settingsTab, setSettingsTab] = useState("general");
-
-	// Fetch current user profile
-	const { data: profile } = useQuery({
-		queryKey: ["my-profile", user?.id],
-		queryFn: async () => {
-			if (!user) return null;
-			const { data } = await supabase
-				.from("profiles")
-				.select("*")
-				.eq("id", user.id)
-				.single();
-			return data;
-		},
-		enabled: !!user,
-	});
+	const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+	const avatarInputRef = useRef<HTMLInputElement>(null);
+	const { profile } = useProfile();
 
 	// Fetch user's posts
 	const { data: myPosts = [] } = useQuery({
@@ -94,25 +78,6 @@ export default function ProfilePage() {
 		enabled: !!user && activeTab === "saved-posts",
 	});
 
-	// Fetch suggested friends
-	const { data: suggestedFriends = [] } = useQuery({
-		queryKey: ["suggested-friends-profile"],
-		queryFn: async () => {
-			const { data } = await supabase
-				.from("profiles")
-				.select("id, display_name, avatar_url, location")
-				.neq("id", user?.id ?? "")
-				.limit(4);
-			return (data ?? []).map((u: any) => ({
-				id: u.id,
-				name: u.display_name ?? "User",
-				title: u.location ?? "Talk N Share Member",
-				avatar: u.avatar_url,
-			})) as SuggestedFriend[];
-		},
-		enabled: !!user,
-	});
-
 	// Profile stats
 	const stats: ProfileStat[] = [
 		{ label: "Posts", value: myPosts.length },
@@ -136,7 +101,7 @@ export default function ProfilePage() {
 			toast.error("Failed to save settings");
 		} else {
 			toast.success("Settings saved successfully");
-			queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
 		}
 	};
 
@@ -156,15 +121,58 @@ export default function ProfilePage() {
 		setSettingsTab(value);
 	};
 
+	const handleAvatarUploadClick = () => {
+		avatarInputRef.current?.click();
+	};
+
+	const handleAvatarFileSelected = async (
+		event: React.ChangeEvent<HTMLInputElement>,
+	) => {
+		const file = event.target.files?.[0];
+		if (!file || !user) return;
+		if (!file.type.startsWith("image/")) {
+			toast.error("Please select an image file");
+			return;
+		}
+
+		try {
+			setIsUploadingAvatar(true);
+			const { publicUrl } = await uploadFileToBucket({
+				bucket: STORAGE_BUCKETS.AVATARS,
+				file,
+				ownerId: user.id,
+			});
+
+			const { error } = await supabase
+				.from("profiles")
+				.update({ avatar_url: publicUrl })
+				.eq("id", user.id);
+			if (error) throw error;
+
+			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
+			toast.success("Avatar updated");
+		} catch {
+			toast.error("Failed to upload avatar");
+		} finally {
+			setIsUploadingAvatar(false);
+			event.target.value = "";
+		}
+	};
+
 	return (
-		<MainLayout
-			leftSidebar={<AppLeftSidebar profile={profile ?? null} />}
-			rightSidebar={<AppRightSidebar suggestedFriends={suggestedFriends} />}
-		>
+		<>
+			<input
+				ref={avatarInputRef}
+				type="file"
+				accept="image/*"
+				className="hidden"
+				onChange={handleAvatarFileSelected}
+			/>
+
 			{/* Profile Header */}
 			<ProfileHeader
 				name={profile?.display_name ?? "User"}
-				username={profile?.display_name}
+				username={profile?.display_name ?? undefined}
 				title={
 					profile?.location
 						? profile?.location
@@ -174,7 +182,7 @@ export default function ProfilePage() {
 								? "Moderator"
 								: "Talk N Share Member"
 				}
-				avatarUrl={profile?.avatar_url}
+				avatarUrl={profile?.avatar_url ?? undefined}
 				stats={stats}
 				tabs={profileTabs}
 				activeTab={activeTab}
@@ -222,21 +230,23 @@ export default function ProfilePage() {
 					activeItem={settingsTab}
 					onMenuChange={handleSettingsMenuChange}
 				>
-					{settingsTab === "general" && (
-						<GeneralSettingsForm
+						{settingsTab === "general" && (
+							<GeneralSettingsForm
 							initialValues={{
 								fullName: profile?.display_name ?? "",
 								username: profile?.display_name ?? "",
 								bio: "",
-							}}
-							onSave={handleSaveGeneral}
-						/>
-					)}
+								}}
+								onSave={handleSaveGeneral}
+								onAvatarUpload={handleAvatarUploadClick}
+								avatarUploading={isUploadingAvatar}
+							/>
+						)}
 					{settingsTab === "account" && (
 						<AccountSettings onDeleteAccount={handleDeleteAccount} />
 					)}
 				</SettingsLayout>
 			)}
-		</MainLayout>
+		</>
 	);
 }

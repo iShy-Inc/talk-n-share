@@ -217,6 +217,16 @@ export default function ReportsPage() {
 															{report.description}
 														</p>
 													)}
+													{report.evidence_image_url && (
+														<a
+															href={report.evidence_image_url}
+															target="_blank"
+															rel="noreferrer"
+															className="mt-1 inline-block text-xs text-primary underline-offset-4 hover:underline"
+														>
+															View evidence
+														</a>
+													)}
 												</td>
 												<td className="px-6 py-4">
 													<Badge

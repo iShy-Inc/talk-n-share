@@ -624,18 +624,15 @@ export type Report = Tables<"reports">;
 
 // Extended types with UI-computed fields (populated after joins)
 export type PostWithAuthor = Post & {
-	author_name?: string;
-	author_avatar?: string | null;
+	profiles?: Profile;
 };
 
 export type CommentWithAuthor = Comment & {
-	author_name?: string;
-	author_avatar?: string | null;
+	profiles?: Profile;
 };
 
 export type ReportWithReporter = Report & {
-	reporter_name?: string;
-	description?: string;
+	profiles?: Profile;
 };
 
 // The matches table serves as ChatSession

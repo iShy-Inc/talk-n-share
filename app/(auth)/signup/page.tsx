@@ -54,7 +54,6 @@ import toast from "react-hot-toast";
 
 export default function SignupPage() {
 	const [isLoading, setIsLoading] = useState(false);
-	const [displayName, setDisplayName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
@@ -78,11 +77,7 @@ export default function SignupPage() {
 			email,
 			password,
 			options: {
-				data: {
-					display_name: displayName,
-					full_name: displayName,
-				},
-				emailRedirectTo: `${location.origin}/auth/confirm`,
+				emailRedirectTo: `${location.origin}/auth/confirm?next=/onboarding`,
 			},
 		});
 
@@ -105,7 +100,7 @@ export default function SignupPage() {
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider,
 			options: {
-				redirectTo: `${location.origin}/auth/callback?next=/`,
+				redirectTo: `${location.origin}/auth/callback?next=/onboarding`,
 			},
 		});
 
@@ -156,18 +151,6 @@ export default function SignupPage() {
 						</div>
 					</div>
 					<form onSubmit={handleSignup} className="grid gap-4">
-						<div className="grid gap-2">
-							<Label htmlFor="displayName">Display Name</Label>
-							<Input
-								id="displayName"
-								type="text"
-								placeholder="John Doe"
-								value={displayName}
-								onChange={(e) => setDisplayName(e.target.value)}
-								required
-								className="bg-background/50"
-							/>
-						</div>
 						<div className="grid gap-2">
 							<Label htmlFor="email">Email</Label>
 							<Input

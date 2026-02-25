@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
+import useProfile, { isProfileComplete } from "@/hooks/useProfile";
 import { createClient } from "@/utils/supabase/client";
 import {
 	MatchOptions,
@@ -23,12 +24,20 @@ type MatchStatus = "options" | "loading" | "active";
 export default function MatchPage() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
+	const { profile, loading: isLoadingProfile } = useProfile();
 	const [status, setStatus] = useState<MatchStatus>("options");
 	const [sessionId, setSessionId] = useState<string | null>(null);
 	const [sessionData, setSessionData] = useState<ChatSession | null>(null);
 	const [partnerProfile, setPartnerProfile] = useState<any>(null);
 
 	const { messages, sendMessage } = useChat(sessionId ?? "");
+
+	useEffect(() => {
+		if (!user || isLoadingProfile) return;
+		if (!isProfileComplete(profile)) {
+			router.replace("/onboarding");
+		}
+	}, [user, isLoadingProfile, profile, router]);
 
 	// Find a match
 	const handleStartMatch = async (criteria: MatchCriteria) => {

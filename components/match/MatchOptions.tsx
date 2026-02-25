@@ -10,6 +10,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { IconMapPin, IconUsers, IconHeart } from "@tabler/icons-react";
+import useProfile from "@/hooks/useProfile";
 
 export type MatchCriteria = {
 	type: "gender" | "location" | "interests";
@@ -21,6 +22,7 @@ interface MatchOptionsProps {
 }
 
 export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
+	const { profile } = useProfile();
 	const [criteriaType, setCriteriaType] = useState<
 		"gender" | "location" | "interests"
 	>("interests");
@@ -100,14 +102,22 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 							<SelectTrigger>
 								<SelectValue placeholder="Select location preference" />
 							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="any">Any Location</SelectItem>
-								<SelectItem value="local">Nearby (Same City)</SelectItem>
-								<SelectItem value="country">Same Country</SelectItem>
-								<SelectItem value="global">Global</SelectItem>
-							</SelectContent>
-						</Select>
-					)}
+								<SelectContent>
+									<SelectItem value="any">Any Location</SelectItem>
+									<SelectItem value="hola">Hola Campus</SelectItem>
+									<SelectItem value="xavalo">Xavalo Campus</SelectItem>
+									<SelectItem value="fuda">Fuda Campus</SelectItem>
+									<SelectItem value="hovilo">Hovilo Campus</SelectItem>
+									<SelectItem value="quynhon">Quy Nhon Campus</SelectItem>
+									{profile?.location && (
+										<SelectItem value={profile.location}>
+											Same Location (City)
+										</SelectItem>
+									)}
+									<SelectItem value="others">Others</SelectItem>
+								</SelectContent>
+							</Select>
+						)}
 
 					{criteriaType === "interests" && (
 						<Select value={criteriaValue} onValueChange={setCriteriaValue}>
@@ -115,6 +125,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 								<SelectValue placeholder="Select an interest" />
 							</SelectTrigger>
 							<SelectContent>
+								<SelectItem value="any">Any Interest</SelectItem>
 								<SelectItem value="coding">Coding</SelectItem>
 								<SelectItem value="music">Music</SelectItem>
 								<SelectItem value="movies">Movies</SelectItem>

@@ -28,6 +28,7 @@ export function MobileDock() {
 	if (
 		pathname.startsWith("/login") ||
 		pathname.startsWith("/signup") ||
+		pathname.startsWith("/onboarding") ||
 		pathname.startsWith("/dashboard")
 	) {
 		return null;
