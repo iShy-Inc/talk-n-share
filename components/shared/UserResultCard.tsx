@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { IconUserPlus } from "@tabler/icons-react";
+import { IconMessageCircle } from "@tabler/icons-react";
 
 interface UserResultCardProps {
 	id: string;
@@ -9,7 +10,7 @@ interface UserResultCardProps {
 	title?: string;
 	avatarUrl?: string;
 	bio?: string;
-	onFollow?: (id: string) => void;
+	onSendMessage?: (id: string) => void;
 }
 
 export function UserResultCard({
@@ -18,7 +19,7 @@ export function UserResultCard({
 	title,
 	avatarUrl,
 	bio,
-	onFollow,
+	onSendMessage,
 }: UserResultCardProps) {
 	return (
 		<div className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
@@ -36,18 +37,22 @@ export function UserResultCard({
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center justify-between gap-2">
 					<div>
-						<h3 className="font-semibold text-foreground">{username}</h3>
+						<Link href={`/profile?userId=${id}`}>
+							<h3 className="font-semibold text-foreground hover:underline">
+								{username}
+							</h3>
+						</Link>
 						{title && <p className="text-sm text-muted-foreground">{title}</p>}
 					</div>
-					{onFollow && (
+					{onSendMessage && (
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={() => onFollow(id)}
+							onClick={() => onSendMessage(id)}
 							className="h-8 rounded-full px-4"
 						>
-							<IconUserPlus className="mr-1.5 size-4" />
-							Follow
+							<IconMessageCircle className="mr-1.5 size-4" />
+							Send Message
 						</Button>
 					)}
 				</div>

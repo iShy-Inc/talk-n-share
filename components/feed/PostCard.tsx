@@ -57,6 +57,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { getAnonymousDisplayName } from "@/lib/anonymous-name";
 
 interface PostCardProps {
 	post: PostWithAuthor;
@@ -70,6 +71,7 @@ type CommentRow = {
 	profiles?: {
 		display_name?: string | null;
 		avatar_url?: string | null;
+		is_public?: boolean | null;
 	} | null;
 };
 
@@ -118,6 +120,12 @@ export function PostCard({ post }: PostCardProps) {
 	const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
+	const isAuthor = user?.id === post.author_id;
+	const shouldMaskAuthor =
+		!isAuthor && (post.profiles?.is_public ?? true) === false;
+	const displayName = shouldMaskAuthor
+		? getAnonymousDisplayName(post.author_id)
+		: (post.profiles?.display_name ?? "Anonymous");
 
 	const { data: likedByMe = false } = useQuery({
 		queryKey: ["post-liked-by-me", post.id, user?.id],
@@ -238,6 +246,7 @@ export function PostCard({ post }: PostCardProps) {
 	};
 
 	const executeUpdate = () => {
+		if (!isAuthor) return;
 		updatePost.mutate(
 			{ id: post.id, content: editContent },
 			{
@@ -255,6 +264,7 @@ export function PostCard({ post }: PostCardProps) {
 	};
 
 	const executeDelete = () => {
+		if (!isAuthor) return;
 		deletePost.mutate(post.id, {
 			onSuccess: () => {
 				toast.success("Post deleted successfully");
@@ -365,6 +375,10 @@ export function PostCard({ post }: PostCardProps) {
 			}
 
 			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+			queryClient.invalidateQueries({ queryKey: ["saved-posts", user.id] });
+			queryClient.invalidateQueries({
+				queryKey: ["post-liked-by-me", post.id, user.id],
+			});
 		} catch {
 			toast.error("Failed to update like");
 		} finally {
@@ -431,17 +445,17 @@ export function PostCard({ post }: PostCardProps) {
 						{post?.profiles?.avatar_url ? (
 							<Image
 								src={post?.profiles?.avatar_url}
-								alt={post.profiles?.display_name || "User"}
+								alt={displayName}
 								width={40}
 								height={40}
 								className="object-cover"
 							/>
 						) : (
-							<span className="text-xl">{post.profiles?.display_name}</span>
+							<span className="text-xl">{displayName}</span>
 						)}
 					</div>
 					<div>
-						<h3 className="text-sm font-semibold">{post.profiles?.display_name}</h3>
+						<h3 className="text-sm font-semibold">{displayName}</h3>
 						<p className="text-xs text-muted-foreground">
 							{formatDistanceToNow(new Date(post.created_at), {
 								addSuffix: true,
@@ -449,34 +463,36 @@ export function PostCard({ post }: PostCardProps) {
 						</p>
 					</div>
 				</div>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="icon">
-							<MoreHorizontal size={20} />
-							<span className="sr-only">More</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent>
-						<DropdownMenuGroup>
-							<DropdownMenuLabel>Edit</DropdownMenuLabel>
-							<DropdownMenuItem onSelect={() => setIsEditing(true)}>
-								<span className="flex items-center gap-2 text-primary">
-									<Pencil size={16} className="hidden md:inline-block" />
-									Update
-								</span>
-							</DropdownMenuItem>
-						</DropdownMenuGroup>
-						<DropdownMenuGroup>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem onSelect={() => setIsDeleteConfirmOpen(true)}>
-								<span className="flex items-center gap-2 text-red-500">
-									<Trash2 size={16} className="hidden md:inline-block" />
-									Delete
-								</span>
-							</DropdownMenuItem>
-						</DropdownMenuGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				{isAuthor && (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="icon">
+								<MoreHorizontal size={20} />
+								<span className="sr-only">More</span>
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent>
+							<DropdownMenuGroup>
+								<DropdownMenuLabel>Edit</DropdownMenuLabel>
+								<DropdownMenuItem onSelect={() => setIsEditing(true)}>
+									<span className="flex items-center gap-2 text-primary">
+										<Pencil size={16} className="hidden md:inline-block" />
+										Update
+									</span>
+								</DropdownMenuItem>
+							</DropdownMenuGroup>
+							<DropdownMenuGroup>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem onSelect={() => setIsDeleteConfirmOpen(true)}>
+									<span className="flex items-center gap-2 text-red-500">
+										<Trash2 size={16} className="hidden md:inline-block" />
+										Delete
+									</span>
+								</DropdownMenuItem>
+							</DropdownMenuGroup>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</div>
 
 			<div className="mb-4">
@@ -524,7 +540,7 @@ export function PostCard({ post }: PostCardProps) {
 						<div className="flex h-full flex-col border-l border-border bg-background">
 							<div className="border-b border-border px-4 py-3">
 								<p className="text-sm font-semibold">
-									{post.profiles?.display_name ?? "Anonymous"}
+									{displayName}
 								</p>
 								<p className="text-xs text-muted-foreground">
 									{formatDistanceToNow(new Date(post.created_at), {
@@ -753,9 +769,13 @@ export function PostCard({ post }: PostCardProps) {
 				</div>
 				<div className="flex gap-4">
 					<button
-						className="text-muted-foreground hover:text-foreground"
-						title="Share"
-						onClick={handleAuthAction}
+						className={`transition-colors ${
+							isLiked
+								? "text-primary"
+								: "text-muted-foreground hover:text-foreground"
+						}`}
+						title={isLiked ? "Unsave" : "Save"}
+						onClick={handleToggleLike}
 					>
 						<Share2 size={18} />
 					</button>

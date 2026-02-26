@@ -3,25 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/useAuthStore";
+import type { Profile } from "@/types/supabase";
 
 const supabase = createClient();
 
 export const MY_PROFILE_QUERY_KEY = "my-profile";
 
-export type UserProfile = {
-	id: string;
-	display_name?: string | null;
-	email?: string | null;
-	location?: string | null;
-	avatar_url?: string | null;
-	role?: "admin" | "moder" | "user" | null;
-	username?: string | null;
-	region?: string | null;
-	birth_date?: string | null;
-	is_public?: boolean | null;
-	zodiac?: string | null;
-	gender?: "male" | "female" | "others" | null;
-};
+export type UserProfile = Profile;
 
 export const isProfileComplete = (profile: UserProfile | null) => {
 	if (!profile) return false;
@@ -30,6 +18,7 @@ export const isProfileComplete = (profile: UserProfile | null) => {
 		profile.avatar_url &&
 		profile.birth_date &&
 		profile.location &&
+		profile.bio &&
 		profile.zodiac &&
 		profile.gender &&
 		profile.is_public !== null &&
@@ -50,7 +39,7 @@ const useProfile = () => {
 				.eq("id", user.id)
 				.maybeSingle();
 			if (error) throw error;
-			return data as UserProfile;
+			return data as UserProfile | null;
 		},
 		enabled: !!user,
 	});

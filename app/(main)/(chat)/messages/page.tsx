@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
 import { useChat } from "@/hooks/useChat";
+import useProfile from "@/hooks/useProfile";
 import type { Message } from "@/types/supabase";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
 import { ChatList, ChatContact } from "@/components/chat/ChatList";
@@ -14,29 +16,69 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { format } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { startOrRequestConversation } from "@/lib/contact-messaging";
+import toast from "react-hot-toast";
+import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
 
 const supabase = createClient();
 
 export default function MessagesPage() {
 	const user = useAuthStore((state) => state.user);
-	const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-	const [activeContact, setActiveContact] = useState<ChatContact | null>(null);
+	const { profile } = useProfile();
+	const searchParams = useSearchParams();
+	const queryClient = useQueryClient();
+	const initialSessionId = searchParams.get("sessionId");
+	const [activeSessionId, setActiveSessionId] = useState<string | null>(
+		initialSessionId,
+	);
 	const [showContactPicker, setShowContactPicker] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	// Fetch chat sessions for the current user
-	const { data: sessions = [] } = useQuery({
+	const { data: contacts = [] } = useQuery({
 		queryKey: ["chat-sessions", user?.id],
 		queryFn: async () => {
 			if (!user) return [];
-			const { data, error } = await supabase
+			const { data: sessions, error } = await supabase
 				.from("matches")
-				.select("*, profiles(*)")
+				.select("*")
 				.or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
 				.order("created_at", { ascending: false });
 			if (error) throw error;
-			return data ?? [];
+
+			const otherUserIds = Array.from(
+				new Set(
+					(sessions ?? []).map((session) =>
+						session.user1_id === user.id ? session.user2_id : session.user1_id,
+					),
+				),
+			);
+
+			if (otherUserIds.length === 0) return [];
+
+			const { data: profiles, error: profilesError } = await supabase
+				.from("profiles")
+				.select("id, display_name, avatar_url, is_public")
+				.in("id", otherUserIds);
+			if (profilesError) throw profilesError;
+
+			const profileMap = new Map(
+				(profiles ?? []).map((profile) => [profile.id, profile]),
+			);
+
+			return (sessions ?? []).map((session) => {
+				const otherId =
+					session.user1_id === user.id ? session.user2_id : session.user1_id;
+				const otherProfile = profileMap.get(otherId);
+					return {
+						id: session.id,
+						name: otherProfile?.display_name ?? "Unknown",
+						avatar: otherProfile?.avatar_url ?? undefined,
+						lastMessage: "",
+						isPublic: otherProfile?.is_public ?? true,
+					} as ChatContact;
+				});
 		},
 		enabled: !!user,
 	});
@@ -47,31 +89,13 @@ export default function MessagesPage() {
 		queryFn: async () => {
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("id, display_name, avatar_url")
+				.select("id, display_name, avatar_url, is_public")
 				.neq("id", user?.id ?? "")
 				.order("display_name");
 			if (error) throw error;
 			return data ?? [];
 		},
 		enabled: !!user && showContactPicker,
-	});
-
-	// Map sessions to ChatContact format
-	const contacts: ChatContact[] = sessions.map((session: any) => {
-		const isUser1 = session.user1_id === user?.id;
-		const otherProfile = isUser1
-			? session.user2_profile
-			: session.user1_profile;
-		return {
-			id: session.id,
-			name:
-				otherProfile?.display_name ??
-				session.profiles?.display_name ??
-				"Unknown",
-			avatar: otherProfile?.avatar_url ?? session.profiles?.avatar_url,
-			lastMessage: session.last_message ?? "",
-			isActive: session.id === activeSessionId,
-		};
 	});
 
 	// Chat messages for active session
@@ -82,10 +106,16 @@ export default function MessagesPage() {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [messages]);
 
+	useEffect(() => {
+		if (!user) return;
+		markMessagesAsSeen(user.id);
+		queryClient.invalidateQueries({
+			queryKey: ["unread-messages-count", user.id],
+		});
+	}, [user, activeSessionId, messages.length, queryClient]);
+
 	const handleSelectContact = (contactId: string) => {
 		setActiveSessionId(contactId);
-		const contact = contacts.find((c) => c.id === contactId);
-		setActiveContact(contact ?? null);
 		setShowContactPicker(false);
 	};
 
@@ -95,27 +125,23 @@ export default function MessagesPage() {
 
 	const handlePickContact = async (contact: PickerContact) => {
 		if (!user) return;
-		// Check if session exists
-		const { data: existingSession } = await supabase
-			.from("matches")
-			.select("id")
-			.or(
-				`and(user1_id.eq.${user.id},user2_id.eq.${contact.id}),and(user1_id.eq.${contact.id},user2_id.eq.${user.id})`,
-			)
-			.single();
-
-		if (existingSession) {
-			handleSelectContact(existingSession.id);
-		} else {
-			// Create new session
-			const { data: newSession } = await supabase
-				.from("matches")
-				.insert({ user1_id: user.id, user2_id: contact.id })
-				.select()
-				.single();
-			if (newSession) {
-				handleSelectContact(newSession.id);
+		try {
+			const target = allUsers.find((person) => person.id === contact.id);
+			const result = await startOrRequestConversation({
+				viewerId: user.id,
+				viewerDisplayName: profile?.display_name,
+				targetUserId: contact.id,
+				targetDisplayName: target?.display_name,
+				targetIsPublic: target?.is_public,
+			});
+			if (result.kind === "request_sent") {
+				toast.success("Message request sent to this private user.");
+				setShowContactPicker(false);
+				return;
 			}
+			handleSelectContact(result.sessionId);
+		} catch {
+			toast.error("Unable to start conversation.");
 		}
 		setShowContactPicker(false);
 	};
@@ -131,7 +157,34 @@ export default function MessagesPage() {
 		avatar: u.avatar_url,
 	}));
 
-	const activeContactName = activeContact?.name ?? "Conversation";
+	const { data: participantPrivacyMap = {} } = useQuery({
+		queryKey: ["chat-participants-privacy", activeSessionId],
+		queryFn: async () => {
+			if (!activeSessionId) return {};
+			const { data: session, error: sessionError } = await supabase
+				.from("matches")
+				.select("user1_id, user2_id")
+				.eq("id", activeSessionId)
+				.maybeSingle();
+			if (sessionError || !session) return {};
+
+			const ids = [session.user1_id, session.user2_id];
+			const { data: profiles, error: profilesError } = await supabase
+				.from("profiles")
+				.select("id, is_public")
+				.in("id", ids);
+			if (profilesError) return {};
+
+			return Object.fromEntries(
+				(profiles ?? []).map((entry) => [entry.id, entry.is_public ?? true]),
+			) as Record<string, boolean>;
+		},
+		enabled: !!activeSessionId,
+	});
+
+	const activeContactName =
+		contacts.find((contact) => contact.id === activeSessionId)?.name ??
+		"Conversation";
 	const showConversation = !!activeSessionId && !showContactPicker;
 	const showList = !showConversation && !showContactPicker;
 
@@ -191,7 +244,6 @@ export default function MessagesPage() {
 										size="icon-sm"
 										onClick={() => {
 											setActiveSessionId(null);
-											setActiveContact(null);
 										}}
 										className="lg:hidden"
 										id="back-to-conversations"
@@ -222,6 +274,12 @@ export default function MessagesPage() {
 												timestamp={format(new Date(msg.created_at), "h:mm a")}
 												variant={
 													msg.sender_id === user?.id ? "sent" : "received"
+												}
+												note={
+													msg.sender_id !== user?.id &&
+													participantPrivacyMap[msg.sender_id] === false
+														? "Careful to scam: verify identity and avoid unknown links."
+														: undefined
 												}
 											/>
 										))

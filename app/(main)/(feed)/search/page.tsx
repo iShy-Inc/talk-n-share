@@ -12,6 +12,9 @@ import { UserResultCard } from "@/components/shared";
 import { PostCard } from "@/components/feed/PostCard";
 import { PostWithAuthor } from "@/types/supabase";
 import { cn } from "@/lib/utils";
+import useProfile from "@/hooks/useProfile";
+import { startOrRequestConversation } from "@/lib/contact-messaging";
+import toast from "react-hot-toast";
 
 const supabase = createClient();
 
@@ -21,6 +24,7 @@ export default function SearchPage() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const { profile } = useProfile();
 	const query = searchParams.get("q") || "";
 
 	const [searchInput, setSearchInput] = useState(query);
@@ -38,7 +42,9 @@ export default function SearchPage() {
 			if (!query.trim()) return [];
 			const { data } = await supabase
 				.from("posts")
-				.select("*, profiles!posts_author_id_fkey(display_name, avatar_url)")
+				.select(
+					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public)",
+				)
 				.ilike("content", `%${query}%`)
 				.eq("status", "approved")
 				.order("created_at", { ascending: false })
@@ -79,9 +85,30 @@ export default function SearchPage() {
 		router.push("/search");
 	};
 
-	const handleFollow = (id: string) => {
-		// Placeholder for follow logic
-		console.log("Following user:", id);
+	const handleSendMessage = async (id: string) => {
+		if (!user) {
+			router.push("/login");
+			return;
+		}
+		const targetUser = people.find((person) => person.id === id);
+		if (!targetUser) return;
+
+		try {
+			const result = await startOrRequestConversation({
+				viewerId: user.id,
+				viewerDisplayName: profile?.display_name,
+				targetUserId: targetUser.id,
+				targetDisplayName: targetUser.display_name,
+				targetIsPublic: targetUser.is_public,
+			});
+			if (result.kind === "request_sent") {
+				toast.success("Message request sent to this private user.");
+				return;
+			}
+			router.push(`/messages?sessionId=${result.sessionId}`);
+		} catch {
+			toast.error("Unable to start conversation.");
+		}
 	};
 
 	return (
@@ -163,16 +190,16 @@ export default function SearchPage() {
 								) : people.length > 0 ? (
 									<div className="grid gap-4">
 										{people.map((person) => (
-											<UserResultCard
-												key={person.id}
-												id={person.id}
-												username={person.display_name || "User"}
-												title={person.location} // using location as title/role placeholder
-												avatarUrl={person.avatar_url}
-												onFollow={handleFollow}
-											/>
-										))}
-									</div>
+										<UserResultCard
+											key={person.id}
+											id={person.id}
+											username={person.display_name || "User"}
+											title={person.location} // using location as title/role placeholder
+											avatarUrl={person.avatar_url}
+											onSendMessage={handleSendMessage}
+										/>
+									))}
+								</div>
 								) : (
 									activeTab === "people" && (
 										<p className="text-center text-muted-foreground">

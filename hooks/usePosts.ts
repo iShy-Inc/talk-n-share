@@ -20,7 +20,9 @@ export const usePosts = () => {
 			const to = from + POSTS_PER_PAGE - 1;
 			const { data, error } = await supabase
 				.from("posts")
-				.select("*, profiles!posts_author_id_fkey(display_name, avatar_url)")
+				.select(
+					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public)",
+				)
 				.eq("status", "approved")
 				.order("created_at", { ascending: false })
 				.range(from, to);

@@ -7,6 +7,7 @@ interface ChatBubbleProps {
 	timestamp: string;
 	senderName?: string;
 	variant: "sent" | "received";
+	note?: string;
 }
 
 export function ChatBubble({
@@ -14,6 +15,7 @@ export function ChatBubble({
 	timestamp,
 	senderName,
 	variant,
+	note,
 }: ChatBubbleProps) {
 	return (
 		<div
@@ -42,6 +44,7 @@ export function ChatBubble({
 				>
 					{timestamp}
 				</span>
+				{note && <p className="mt-1.5 text-[11px] text-amber-700">{note}</p>}
 			</div>
 		</div>
 	);

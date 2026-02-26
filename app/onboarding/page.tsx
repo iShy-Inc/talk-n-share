@@ -2,15 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/useAuthStore";
-import useProfile, { MY_PROFILE_QUERY_KEY, isProfileComplete } from "@/hooks/useProfile";
+import useProfile, {
+	MY_PROFILE_QUERY_KEY,
+	isProfileComplete,
+} from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	Select,
 	SelectContent,
@@ -19,38 +22,26 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AvatarCategoryPicker } from "@/components/shared/AvatarCategoryPicker";
+import {
+	AvatarCategoryKey,
+	getAvatarCategoryForUrl,
+} from "@/lib/avatar-options";
+import { getZodiacSign } from "@/lib/zodiac";
 import toast from "react-hot-toast";
 
 const supabase = createClient();
 
-const ZODIAC_OPTIONS = [
-	"Aries",
-	"Taurus",
-	"Gemini",
-	"Cancer",
-	"Leo",
-	"Virgo",
-	"Libra",
-	"Scorpio",
-	"Sagittarius",
-	"Capricorn",
-	"Aquarius",
-	"Pisces",
+export const LOCATION_OPTIONS = [
+	"Hola Campus",
+	"Xavalo Campus",
+	"Hovilo Campus",
+	"Fuda Campus",
+	"Quy Nhon Campus",
+	"Others",
 ];
 
-const AVATAR_OPTIONS = [
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Fox",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Falcon",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Bear",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Panda",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Shark",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Koala",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Tiger",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Wolf",
-	"https://api.dicebear.com/9.x/notionists/svg?seed=Otter",
-];
-
-const ADJECTIVES = [
+export const ADJECTIVES = [
 	"Silent",
 	"Curious",
 	"Hidden",
@@ -65,7 +56,7 @@ const ADJECTIVES = [
 	"Calm",
 ];
 
-const NOUNS = [
+export const NOUNS = [
 	"Fox",
 	"Hawk",
 	"Otter",
@@ -104,13 +95,16 @@ export default function OnboardingPage() {
 	const [step, setStep] = useState(1);
 	const [selectedName, setSelectedName] = useState("");
 	const [selectedAvatar, setSelectedAvatar] = useState("");
+	const [selectedAvatarCategory, setSelectedAvatarCategory] =
+		useState<AvatarCategoryKey>("people");
 	const [birthDate, setBirthDate] = useState("");
 	const [gender, setGender] = useState<"male" | "female" | "others" | "">("");
 	const [location, setLocation] = useState("");
-	const [zodiac, setZodiac] = useState("");
+	const [bio, setBio] = useState("");
 	const [isPublic, setIsPublic] = useState<boolean | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [nameVersion, setNameVersion] = useState(0);
+	const zodiac = useMemo(() => getZodiacSign(birthDate), [birthDate]);
 
 	const { data: allNames = [] } = useQuery({
 		queryKey: ["all-profile-names"],
@@ -139,18 +133,21 @@ export default function OnboardingPage() {
 			return;
 		}
 		if (!isLoadingProfile && isProfileComplete(profile)) {
-			router.replace("/");
+			router.replace("/profile?tab=settings&section=general");
 		}
 	}, [user, isLoadingProfile, profile, router]);
 
 	useEffect(() => {
 		if (!profile) return;
 		if (profile.display_name) setSelectedName(profile.display_name);
-		if (profile.avatar_url) setSelectedAvatar(profile.avatar_url);
+		if (profile.avatar_url) {
+			setSelectedAvatar(profile.avatar_url);
+			setSelectedAvatarCategory(getAvatarCategoryForUrl(profile.avatar_url));
+		}
 		if (profile.birth_date) setBirthDate(profile.birth_date);
 		if (profile.gender) setGender(profile.gender);
 		if (profile.location) setLocation(profile.location);
-		if (profile.zodiac) setZodiac(profile.zodiac);
+		if (profile.bio) setBio(profile.bio);
 		if (profile.is_public !== null && profile.is_public !== undefined) {
 			setIsPublic(profile.is_public);
 		}
@@ -158,8 +155,9 @@ export default function OnboardingPage() {
 
 	const canGoNextStep1 = !!selectedName && !!selectedAvatar;
 	const canGoNextStep2 = !!birthDate && !!gender;
-	const canGoNextStep3 = !!location && !!zodiac;
-	const canSubmit = canGoNextStep1 && canGoNextStep2 && canGoNextStep3 && isPublic !== null;
+	const canGoNextStep3 = !!location && !!bio.trim();
+	const canSubmit =
+		canGoNextStep1 && canGoNextStep2 && canGoNextStep3 && isPublic !== null;
 
 	const handleSaveProfile = async () => {
 		if (!user || !canSubmit) return;
@@ -173,6 +171,7 @@ export default function OnboardingPage() {
 					birth_date: birthDate,
 					gender,
 					location,
+					bio: bio.trim(),
 					zodiac,
 					is_public: isPublic,
 				})
@@ -181,7 +180,7 @@ export default function OnboardingPage() {
 
 			await queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
 			toast.success("Profile setup completed");
-			router.replace("/");
+			router.replace("/profile?tab=settings&section=general");
 		} catch (error: any) {
 			toast.error(error?.message ?? "Failed to save onboarding profile");
 		} finally {
@@ -226,29 +225,12 @@ export default function OnboardingPage() {
 								))}
 							</div>
 
-							<Label>Choose an avatar</Label>
-							<div className="grid grid-cols-3 gap-3 md:grid-cols-6">
-								{AVATAR_OPTIONS.map((avatar) => (
-									<button
-										key={avatar}
-										type="button"
-										onClick={() => setSelectedAvatar(avatar)}
-										className={`overflow-hidden rounded-xl border-2 transition ${
-											selectedAvatar === avatar
-												? "border-primary"
-												: "border-transparent hover:border-border"
-										}`}
-									>
-										<Image
-											src={avatar}
-											alt="Anonymous avatar option"
-											width={80}
-											height={80}
-											className="h-20 w-full bg-muted/50 object-cover"
-										/>
-									</button>
-								))}
-							</div>
+							<AvatarCategoryPicker
+								selectedCategory={selectedAvatarCategory}
+								selectedAvatar={selectedAvatar}
+								onCategoryChange={setSelectedAvatarCategory}
+								onAvatarSelect={setSelectedAvatar}
+							/>
 						</div>
 					)}
 
@@ -266,7 +248,10 @@ export default function OnboardingPage() {
 							</div>
 							<div>
 								<Label>Gender</Label>
-								<Select value={gender} onValueChange={(v) => setGender(v as any)}>
+								<Select
+									value={gender}
+									onValueChange={(v) => setGender(v as any)}
+								>
 									<SelectTrigger className="w-full">
 										<SelectValue placeholder="Select your gender" />
 									</SelectTrigger>
@@ -284,27 +269,34 @@ export default function OnboardingPage() {
 						<div className="space-y-4">
 							<div>
 								<Label htmlFor="location">Location</Label>
-								<Input
-									id="location"
-									placeholder="City or campus"
-									value={location}
-									onChange={(e) => setLocation(e.target.value)}
-								/>
-							</div>
-							<div>
-								<Label>Zodiac</Label>
-								<Select value={zodiac} onValueChange={setZodiac}>
+								<Select value={location} onValueChange={setLocation}>
 									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select zodiac sign" />
+										<SelectValue placeholder="Select location" />
 									</SelectTrigger>
 									<SelectContent>
-										{ZODIAC_OPTIONS.map((z) => (
-											<SelectItem key={z} value={z}>
-												{z}
+										{LOCATION_OPTIONS.map((l) => (
+											<SelectItem key={l} value={l}>
+												{l}
 											</SelectItem>
 										))}
 									</SelectContent>
 								</Select>
+							</div>
+							<div>
+								<Label htmlFor="onboarding-bio">Bio</Label>
+								<Textarea
+									id="onboarding-bio"
+									placeholder="Tell people a little bit about yourself..."
+									value={bio}
+									onChange={(e) => setBio(e.target.value)}
+									className="min-h-[110px] resize-none"
+								/>
+							</div>
+							<div className="rounded-xl border border-border bg-muted/20 p-3">
+								<p className="text-xs text-muted-foreground">
+									Zodiac is auto-detected from birth date
+								</p>
+								<p className="text-sm font-semibold">{zodiac || "—"}</p>
 							</div>
 						</div>
 					)}
@@ -338,6 +330,7 @@ export default function OnboardingPage() {
 									Anonymous Name: <strong>{selectedName}</strong>
 								</p>
 								<p>Location: {location}</p>
+								<p>Bio: {bio || "—"}</p>
 								<p>Zodiac: {zodiac}</p>
 								<p>Gender: {gender}</p>
 							</div>

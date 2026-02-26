@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { IconMapPin, IconUsers, IconHeart } from "@tabler/icons-react";
 import useProfile from "@/hooks/useProfile";
+import { LOCATION_OPTIONS } from "@/app/onboarding/page";
 
 export type MatchCriteria = {
 	type: "gender" | "location" | "interests";
@@ -86,13 +87,12 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 					{criteriaType === "gender" && (
 						<Select value={criteriaValue} onValueChange={setCriteriaValue}>
 							<SelectTrigger>
-								<SelectValue placeholder="Select gender preference" />
+								<SelectValue placeholder="Select gender" />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="any">Any Gender</SelectItem>
 								<SelectItem value="male">Male</SelectItem>
 								<SelectItem value="female">Female</SelectItem>
-								<SelectItem value="other">Other</SelectItem>
 							</SelectContent>
 						</Select>
 					)}
@@ -100,24 +100,17 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 					{criteriaType === "location" && (
 						<Select value={criteriaValue} onValueChange={setCriteriaValue}>
 							<SelectTrigger>
-								<SelectValue placeholder="Select location preference" />
+								<SelectValue placeholder="Select location" />
 							</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="any">Any Location</SelectItem>
-									<SelectItem value="hola">Hola Campus</SelectItem>
-									<SelectItem value="xavalo">Xavalo Campus</SelectItem>
-									<SelectItem value="fuda">Fuda Campus</SelectItem>
-									<SelectItem value="hovilo">Hovilo Campus</SelectItem>
-									<SelectItem value="quynhon">Quy Nhon Campus</SelectItem>
-									{profile?.location && (
-										<SelectItem value={profile.location}>
-											Same Location (City)
-										</SelectItem>
-									)}
-									<SelectItem value="others">Others</SelectItem>
-								</SelectContent>
-							</Select>
-						)}
+							<SelectContent>
+								{LOCATION_OPTIONS.map((loc) => (
+									<SelectItem key={loc} value={loc}>
+										{loc}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					)}
 
 					{criteriaType === "interests" && (
 						<Select value={criteriaValue} onValueChange={setCriteriaValue}>

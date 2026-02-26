@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import useProfile, { MY_PROFILE_QUERY_KEY } from "@/hooks/useProfile";
+import useProfile, { MY_PROFILE_QUERY_KEY, UserProfile } from "@/hooks/useProfile";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,9 +18,15 @@ import {
 import { GeneralSettingsForm } from "@/components/shared/GeneralSettingsForm";
 import { AccountSettings } from "@/components/shared/AccountSettings";
 import { PostCard } from "@/components/feed/PostCard";
-import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
+import {
+	AvatarCategoryKey,
+	getAvatarCategoryForUrl,
+} from "@/lib/avatar-options";
+import { getZodiacSign } from "@/lib/zodiac";
 import toast from "react-hot-toast";
 import { PostWithAuthor } from "@/types/supabase";
+import { Button } from "@/components/ui/button";
+import { startOrRequestConversation } from "@/lib/contact-messaging";
 
 const supabase = createClient();
 
@@ -29,72 +36,150 @@ const profileTabs: ProfileTab[] = [
 	{ label: "Settings", value: "settings" },
 ];
 
+const visitorTabs: ProfileTab[] = [
+	{ label: "Posts", value: "my-posts" },
+	{ label: "Saved Posts", value: "saved-posts" },
+];
+
 const settingsMenuItems: SettingsMenuItem[] = [
 	{ label: "General", value: "general" },
 	{ label: "Account", value: "account" },
 	{ label: "Logout", value: "logout" },
 ];
 
+const formatBirthDate = (value?: string | null) => {
+	if (!value) return "N/A";
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return "N/A";
+	return date.toLocaleDateString();
+};
+
 export default function ProfilePage() {
 	const user = useAuthStore((state) => state.user);
+	const router = useRouter();
+	const searchParams = useSearchParams();
 	const queryClient = useQueryClient();
-	const [activeTab, setActiveTab] = useState("my-posts");
-	const [settingsTab, setSettingsTab] = useState("general");
-	const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-	const avatarInputRef = useRef<HTMLInputElement>(null);
-	const { profile } = useProfile();
+	const requestedProfileId = searchParams.get("userId");
+	const isOwnProfile = !requestedProfileId || requestedProfileId === user?.id;
+	const profileId = isOwnProfile ? user?.id : requestedProfileId;
+	const [activeTab, setActiveTab] = useState(
+		searchParams.get("tab") === "settings" && isOwnProfile
+			? "settings"
+			: searchParams.get("tab") === "saved-posts"
+				? "saved-posts"
+				: "my-posts",
+	);
+	const [settingsTab, setSettingsTab] = useState(
+		searchParams.get("section") ?? "general",
+	);
+	const [selectedAvatar, setSelectedAvatar] = useState("");
+	const [selectedAvatarCategory, setSelectedAvatarCategory] =
+		useState<AvatarCategoryKey>("people");
+	const { profile: myProfile } = useProfile();
 
-	// Fetch user's posts
-	const { data: myPosts = [] } = useQuery({
-		queryKey: ["my-posts", user?.id],
+	const { data: visitedProfile = null } = useQuery({
+		queryKey: ["profile-by-id", requestedProfileId],
 		queryFn: async () => {
-			if (!user) return [];
+			if (!requestedProfileId) return null;
+			const { data, error } = await supabase
+				.from("profiles")
+				.select("*")
+				.eq("id", requestedProfileId)
+				.maybeSingle();
+			if (error) throw error;
+			return data as UserProfile | null;
+		},
+		enabled: !!requestedProfileId && !isOwnProfile,
+	});
+
+	const profile = isOwnProfile ? myProfile : visitedProfile;
+	const effectiveAvatar = selectedAvatar || profile?.avatar_url || "";
+	const effectiveAvatarCategory = selectedAvatar
+		? selectedAvatarCategory
+		: getAvatarCategoryForUrl(profile?.avatar_url);
+	const shouldHidePrivateInfo =
+		!isOwnProfile && (profile?.is_public ?? true) === false;
+
+	const effectiveActiveTab =
+		!isOwnProfile && activeTab === "settings" ? "my-posts" : activeTab;
+
+	const { data: myPosts = [] } = useQuery({
+		queryKey: ["my-posts", profileId],
+		queryFn: async () => {
+			if (!profileId) return [];
 			const { data } = await supabase
 				.from("posts")
-				.select("*, profiles!posts_author_id_fkey(display_name, avatar_url)")
-				.eq("author_id", user.id)
+				.select(
+					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public)",
+				)
+				.eq("author_id", profileId)
 				.order("created_at", { ascending: false });
 			return (data ?? []) as PostWithAuthor[];
 		},
-		enabled: !!user && activeTab === "my-posts",
+		enabled:
+			!!profileId &&
+			effectiveActiveTab === "my-posts" &&
+			!shouldHidePrivateInfo,
 	});
 
-	// Fetch saved posts (user bookmarks)
 	const { data: savedPosts = [] } = useQuery({
 		queryKey: ["saved-posts", user?.id],
 		queryFn: async () => {
 			if (!user) return [];
 			const { data } = await supabase
-				.from("saved_posts")
+				.from("likes")
 				.select(
-					"*, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url))",
+					"*, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public))",
 				)
 				.eq("user_id", user.id)
 				.order("created_at", { ascending: false });
 			return (data ?? [])
-				.map((s: any) => s.posts)
+				.map((s) => s.posts)
 				.filter(Boolean) as PostWithAuthor[];
 		},
-		enabled: !!user && activeTab === "saved-posts",
+		enabled: !!user && isOwnProfile && effectiveActiveTab === "saved-posts",
 	});
 
-	// Profile stats
-	const stats: ProfileStat[] = [
-		{ label: "Posts", value: myPosts.length },
-		{ label: "Followers", value: 0 },
-		{ label: "Following", value: 0 },
-	];
+	const stats: ProfileStat[] = shouldHidePrivateInfo
+		? []
+		: [
+				{ label: "Posts", value: myPosts.length },
+				{ label: "Followers", value: 0 },
+				{ label: "Following", value: 0 },
+			];
 
-	// Handle save settings
 	const handleSaveGeneral = async (values: {
-		fullName: string;
-		username: string;
+		display_name: string;
 		bio: string;
+		avatarUrl: string;
+		location: string;
+		birth_date: string;
+		is_public: boolean;
 	}) => {
 		if (!user) return;
+
+		const isSwitchingToPublic = (myProfile?.is_public ?? true) === false && values.is_public;
+		if (isSwitchingToPublic) {
+			const confirmed = window.confirm(
+				"Switching to public will make your profile information visible to others. Continue?",
+			);
+			if (!confirmed) {
+				toast("Your profile is still private.");
+				return;
+			}
+		}
+
 		const { error } = await supabase
 			.from("profiles")
-			.update({ display_name: values.username })
+			.update({
+				display_name: values.display_name,
+				bio: values.bio || null,
+				avatar_url: values.avatarUrl || null,
+				location: values.location || null,
+				birth_date: values.birth_date || null,
+				zodiac: values.birth_date ? getZodiacSign(values.birth_date) : null,
+				is_public: values.is_public,
+			})
 			.eq("id", user.id);
 
 		if (error) {
@@ -106,7 +191,6 @@ export default function ProfilePage() {
 	};
 
 	const handleDeleteAccount = async () => {
-		// Placeholder — actual deletion requires server-side logic
 		toast.error(
 			"Account deletion requires admin action. Please contact support.",
 		);
@@ -121,85 +205,99 @@ export default function ProfilePage() {
 		setSettingsTab(value);
 	};
 
-	const handleAvatarUploadClick = () => {
-		avatarInputRef.current?.click();
-	};
-
-	const handleAvatarFileSelected = async (
-		event: React.ChangeEvent<HTMLInputElement>,
-	) => {
-		const file = event.target.files?.[0];
-		if (!file || !user) return;
-		if (!file.type.startsWith("image/")) {
-			toast.error("Please select an image file");
+	const handleSendMessage = async () => {
+		if (!user) {
+			router.push("/login");
 			return;
 		}
-
+		if (!profileId || isOwnProfile) return;
 		try {
-			setIsUploadingAvatar(true);
-			const { publicUrl } = await uploadFileToBucket({
-				bucket: STORAGE_BUCKETS.AVATARS,
-				file,
-				ownerId: user.id,
+			const result = await startOrRequestConversation({
+				viewerId: user.id,
+				viewerDisplayName: myProfile?.display_name,
+				targetUserId: profileId,
+				targetDisplayName: profile?.display_name,
+				targetIsPublic: profile?.is_public,
 			});
-
-			const { error } = await supabase
-				.from("profiles")
-				.update({ avatar_url: publicUrl })
-				.eq("id", user.id);
-			if (error) throw error;
-
-			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
-			toast.success("Avatar updated");
+			if (result.kind === "request_sent") {
+				toast.success("Message request sent to this private user.");
+				return;
+			}
+			router.push(`/messages?sessionId=${result.sessionId}`);
 		} catch {
-			toast.error("Failed to upload avatar");
-		} finally {
-			setIsUploadingAvatar(false);
-			event.target.value = "";
+			toast.error("Unable to start conversation.");
 		}
 	};
 
 	return (
 		<>
-			<input
-				ref={avatarInputRef}
-				type="file"
-				accept="image/*"
-				className="hidden"
-				onChange={handleAvatarFileSelected}
-			/>
-
-			{/* Profile Header */}
 			<ProfileHeader
 				name={profile?.display_name ?? "User"}
-				username={profile?.display_name ?? undefined}
+				username={shouldHidePrivateInfo ? undefined : profile?.display_name ?? undefined}
 				title={
-					profile?.location
-						? profile?.location
-						: profile?.role === "admin"
-							? "Administrator"
-							: profile?.role === "moder"
-								? "Moderator"
-								: "Talk N Share Member"
+					shouldHidePrivateInfo
+						? undefined
+						: profile?.location
+							? profile.location
+							: profile?.role === "admin"
+								? "Administrator"
+								: profile?.role === "moder"
+									? "Moderator"
+									: "Talk N Share Member"
 				}
-				avatarUrl={profile?.avatar_url ?? undefined}
+				avatarUrl={shouldHidePrivateInfo ? undefined : profile?.avatar_url ?? undefined}
 				stats={stats}
-				tabs={profileTabs}
-				activeTab={activeTab}
+				tabs={isOwnProfile ? profileTabs : visitorTabs}
+				activeTab={effectiveActiveTab}
 				onTabChange={setActiveTab}
 			/>
 
-			{/* Tab Content */}
-			{activeTab === "my-posts" && (
+			{!isOwnProfile && (
+				<div className="mt-4">
+					<Button onClick={handleSendMessage} className="rounded-xl">
+						Send Message
+					</Button>
+				</div>
+			)}
+
+			{!shouldHidePrivateInfo && (profile?.birth_date || profile?.zodiac) && (
+				<div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+					<h3 className="text-sm font-semibold text-foreground">
+						Birthday & Zodiac
+					</h3>
+					<div className="mt-2 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+						<p>
+							<span className="font-medium text-foreground">Birthday:</span>{" "}
+							{formatBirthDate(profile?.birth_date)}
+						</p>
+						<p>
+							<span className="font-medium text-foreground">Zodiac:</span>{" "}
+							{profile?.zodiac || "N/A"}
+						</p>
+					</div>
+				</div>
+			)}
+
+			{effectiveActiveTab === "my-posts" && (
 				<div className="space-y-4">
-					{myPosts.length === 0 ? (
+					{shouldHidePrivateInfo ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
-								You haven&apos;t posted anything yet
+								This is a private profile
 							</p>
-							<p className="mt-1 text-sm text-muted-foreground/70">
-								Share your thoughts on the feed!
+						</div>
+					) : myPosts.length === 0 ? (
+						<div className="rounded-2xl border border-border bg-card py-16 text-center">
+							<p className="text-base font-medium text-muted-foreground">
+								{isOwnProfile
+									? "You haven't posted anything yet"
+									: "This user hasn't posted anything yet"}
 							</p>
+							{isOwnProfile && (
+								<p className="mt-1 text-sm text-muted-foreground/70">
+									Share your thoughts on the feed!
+								</p>
+							)}
 						</div>
 					) : (
 						myPosts.map((post) => <PostCard key={post.id} post={post} />)
@@ -207,7 +305,19 @@ export default function ProfilePage() {
 				</div>
 			)}
 
-			{activeTab === "saved-posts" && (
+			{!isOwnProfile && effectiveActiveTab === "saved-posts" && (
+				<div className="space-y-4">
+					<div className="rounded-2xl border border-border bg-card py-16 text-center">
+						<p className="text-base font-medium text-muted-foreground">
+							{shouldHidePrivateInfo
+								? "This is a private profile"
+								: "Saved posts are private"}
+						</p>
+					</div>
+				</div>
+			)}
+
+			{isOwnProfile && effectiveActiveTab === "saved-posts" && (
 				<div className="space-y-4">
 					{savedPosts.length === 0 ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
@@ -224,24 +334,30 @@ export default function ProfilePage() {
 				</div>
 			)}
 
-			{activeTab === "settings" && (
+			{isOwnProfile && effectiveActiveTab === "settings" && (
 				<SettingsLayout
 					menuItems={settingsMenuItems}
 					activeItem={settingsTab}
 					onMenuChange={handleSettingsMenuChange}
 				>
-						{settingsTab === "general" && (
-							<GeneralSettingsForm
+					{settingsTab === "general" && (
+						<GeneralSettingsForm
+							key={`${profile?.id ?? "profile"}-${profile?.updated_at ?? "init"}`}
 							initialValues={{
-								fullName: profile?.display_name ?? "",
-								username: profile?.display_name ?? "",
-								bio: "",
-								}}
-								onSave={handleSaveGeneral}
-								onAvatarUpload={handleAvatarUploadClick}
-								avatarUploading={isUploadingAvatar}
-							/>
-						)}
+								display_name: profile?.display_name ?? "",
+								bio: profile?.bio ?? "",
+								location: profile?.location ?? "",
+								birth_date: profile?.birth_date ?? "",
+								zodiac: profile?.zodiac ?? "",
+								is_public: profile?.is_public,
+							}}
+							selectedAvatar={effectiveAvatar}
+							selectedAvatarCategory={effectiveAvatarCategory}
+							onAvatarSelect={setSelectedAvatar}
+							onAvatarCategoryChange={setSelectedAvatarCategory}
+							onSave={handleSaveGeneral}
+						/>
+					)}
 					{settingsTab === "account" && (
 						<AccountSettings onDeleteAccount={handleDeleteAccount} />
 					)}

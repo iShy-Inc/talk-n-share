@@ -9,6 +9,7 @@ export interface ChatContact {
 	avatar?: string;
 	lastMessage?: string;
 	isActive?: boolean;
+	isPublic?: boolean;
 }
 
 interface ChatListProps {
