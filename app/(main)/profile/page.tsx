@@ -39,29 +39,29 @@ import {
 const supabase = createClient();
 
 const profileTabs: ProfileTab[] = [
-	{ label: "My Posts", value: "my-posts" },
-	{ label: "Saved Posts", value: "saved-posts" },
-	{ label: "Settings", value: "settings" },
+	{ label: "Bài viết của tôi", value: "my-posts" },
+	{ label: "Bài viết đã lưu", value: "saved-posts" },
+	{ label: "Cài đặt", value: "settings" },
 ];
 
 const visitorTabs: ProfileTab[] = [
-	{ label: "Posts", value: "my-posts" },
-	{ label: "Saved Posts", value: "saved-posts" },
+	{ label: "Bài viết", value: "my-posts" },
+	{ label: "Bài viết đã lưu", value: "saved-posts" },
 ];
 
 const settingsMenuItems: SettingsMenuItem[] = [
-	{ label: "General", value: "general" },
-	{ label: "Privacy", value: "privacy" },
-	{ label: "Appearance", value: "appearance" },
-	{ label: "Account", value: "account" },
-	{ label: "Logout", value: "logout" },
+	{ label: "Chung", value: "general" },
+	{ label: "Riêng tư", value: "privacy" },
+	{ label: "Giao diện", value: "appearance" },
+	{ label: "Tài khoản", value: "account" },
+	{ label: "Đăng xuất", value: "logout" },
 ];
 
 const formatBirthDateByPrivacy = (
 	value?: string | null,
 	visibility?: string | null,
 ) => {
-	if (!value) return "N/A";
+	if (!value) return "Không có";
 
 	if (visibility === "year_only") {
 		return formatDateYYYY(value);
@@ -75,10 +75,10 @@ const formatBirthDateByPrivacy = (
 	return formatDateDDMMYYYY(value);
 };
 
-const formatRelationship = (value?: string | null) => {
+	const formatRelationship = (value?: string | null) => {
 	if (!value) return undefined;
-	if (value === "in_relationship") return "In a relationship";
-	if (value === "private") return "Prefer not to say";
+	if (value === "in_relationship") return "Đang trong mối quan hệ";
+	if (value === "private") return "Không muốn tiết lộ";
 	return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
@@ -171,9 +171,9 @@ export default function ProfilePage() {
 	const stats: ProfileStat[] = shouldHidePrivateInfo
 		? []
 		: [
-				{ label: "Posts", value: myPosts.length },
+				{ label: "Bài viết", value: myPosts.length },
 				{
-					label: "Likes",
+					label: "Lượt thích",
 					value: myPosts.reduce((sum, post) => sum + (post.likes_count ?? 0), 0),
 				},
 			];
@@ -197,9 +197,9 @@ export default function ProfilePage() {
 			.eq("id", user.id);
 
 		if (error) {
-			toast.error("Failed to save settings");
+			toast.error("Không thể lưu cài đặt");
 		} else {
-			toast.success("Settings saved successfully");
+			toast.success("Đã lưu cài đặt thành công");
 			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
 		}
 	};
@@ -216,10 +216,10 @@ export default function ProfilePage() {
 			(myProfile?.is_public ?? true) === false && values.is_public;
 		if (isSwitchingToPublic) {
 			const confirmed = window.confirm(
-				"Switching to public will make your profile information visible to others. Continue?",
+				"Chuyển sang công khai sẽ làm thông tin hồ sơ hiển thị với người khác. Tiếp tục?",
 			);
 			if (!confirmed) {
-				toast("Your profile is still private.");
+				toast("Hồ sơ của bạn vẫn ở chế độ riêng tư.");
 				return;
 			}
 		}
@@ -236,16 +236,16 @@ export default function ProfilePage() {
 			.eq("id", user.id);
 
 		if (error) {
-			toast.error("Failed to save settings");
+			toast.error("Không thể lưu cài đặt");
 		} else {
-			toast.success("Settings saved successfully");
+			toast.success("Đã lưu cài đặt thành công");
 			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
 		}
 	};
 
 	const handleDeleteAccount = async () => {
 		toast.error(
-			"Account deletion requires admin action. Please contact support.",
+			"Xóa tài khoản cần quản trị viên xử lý. Vui lòng liên hệ hỗ trợ.",
 		);
 	};
 
@@ -273,19 +273,19 @@ export default function ProfilePage() {
 				targetIsPublic: profile?.is_public,
 			});
 			if (result.kind === "request_sent") {
-				toast.success("Message request sent to this private user.");
+				toast.success("Đã gửi yêu cầu nhắn tin tới tài khoản riêng tư này.");
 				return;
 			}
 			router.push(`/messages?sessionId=${result.sessionId}`);
 		} catch {
-			toast.error("Unable to start conversation.");
+			toast.error("Không thể bắt đầu cuộc trò chuyện.");
 		}
 	};
 
 	return (
 		<>
 			<ProfileHeader
-				name={profile?.display_name ?? "User"}
+				name={profile?.display_name ?? "Người dùng"}
 				username={shouldHidePrivateInfo ? undefined : profile?.display_name ?? undefined}
 				role={shouldHidePrivateInfo ? null : profile?.role}
 				title={
@@ -294,10 +294,10 @@ export default function ProfilePage() {
 						: profile?.location
 							? profile.location
 							: profile?.role === "admin"
-								? "Administrator"
+								? "Quản trị viên"
 								: profile?.role === "moder"
-									? "Moderator"
-									: "Talk N Share Member"
+									? "Kiểm duyệt viên"
+									: "Thành viên Talk N Share"
 				}
 				avatarUrl={shouldHidePrivateInfo ? undefined : profile?.avatar_url ?? undefined}
 				joinDate={profile?.created_at}
@@ -320,7 +320,7 @@ export default function ProfilePage() {
 				actionSlot={
 					!isOwnProfile ? (
 						<Button onClick={handleSendMessage} size="sm" className="rounded-full">
-							Send Message
+							Gửi tin nhắn
 						</Button>
 					) : undefined
 				}
@@ -335,19 +335,19 @@ export default function ProfilePage() {
 					{shouldHidePrivateInfo ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
-								This is a private profile
+								Đây là hồ sơ riêng tư
 							</p>
 						</div>
 					) : myPosts.length === 0 ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
 								{isOwnProfile
-									? "You haven't posted anything yet"
-									: "This user hasn't posted anything yet"}
+									? "Bạn chưa đăng bài nào"
+									: "Người dùng này chưa đăng bài nào"}
 							</p>
 							{isOwnProfile && (
 								<p className="mt-1 text-sm text-muted-foreground/70">
-									Share your thoughts on the feed!
+									Hãy chia sẻ suy nghĩ của bạn trên bảng tin!
 								</p>
 							)}
 						</div>
@@ -362,8 +362,8 @@ export default function ProfilePage() {
 					<div className="rounded-2xl border border-border bg-card py-16 text-center">
 						<p className="text-base font-medium text-muted-foreground">
 							{shouldHidePrivateInfo
-								? "This is a private profile"
-								: "Saved posts are private"}
+								? "Đây là hồ sơ riêng tư"
+								: "Bài viết đã lưu là riêng tư"}
 						</p>
 					</div>
 				</div>
@@ -374,10 +374,10 @@ export default function ProfilePage() {
 					{savedPosts.length === 0 ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
-								No saved posts yet
+								Chưa có bài viết đã lưu
 							</p>
 							<p className="mt-1 text-sm text-muted-foreground/70">
-								Save posts from the feed to revisit them later
+								Lưu bài viết từ bảng tin để xem lại sau
 							</p>
 						</div>
 					) : (

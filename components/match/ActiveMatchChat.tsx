@@ -153,7 +153,7 @@ export function ActiveMatchChat({
 			{!isRevealed && (
 				<div className="bg-muted/30 px-4 py-2 text-center text-xs text-muted-foreground">
 					<IconAlertTriangle className="mr-1.5 inline-block size-3.5 align-text-bottom" />
-					Like each other to reveal identities and save this chat.
+					Hãy cùng bấm thích để hiện danh tính và lưu cuộc trò chuyện này.
 				</div>
 			)}
 

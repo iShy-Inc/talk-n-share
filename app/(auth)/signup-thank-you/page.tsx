@@ -21,24 +21,24 @@ function SignupThankYouContent() {
 		<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm">
 			<CardHeader className="text-center">
 				<CardTitle className="text-2xl font-bold tracking-tight">
-					Thank you for signing up
+					Cảm ơn bạn đã đăng ký
 				</CardTitle>
 				<CardDescription>
-					Your account was created successfully.
+					Tài khoản của bạn đã được tạo thành công.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3 text-sm text-muted-foreground">
 				<p>
-					Please check your email{email ? ` (${email})` : ""} for a verification
-					link.
+					Vui lòng kiểm tra email{email ? ` (${email})` : ""} để xác minh tài
+					khoản.
 				</p>
 				<p>
-					After verifying your email, come back and sign in to continue.
+					Sau khi xác minh email, quay lại và đăng nhập để tiếp tục.
 				</p>
 			</CardContent>
 			<CardFooter className="flex justify-center">
 				<Button asChild className="w-full">
-					<Link href="/login">Back to Login</Link>
+					<Link href="/login">Quay lại đăng nhập</Link>
 				</Button>
 			</CardFooter>
 		</Card>
@@ -48,7 +48,7 @@ function SignupThankYouContent() {
 export default function SignupThankYouPage() {
 	return (
 		<div className="flex min-h-screen w-full items-center justify-center p-4">
-			<Suspense fallback={<div>Loading...</div>}>
+			<Suspense fallback={<div>Đang tải...</div>}>
 				<SignupThankYouContent />
 			</Suspense>
 		</div>

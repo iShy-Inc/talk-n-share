@@ -216,13 +216,13 @@ export default function MessagesPage() {
 				targetIsPublic: target?.is_public,
 			});
 			if (result.kind === "request_sent") {
-				toast.success("Message request sent to this private user.");
+				toast.success("Đã gửi yêu cầu nhắn tin tới tài khoản riêng tư này.");
 				setShowContactPicker(false);
 				return;
 			}
 			handleSelectContact(result.sessionId);
 		} catch {
-			toast.error("Unable to start conversation.");
+			toast.error("Không thể bắt đầu cuộc trò chuyện.");
 		}
 		setShowContactPicker(false);
 	};
@@ -275,7 +275,7 @@ export default function MessagesPage() {
 				<Button asChild variant="outline" size="sm" className="rounded-xl">
 					<Link href="/">
 						<IconArrowLeft className="mr-2 size-4" />
-						Back to Home
+						Về trang chủ
 					</Link>
 				</Button>
 			</div>
@@ -287,9 +287,9 @@ export default function MessagesPage() {
 						}`}
 					>
 						<div className="border-b border-border/80 px-5 py-4">
-							<h3 className="text-base font-semibold">Messages</h3>
+							<h3 className="text-base font-semibold">Tin nhắn</h3>
 							<p className="mt-0.5 text-xs text-muted-foreground">
-								{contacts.length} conversation{contacts.length !== 1 ? "s" : ""}
+								{contacts.length} cuộc trò chuyện
 							</p>
 						</div>
 						<div className="h-[calc(100%-65px)] overflow-y-auto">
@@ -317,7 +317,7 @@ export default function MessagesPage() {
 										className="mb-4"
 									>
 										<IconArrowLeft className="mr-2 size-4" />
-										Back
+										Quay lại
 									</Button>
 									<ContactPicker
 										contacts={pickerContacts}
@@ -352,7 +352,7 @@ export default function MessagesPage() {
 									{messages.length === 0 ? (
 										<div className="flex h-full items-center justify-center">
 											<p className="text-center text-sm text-muted-foreground">
-												No messages yet. Start the conversation.
+												Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.
 											</p>
 										</div>
 									) : (
@@ -367,7 +367,7 @@ export default function MessagesPage() {
 												note={
 													msg.sender_id !== user?.id &&
 													participantPrivacyMap[msg.sender_id] === false
-														? "Careful to scam: verify identity and avoid unknown links."
+														? "Cẩn thận lừa đảo: hãy xác minh danh tính và tránh bấm link lạ."
 														: undefined
 												}
 											/>

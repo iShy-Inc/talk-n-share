@@ -59,7 +59,7 @@ export default function MatchPage() {
 		setPendingCriteria(null);
 		setElapsedSeconds(0);
 		setStatus("options");
-		toast("Matching cancelled.");
+		toast("Đã hủy tìm kiếm ghép đôi.");
 	};
 
 	useEffect(() => {
@@ -114,7 +114,7 @@ export default function MatchPage() {
 			} catch (error) {
 				console.error("Matching error:", error);
 				if (isDisposed) return;
-				toast.error("Failed to match right now.");
+				toast.error("Hiện tại chưa thể ghép đôi.");
 				setStatus("options");
 				setPendingCriteria(null);
 				setElapsedSeconds(0);
@@ -135,7 +135,7 @@ export default function MatchPage() {
 			if (elapsed >= MIN_WAIT_SECONDS) {
 				isDisposed = true;
 				void supabase.from("matching_queue").delete().eq("user_id", user.id);
-				toast("No match found in 60 seconds. Try again.");
+				toast("Không tìm thấy người phù hợp trong 60 giây. Hãy thử lại.");
 				setStatus("options");
 				setPendingCriteria(null);
 				setElapsedSeconds(0);
@@ -164,7 +164,7 @@ export default function MatchPage() {
 		setSessionData(null);
 		setPartnerProfile(null);
 		setStatus("options");
-		toast.success("Chat ended.");
+		toast.success("Đã kết thúc cuộc trò chuyện.");
 	};
 
 	// Handle Like
@@ -183,9 +183,9 @@ export default function MatchPage() {
 			: sessionData.user1_liked;
 		if (otherLiked) {
 			updates.is_revealed = true;
-			toast.success("It's a match! Identities revealed.");
+			toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
 		} else {
-			toast.success("You liked your partner!");
+			toast.success("Bạn đã bày tỏ thích với đối phương!");
 		}
 
 		const { data, error } = await supabase
@@ -215,7 +215,7 @@ export default function MatchPage() {
 				(payload) => {
 					setSessionData(payload.new as ChatSession);
 					if (payload.new.is_revealed && !sessionData?.is_revealed) {
-						toast.success("Allocated! Identities revealed.");
+						toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
 					}
 				},
 			)
@@ -250,7 +250,7 @@ export default function MatchPage() {
 							className="text-muted-foreground hover:text-foreground"
 						>
 							<IconMessage className="mr-2 size-4" />
-							History
+							Lịch sử
 						</Button>
 					</div>
 				)}

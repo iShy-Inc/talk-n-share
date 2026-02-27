@@ -9,13 +9,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { IconMapPin, IconUsers, IconHeart } from "@tabler/icons-react";
+import { IconMapPin, IconUsers, IconSparkles } from "@tabler/icons-react";
 import { LOCATION_OPTIONS } from "@/app/onboarding/page";
 
 export type MatchCriteria = {
 	gender: string;
 	location: string;
-	interests: string;
+	zodiac: string;
 };
 
 interface MatchOptionsProps {
@@ -24,15 +24,15 @@ interface MatchOptionsProps {
 
 export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 	const [criteriaType, setCriteriaType] = useState<
-		"gender" | "location" | "interests"
-	>("interests");
+		"gender" | "location" | "zodiac"
+	>("zodiac");
 	const [gender, setGender] = useState("");
 	const [location, setLocation] = useState("");
-	const [interests, setInterests] = useState("");
+	const [zodiac, setZodiac] = useState("");
 
 	const interestOptions = useMemo(() => {
 		const zodiacs = [
-			"Aries",
+			"Bạch Dương",
 			"Taurus",
 			"Gemini",
 			"Cancer",
@@ -52,11 +52,11 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 		onStartMatch({
 			gender,
 			location,
-			interests,
+			zodiac,
 		});
 	};
 
-	const canStart = Boolean(gender && location && interests);
+	const canStart = Boolean(gender && location && zodiac);
 
 	return (
 		<div className="flex flex-col items-center justify-center space-y-8 p-8 text-center">
@@ -64,9 +64,9 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 				<div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary/10">
 					<IconUsers className="size-10 text-primary" />
 				</div>
-				<h2 className="text-2xl font-bold">Find a Match</h2>
+				<h2 className="text-2xl font-bold">Tìm người phù hợp</h2>
 				<p className="max-w-md text-muted-foreground">
-					Connect anonymously with someone based on your preferences.
+					Kết nối ẩn danh với người phù hợp theo tiêu chí của bạn.
 				</p>
 			</div>
 
@@ -81,7 +81,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 						}`}
 					>
 						<IconUsers className="mb-1 size-5" />
-						Gender
+						Giới tính
 					</button>
 					<button
 						onClick={() => setCriteriaType("location")}
@@ -92,43 +92,43 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 						}`}
 					>
 						<IconMapPin className="mb-1 size-5" />
-						Location
+						Khu vực
 					</button>
 					<button
-						onClick={() => setCriteriaType("interests")}
+						onClick={() => setCriteriaType("zodiac")}
 						className={`flex flex-col items-center justify-center rounded-md p-2 text-xs font-medium transition-all ${
-							criteriaType === "interests"
+							criteriaType === "zodiac"
 								? "bg-background text-foreground shadow-sm"
 								: "text-muted-foreground hover:text-foreground"
 						}`}
 					>
-						<IconHeart className="mb-1 size-5" />
-						Interests
+						<IconSparkles className="mb-1 size-5" />
+						Cung hoàng đạo
 					</button>
 				</div>
 
 				<div className="space-y-2 text-left">
-					<label className="text-sm font-medium">Select Preference</label>
+					<label className="text-sm font-medium">Chọn tiêu chí</label>
 					{criteriaType === "gender" && (
 						<Select value={gender} onValueChange={setGender}>
 							<SelectTrigger>
-								<SelectValue placeholder="Select gender" />
+								<SelectValue placeholder="Chọn giới tính" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="any">Any Gender</SelectItem>
-								<SelectItem value="male">Male</SelectItem>
-								<SelectItem value="female">Female</SelectItem>
-								<SelectItem value="others">Others</SelectItem>
+								<SelectItem value="any">Bất kỳ</SelectItem>
+								<SelectItem value="male">Nam</SelectItem>
+								<SelectItem value="female">Nữ</SelectItem>
+								<SelectItem value="others">Khác</SelectItem>
 							</SelectContent>
 						</Select>
 					)}
 					{criteriaType === "location" && (
 						<Select value={location} onValueChange={setLocation}>
 							<SelectTrigger>
-								<SelectValue placeholder="Select location" />
+								<SelectValue placeholder="Chọn khu vực" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="any">Any Location</SelectItem>
+								<SelectItem value="any">Bất kỳ</SelectItem>
 								{LOCATION_OPTIONS.map((loc) => (
 									<SelectItem key={loc} value={loc}>
 										{loc}
@@ -137,15 +137,15 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 							</SelectContent>
 						</Select>
 					)}
-					{criteriaType === "interests" && (
-						<Select value={interests} onValueChange={setInterests}>
+					{criteriaType === "zodiac" && (
+						<Select value={zodiac} onValueChange={setZodiac}>
 							<SelectTrigger>
-								<SelectValue placeholder="Select an interest" />
+								<SelectValue placeholder="Chọn cung hoàng đạo" />
 							</SelectTrigger>
 							<SelectContent>
 								{interestOptions.map((value) => (
 									<SelectItem key={value} value={value}>
-										{value === "any" ? "Any Interest" : value}
+										{value === "any" ? "Bất kỳ" : value}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -156,10 +156,12 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 				<div className="grid grid-cols-3 gap-2 text-[11px]">
 					<div
 						className={`rounded-md border px-2 py-1.5 text-center ${
-							gender ? "border-primary/40 bg-primary/10 text-foreground" : "text-muted-foreground"
+							gender
+								? "border-primary/40 bg-primary/10 text-foreground"
+								: "text-muted-foreground"
 						}`}
 					>
-						{gender ? `Gender: ${gender}` : "Gender: missing"}
+						{gender ? `Giới tính: ${gender}` : "Giới tính: chưa chọn"}
 					</div>
 					<div
 						className={`rounded-md border px-2 py-1.5 text-center ${
@@ -168,16 +170,16 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 								: "text-muted-foreground"
 						}`}
 					>
-						{location ? `Location: ${location}` : "Location: missing"}
+						{location ? `Khu vực: ${location}` : "Khu vực: chưa chọn"}
 					</div>
 					<div
 						className={`rounded-md border px-2 py-1.5 text-center ${
-							interests
+							zodiac
 								? "border-primary/40 bg-primary/10 text-foreground"
 								: "text-muted-foreground"
 						}`}
 					>
-						{interests ? `Interest: ${interests}` : "Interest: missing"}
+						{zodiac ? `Cung hoàng đạo: ${zodiac}` : "Cung hoàng đạo: chưa chọn"}
 					</div>
 				</div>
 
@@ -187,7 +189,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 					onClick={handleStart}
 					disabled={!canStart}
 				>
-					Start Matching
+					Bắt đầu ghép đôi
 				</Button>
 			</div>
 		</div>

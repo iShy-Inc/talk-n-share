@@ -24,33 +24,33 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 const features = [
 	{
-		title: "Anonymous First",
+		title: "Ưu tiên ẩn danh",
 		description:
-			"Share your thoughts freely without judgment. Our platform is built on privacy, allowing you to connect authentically.",
+			"Chia sẻ suy nghĩ tự do, không phán xét. Nền tảng được xây dựng trên quyền riêng tư để bạn kết nối chân thật hơn.",
 		icon: IconGhost,
 		color: "text-purple-500",
 		bg: "bg-purple-500/10",
 	},
 	{
-		title: "Smart Matching",
+		title: "Ghép đôi thông minh",
 		description:
-			"Find meaningful connections with filters for gender, location, and interests. No more random swiping.",
+			"Tìm kết nối ý nghĩa theo bộ lọc giới tính, khu vực và sở thích. Không còn ghép ngẫu nhiên.",
 		icon: IconFilter,
 		color: "text-pink-500",
 		bg: "bg-pink-500/10",
 	},
 	{
-		title: "Safe & Moderated",
+		title: "An toàn & kiểm duyệt",
 		description:
-			"Advanced AI moderation keeps conversations healthy. We prioritize a toxic-free environment.",
+			"Kiểm duyệt AI giúp cuộc trò chuyện lành mạnh. Chúng tôi ưu tiên môi trường không độc hại.",
 		icon: IconShieldCheck,
 		color: "text-emerald-500",
 		bg: "bg-emerald-500/10",
 	},
 	{
-		title: "Mutual Reveal",
+		title: "Hiện danh tính hai chiều",
 		description:
-			"Identities remain hidden until both parties feel comfortable to connect. It's a double-opt-in for trust.",
+			"Danh tính được giữ kín cho đến khi cả hai cùng sẵn sàng kết nối. Đây là cơ chế đồng thuận hai chiều.",
 		icon: IconUserCheck,
 		color: "text-blue-500",
 		bg: "bg-blue-500/10",
@@ -75,24 +75,24 @@ export default function AboutPage() {
 				<div className="container mx-auto px-4 text-center">
 					<div className="mb-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary backdrop-blur-sm">
 						<span className="flex size-2 me-2 rounded-full bg-primary animate-pulse" />
-						The Future of Social Connection
+						Tương lai của kết nối xã hội
 					</div>
 					<h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-						Connect{" "}
+						Kết nối{" "}
 						<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">
-							Anonymously.
+							Ẩn danh.
 						</span>{" "}
 						<br />
-						Reveal{" "}
+						Hiện diện{" "}
 						<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">
-							Meaningfully.
+							Ý nghĩa.
 						</span>
 					</h1>
 					<p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
-						Talk-N-Share is a next-generation platform that combines the freedom
-						of anonymous social networking with the excitement of real-time chat
-						matching. Prioritizing privacy, intelligent moderation, and genuine
-						human connection.
+						Talk-N-Share là nền tảng thế hệ mới kết hợp sự tự do của mạng xã hội
+						ẩn danh với trải nghiệm ghép đôi trò chuyện theo thời gian thực. Ưu
+						tiên quyền riêng tư, kiểm duyệt thông minh và kết nối con người chân
+						thật.
 					</p>
 					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
 						<Button
@@ -101,7 +101,7 @@ export default function AboutPage() {
 							asChild
 						>
 							<Link href={user ? "/match" : "/signup"}>
-								{user ? "Start Matching" : "Join the Community"}
+								{user ? "Bắt đầu ghép đôi" : "Tham gia cộng đồng"}
 							</Link>
 						</Button>
 						<Button
@@ -110,7 +110,7 @@ export default function AboutPage() {
 							className="rounded-full px-8 h-12 text-base"
 							asChild
 						>
-							<Link href="/contact">Get in Touch</Link>
+							<Link href="/contact">Liên hệ</Link>
 						</Button>
 					</div>
 				</div>
@@ -121,11 +121,11 @@ export default function AboutPage() {
 				<div className="container mx-auto px-4">
 					<div className="mb-16 text-center">
 						<h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-							Why Talk-N-Share?
+							Vì sao chọn Talk-N-Share?
 						</h2>
 						<p className="mt-4 text-muted-foreground">
-							Features designed for a modern, safe, and engaging social
-							experience.
+							Các tính năng được thiết kế cho trải nghiệm xã hội hiện đại, an toàn
+							và thu hút.
 						</p>
 					</div>
 					<div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -152,7 +152,7 @@ export default function AboutPage() {
 			<section className="py-20">
 				<div className="container mx-auto px-4 text-center">
 					<h3 className="mb-10 text-2xl font-semibold text-muted-foreground/80">
-						Built with Cutting-Edge Technology
+						Được xây dựng bằng công nghệ hiện đại
 					</h3>
 					<div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 grayscale transition-all hover:grayscale-0 hover:opacity-100">
 						{techStack.map((tech) => (
@@ -171,13 +171,13 @@ export default function AboutPage() {
 			{/* CTA Footer */}
 			<section className="border-t bg-card py-16">
 				<div className="container mx-auto px-4 text-center">
-					<h2 className="mb-6 text-3xl font-bold">Ready to start sharing?</h2>
+					<h2 className="mb-6 text-3xl font-bold">Sẵn sàng bắt đầu chia sẻ?</h2>
 					<p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-						Join thousands of users who are discovering a new way to connect
-						online. Safe, private, and fun.
+						Tham gia cùng hàng ngàn người dùng đang khám phá cách kết nối mới trên
+						online. An toàn, riêng tư và thú vị.
 					</p>
 					<Button size="lg" className="rounded-full px-10" asChild>
-						<Link href="/signup">Create Free Account</Link>
+						<Link href="/signup">Tạo tài khoản miễn phí</Link>
 					</Button>
 				</div>
 			</section>

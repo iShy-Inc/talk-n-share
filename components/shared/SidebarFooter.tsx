@@ -6,11 +6,11 @@ interface SidebarFooterProps {
 }
 
 export function SidebarFooter({
-	copyrightText = "© 2024 Talk N Share. All rights reserved.",
+	copyrightText = "© 2026 Talk N Share. Copyright reserved.",
 	links = [
-		{ label: "About", href: "/about" },
-		{ label: "Help", href: "/contact" },
-		{ label: "Privacy & Terms", href: "/about" },
+		{ label: "Giới thiệu", href: "/about" },
+		{ label: "Trợ giúp", href: "/contact" },
+		{ label: "Riêng tư & Điều khoản", href: "/about" },
 	],
 }: SidebarFooterProps) {
 	return (

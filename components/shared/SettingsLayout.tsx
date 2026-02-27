@@ -17,7 +17,7 @@ interface SettingsLayoutProps {
 }
 
 export function SettingsLayout({
-	title = "Settings",
+	title = "Cài đặt",
 	menuItems,
 	activeItem,
 	onMenuChange,

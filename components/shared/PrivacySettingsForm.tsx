@@ -56,7 +56,7 @@ export function PrivacySettingsForm({
 			className="mx-auto flex w-full max-w-md flex-col gap-5"
 		>
 			<div className="space-y-2">
-				<Label htmlFor="privacy-birth-date">Birth date</Label>
+				<Label htmlFor="privacy-birth-date">Ngày sinh</Label>
 				<Input
 					id="privacy-birth-date"
 					type="date"
@@ -65,59 +65,59 @@ export function PrivacySettingsForm({
 					onChange={(e) => setBirthDate(e.target.value)}
 				/>
 				<p className="text-xs text-muted-foreground">
-					Zodiac is automatically calculated from birth date.
+					Cung hoàng đạo được tự động tính theo ngày sinh.
 				</p>
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="privacy-birthday-visibility">Birthday privacy</Label>
+				<Label htmlFor="privacy-birthday-visibility">Quyền riêng tư ngày sinh</Label>
 				<Select value={birthVisibility} onValueChange={setBirthVisibility}>
 					<SelectTrigger id="privacy-birthday-visibility" className="w-full">
-						<SelectValue placeholder="Select birthday visibility" />
+						<SelectValue placeholder="Chọn chế độ hiển thị ngày sinh" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="full">Show full birthday (day/month/year)</SelectItem>
-						<SelectItem value="month_year">Hide day (month/year only)</SelectItem>
-						<SelectItem value="day_month">Show day/month only</SelectItem>
-						<SelectItem value="year_only">Show only year</SelectItem>
+						<SelectItem value="full">Hiển thị đầy đủ (ngày/tháng/năm)</SelectItem>
+						<SelectItem value="month_year">Ẩn ngày (chỉ tháng/năm)</SelectItem>
+						<SelectItem value="day_month">Chỉ hiển thị ngày/tháng</SelectItem>
+						<SelectItem value="year_only">Chỉ hiển thị năm</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="privacy-relationship">Relationship</Label>
+				<Label htmlFor="privacy-relationship">Mối quan hệ</Label>
 				<Select value={relationship} onValueChange={setRelationship}>
 					<SelectTrigger id="privacy-relationship" className="w-full">
-						<SelectValue placeholder="Select relationship status" />
+						<SelectValue placeholder="Chọn trạng thái mối quan hệ" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="single">Single</SelectItem>
-						<SelectItem value="in_relationship">In a relationship</SelectItem>
-						<SelectItem value="married">Married</SelectItem>
-						<SelectItem value="complicated">Complicated</SelectItem>
-						<SelectItem value="private">Prefer not to say</SelectItem>
+						<SelectItem value="single">Độc thân</SelectItem>
+						<SelectItem value="in_relationship">Đang trong mối quan hệ</SelectItem>
+						<SelectItem value="married">Đã kết hôn</SelectItem>
+						<SelectItem value="complicated">Phức tạp</SelectItem>
+						<SelectItem value="private">Không muốn tiết lộ</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="privacy-profile-visibility">Profile visibility</Label>
+				<Label htmlFor="privacy-profile-visibility">Hiển thị hồ sơ</Label>
 				<Select
 					value={isPublic ? "public" : "private"}
 					onValueChange={(value) => setIsPublic(value === "public")}
 				>
 					<SelectTrigger id="privacy-profile-visibility" className="w-full">
-						<SelectValue placeholder="Select profile visibility" />
+						<SelectValue placeholder="Chọn chế độ hiển thị hồ sơ" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="public">Public profile</SelectItem>
-						<SelectItem value="private">Private profile</SelectItem>
+						<SelectItem value="public">Hồ sơ công khai</SelectItem>
+						<SelectItem value="private">Hồ sơ riêng tư</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>
 
 			<Button type="submit" className="w-40" id="privacy-save-btn">
-				Save Changes
+				Lưu thay đổi
 			</Button>
 		</form>
 	);

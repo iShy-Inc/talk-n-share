@@ -17,7 +17,7 @@ export function RoleVerifiedBadge({ role, className }: RoleVerifiedBadgeProps) {
 					"inline-flex items-center gap-1 rounded-full bg-sky-500/15 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-300",
 					className,
 				)}
-				title="Admin verified"
+				title="Quản trị viên đã xác minh"
 			>
 				<ShieldCheck className="size-3.5" />
 				Admin
@@ -32,10 +32,10 @@ export function RoleVerifiedBadge({ role, className }: RoleVerifiedBadgeProps) {
 					"inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300",
 					className,
 				)}
-				title="Moderator verified"
+				title="Kiểm duyệt viên đã xác minh"
 			>
 				<BadgeCheck className="size-3.5" />
-				Moder
+				Moderator
 			</span>
 		);
 	}

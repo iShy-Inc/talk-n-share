@@ -11,14 +11,14 @@ interface MatchLoadingProps {
 }
 
 const PSYCHOLOGY_TIPS = [
-	"Psychology fact: smiling can reduce stress signals in your brain.",
-	"Tip: asking open-ended questions builds stronger social connection.",
-	"Psychology fact: people feel closer after sharing small personal stories.",
-	"Tip: matching communication pace can improve conversation comfort.",
-	"Psychology fact: curiosity often creates better first impressions than perfection.",
-	"Tip: use names naturally in chat to increase warmth and trust.",
-	"Psychology fact: short positive feedback loops improve conversation flow.",
-	"Tip: empathy statements make others feel heard and understood.",
+	"Sự thật tâm lý: mỉm cười có thể giúp giảm tín hiệu căng thẳng trong não.",
+	"Mẹo: đặt câu hỏi mở sẽ giúp kết nối xã hội tốt hơn.",
+	"Sự thật tâm lý: mọi người thấy gần gũi hơn khi chia sẻ chuyện cá nhân nhỏ.",
+	"Mẹo: đồng bộ nhịp giao tiếp giúp cuộc trò chuyện thoải mái hơn.",
+	"Sự thật tâm lý: sự tò mò thường tạo ấn tượng đầu tốt hơn sự hoàn hảo.",
+	"Mẹo: gọi tên tự nhiên trong chat giúp tăng cảm giác thân thiện và tin tưởng.",
+	"Sự thật tâm lý: phản hồi tích cực ngắn giúp cuộc trò chuyện trôi chảy hơn.",
+	"Mẹo: câu nói thể hiện đồng cảm giúp đối phương cảm thấy được lắng nghe.",
 ];
 
 export function MatchLoading({
@@ -51,23 +51,23 @@ export function MatchLoading({
 			</div>
 
 			<div className="space-y-2">
-				<h3 className="text-xl font-bold">Finding a Match...</h3>
+				<h3 className="text-xl font-bold">Đang tìm người phù hợp...</h3>
 				<p className="text-muted-foreground">
-					We are looking for someone who matches your preferences.
+					Chúng tôi đang tìm người phù hợp với tiêu chí của bạn.
 				</p>
 				<p className="text-sm font-medium text-primary">
-					Waiting: {elapsedSeconds}s / {minWaitSeconds}s
+					Đang chờ: {elapsedSeconds}s / {minWaitSeconds}s
 				</p>
 				{remaining > 0 && (
 					<p className="text-xs text-muted-foreground">
-						Keep waiting at least {remaining}s more for best results.
+						Hãy chờ thêm ít nhất {remaining}s để có kết quả tốt hơn.
 					</p>
 				)}
 			</div>
 
 			<div className="w-full rounded-xl border border-border/70 bg-muted/30 p-3 text-left">
 				<p className="text-xs uppercase tracking-wide text-muted-foreground">
-					Psychology tip
+					Mẹo tâm lý
 				</p>
 				<p className="mt-1 text-sm text-foreground">
 					{PSYCHOLOGY_TIPS[tipIndex]}
@@ -79,7 +79,7 @@ export function MatchLoading({
 				onClick={onCancel}
 				className="rounded-full px-8"
 			>
-				Cancel Search
+				Hủy tìm
 			</Button>
 		</div>
 	);

@@ -18,12 +18,12 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const navItems = [
-	{ label: "Home", href: "/", icon: IconHome },
-	{ label: "Profile", href: "/profile", icon: IconUser },
-	{ label: "Messages", href: "/messages", icon: IconMessage },
-	{ label: "Notifications", href: "/notify", icon: IconBell },
-	{ label: "Search", href: "/search", icon: IconSearch },
-	{ label: "Match", href: "/match", icon: IconSparkles },
+	{ label: "Trang chủ", href: "/", icon: IconHome },
+	{ label: "Hồ sơ", href: "/profile", icon: IconUser },
+	{ label: "Tin nhắn", href: "/messages", icon: IconMessage },
+	{ label: "Thông báo", href: "/notify", icon: IconBell },
+	{ label: "Tìm kiếm", href: "/search", icon: IconSearch },
+	{ label: "Ghép đôi", href: "/match", icon: IconSparkles },
 ];
 const supabase = createClient();
 
@@ -103,7 +103,7 @@ export function MobileDock() {
 						className="text-red-500 hover:text-red-600 flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs font-medium transition-all duration-300"
 					>
 						<IconLogout className="size-5" />
-						Logout
+						Đăng xuất
 					</Link>
 				)}
 			</nav>

@@ -70,7 +70,12 @@ export function SidebarProfileCard({
 					)}
 
 					<div className="mt-2 flex items-center justify-center gap-2">
-						<h3 className="text-base font-semibold">{displayName}</h3>
+						<h3
+							className="max-w-[11rem] truncate text-base font-semibold"
+							title={displayName}
+						>
+							{displayName}
+						</h3>
 						<RoleVerifiedBadge role={role} />
 					</div>
 					{title && <p className="text-sm text-muted-foreground">{title}</p>}

@@ -68,7 +68,7 @@ export function ChatList({
 					id="new-message-sidebar-btn"
 				>
 					<IconPencil className="size-4" />
-					New Message
+					Tin nhắn mới
 				</button>
 			)}
 		</div>

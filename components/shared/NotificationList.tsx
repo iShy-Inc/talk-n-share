@@ -34,7 +34,7 @@ export function NotificationList({
 	return (
 		<Card className="overflow-hidden border shadow-sm">
 			<CardHeader className="flex flex-row items-center justify-between border-b border-border px-5 py-4">
-				<CardTitle className="text-base">Notifications</CardTitle>
+				<CardTitle className="text-base">Thông báo</CardTitle>
 				<Button
 					size="xs"
 					variant="outline"
@@ -42,7 +42,7 @@ export function NotificationList({
 					onClick={onReadAll}
 					disabled={unreadCount === 0}
 				>
-					Read all
+					Đánh dấu đã đọc tất cả
 				</Button>
 			</CardHeader>
 			<CardContent className="p-0">
@@ -50,7 +50,7 @@ export function NotificationList({
 					<div className="flex flex-col items-center justify-center py-12 text-center">
 						<span className="text-3xl">🔔</span>
 						<p className="mt-2 text-sm text-muted-foreground">
-							No notifications yet
+							Chưa có thông báo nào
 						</p>
 					</div>
 				) : (

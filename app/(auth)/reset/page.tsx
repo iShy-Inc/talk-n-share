@@ -27,7 +27,7 @@ function ResetPasswordContent() {
 	const handleResetPassword = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (password !== confirmPassword) {
-			alert("Passwords do not match");
+			alert("Mật khẩu xác nhận không khớp");
 			return;
 		}
 		setIsLoading(true);
@@ -42,14 +42,14 @@ function ResetPasswordContent() {
 		<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
 			<CardHeader className="space-y-1 text-center">
 				<CardTitle className="text-2xl font-bold tracking-tight">
-					Reset Password
+					Đặt lại mật khẩu
 				</CardTitle>
-				<CardDescription>Enter your new password below</CardDescription>
+				<CardDescription>Nhập mật khẩu mới của bạn bên dưới</CardDescription>
 			</CardHeader>
 			<CardContent className="grid gap-4">
 				<form onSubmit={handleResetPassword} className="grid gap-4">
 					<div className="grid gap-2">
-						<Label htmlFor="password">New Password</Label>
+						<Label htmlFor="password">Mật khẩu mới</Label>
 						<Input
 							id="password"
 							type="password"
@@ -61,7 +61,7 @@ function ResetPasswordContent() {
 						/>
 					</div>
 					<div className="grid gap-2">
-						<Label htmlFor="confirmPassword">Confirm New Password</Label>
+						<Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
 						<Input
 							id="confirmPassword"
 							type="password"
@@ -73,7 +73,7 @@ function ResetPasswordContent() {
 						/>
 					</div>
 					<Button type="submit" className="w-full" disabled={isLoading}>
-						{isLoading ? "Resetting..." : "Reset Password"}
+						{isLoading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
 					</Button>
 				</form>
 			</CardContent>
@@ -83,7 +83,7 @@ function ResetPasswordContent() {
 					className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
 				>
 					<ArrowLeft className="mr-2 h-4 w-4" />
-					Back to Login
+					Quay lại đăng nhập
 				</Link>
 			</CardFooter>
 		</Card>
@@ -93,7 +93,7 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center w-full p-4">
-			<Suspense fallback={<div>Loading...</div>}>
+			<Suspense fallback={<div>Đang tải...</div>}>
 				<ResetPasswordContent />
 			</Suspense>
 		</div>

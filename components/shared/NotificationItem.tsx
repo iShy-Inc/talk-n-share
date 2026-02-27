@@ -59,7 +59,7 @@ export function NotificationItem({
 						type="button"
 						onClick={() => onRead?.(id)}
 					>
-						Read
+						Đã đọc
 					</Button>
 				)}
 				<Button
@@ -68,7 +68,7 @@ export function NotificationItem({
 					type="button"
 					onClick={() => onHide?.(id)}
 				>
-					Hide
+					Ẩn
 				</Button>
 				<Button
 					size="xs"
@@ -76,7 +76,7 @@ export function NotificationItem({
 					type="button"
 					onClick={() => onDelete?.(id)}
 				>
-					Delete
+					Xóa
 				</Button>
 			</div>
 		</div>

@@ -25,28 +25,28 @@ export default function DashboardPage() {
 
 	const statCards = [
 		{
-			label: "Total Posts",
+			label: "Tổng bài viết",
 			value: stats?.totalPosts ?? 0,
 			icon: IconArticle,
 			gradient: "from-emerald-500 to-teal-600",
 			bgGlow: "bg-emerald-500/10",
 		},
 		{
-			label: "Total Users",
+			label: "Tổng người dùng",
 			value: stats?.totalUsers ?? 0,
 			icon: IconUsers,
 			gradient: "from-blue-500 to-indigo-600",
 			bgGlow: "bg-blue-500/10",
 		},
 		{
-			label: "Total Comments",
+			label: "Tổng bình luận",
 			value: stats?.totalComments ?? 0,
 			icon: IconMessageCircle,
 			gradient: "from-violet-500 to-purple-600",
 			bgGlow: "bg-violet-500/10",
 		},
 		{
-			label: "Total Reports",
+			label: "Tổng báo cáo",
 			value: stats?.totalReports ?? 0,
 			icon: IconFlag,
 			gradient: "from-rose-500 to-red-600",
@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
 	const alertCards = [
 		{
-			label: "Pending Posts",
+			label: "Bài viết chờ duyệt",
 			value: stats?.pendingPosts ?? 0,
 			description: "Posts awaiting approval",
 			icon: IconClock,
@@ -64,7 +64,7 @@ export default function DashboardPage() {
 			bg: "bg-amber-500/10",
 		},
 		{
-			label: "Pending Reports",
+			label: "Báo cáo chờ xử lý",
 			value: stats?.pendingReports ?? 0,
 			description: "Reports needing review",
 			icon: IconAlertTriangle,
@@ -77,7 +77,7 @@ export default function DashboardPage() {
 		<div className="space-y-7">
 			{/* Page Title */}
 			<div className="rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm backdrop-blur-sm">
-				<h1 className="text-2xl font-bold tracking-tight">Operations Center</h1>
+				<h1 className="text-2xl font-bold tracking-tight">Trung tâm vận hành</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
 					A clean overview of platform health, moderation load, and key actions.
 				</p>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
 			{/* Quick info */}
 			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardHeader>
-					<CardTitle>Quick Actions</CardTitle>
+					<CardTitle>Thao tác nhanh</CardTitle>
 					<CardDescription>
 						Navigate to manage your platform content
 					</CardDescription>
@@ -161,25 +161,25 @@ export default function DashboardPage() {
 					<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 						{[
 							{
-								label: "Manage Posts",
+								label: "Quản lý bài viết",
 								href: "/dashboard/posts",
 								icon: IconArticle,
 								desc: "Review, approve or remove posts",
 							},
 							{
-								label: "Manage Users",
+								label: "Quản lý người dùng",
 								href: "/dashboard/users",
 								icon: IconUsers,
 								desc: "View and manage user profiles",
 							},
 							{
-								label: "Manage Comments",
+								label: "Quản lý bình luận",
 								href: "/dashboard/comments",
 								icon: IconMessageCircle,
 								desc: "Moderate user comments",
 							},
 							{
-								label: "Manage Reports",
+								label: "Quản lý báo cáo",
 								href: "/dashboard/reports",
 								icon: IconFlag,
 								desc: "Review and resolve reports",

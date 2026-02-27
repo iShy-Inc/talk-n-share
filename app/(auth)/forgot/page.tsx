@@ -37,10 +37,10 @@ export default function ForgotPasswordPage() {
 			<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
 				<CardHeader className="space-y-1 text-center">
 					<CardTitle className="text-2xl font-bold tracking-tight">
-						Forgot Password
+						Quên mật khẩu
 					</CardTitle>
 					<CardDescription>
-						Enter your email to receive a reset link
+						Nhập email để nhận liên kết đặt lại mật khẩu
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="grid gap-4">
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
 							/>
 						</div>
 						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Sending Link..." : "Send Reset Link"}
+							{isLoading ? "Đang gửi liên kết..." : "Gửi liên kết đặt lại"}
 						</Button>
 					</form>
 				</CardContent>
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
 						className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" />
-						Back to Login
+						Quay lại đăng nhập
 					</Link>
 				</CardFooter>
 			</Card>

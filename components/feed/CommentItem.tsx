@@ -40,7 +40,7 @@ export function CommentItem({
 					<span className="text-sm font-semibold">{authorName}</span>
 					{isAuthor && (
 						<span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
-							Author
+							Tác giả
 						</span>
 					)}
 					<span className="ml-auto text-xs text-muted-foreground">
@@ -63,7 +63,7 @@ export function CommentItem({
 						onClick={onReply}
 						className="mt-2 text-[13px] font-medium text-primary hover:underline"
 					>
-						Reply
+						Trả lời
 					</button>
 				)}
 			</div>

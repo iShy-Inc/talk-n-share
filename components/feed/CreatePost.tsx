@@ -70,13 +70,13 @@ export function CreatePost() {
 			}
 			if (createdPost?.status === "pending") {
 				toast.success(
-					"Post submitted. It is pending review because it contains sensitive text or a link.",
+					"Bài viết đã gửi và đang chờ duyệt vì chứa nội dung nhạy cảm hoặc liên kết.",
 				);
 			} else {
-				toast.success("Post published successfully.");
+				toast.success("Đăng bài thành công.");
 			}
 		} catch {
-			toast.error("Failed to create post");
+			toast.error("Không thể đăng bài");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -84,7 +84,7 @@ export function CreatePost() {
 
 	const handlePickImage = () => {
 		if (!profile) {
-			toast.error("Please sign in to upload images");
+			toast.error("Vui lòng đăng nhập để tải ảnh lên");
 			return;
 		}
 		imageInputRef.current?.click();
@@ -94,19 +94,19 @@ export function CreatePost() {
 		const file = event.target.files?.[0];
 		if (!file || !profile) return;
 		if (!file.type.startsWith("image/")) {
-			toast.error("Please select an image file");
+			toast.error("Vui lòng chọn tệp hình ảnh");
 			return;
 		}
 
 		setSelectedImageFile(file);
-		toast.success("Image selected. It will upload when you post.");
+		toast.success("Đã chọn ảnh. Ảnh sẽ được tải lên khi bạn đăng bài.");
 	};
 
 	return (
 		<div className="mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
 			<form onSubmit={handleSubmit}>
 				<label htmlFor="image-upload" className="sr-only">
-					Upload image
+					Tải ảnh lên
 				</label>
 				<input
 					ref={imageInputRef}
@@ -121,7 +121,7 @@ export function CreatePost() {
 						{profile?.avatar_url ? (
 							<Image
 								src={profile.avatar_url}
-								alt={profile.display_name || "User"}
+								alt={profile.display_name || "Người dùng"}
 								width={40}
 								height={40}
 								className="size-10 object-cover"
@@ -136,21 +136,21 @@ export function CreatePost() {
 						<textarea
 							value={post.content}
 							onChange={(e) => setPost({ ...post, content: e.target.value })}
-							placeholder={`What's on your mind${
+							placeholder={`Bạn đang nghĩ gì${
 								profile?.display_name ? `, ${profile.display_name}` : ""
 							}?`}
 							className="min-h-[92px] w-full resize-none rounded-2xl border border-transparent bg-muted/55 px-4 py-3 text-[15px] leading-relaxed placeholder:text-muted-foreground/80 focus:border-border focus:outline-none"
 						/>
 						{selectedImageFile && (
 							<div className="mb-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-								Image attached: {selectedImageFile.name}
+								Ảnh đã đính kèm: {selectedImageFile.name}
 							</div>
 						)}
 						{previewUrl && (
 							<div className="mb-2 overflow-hidden rounded-xl border border-border">
 								<Image
 									src={previewUrl}
-									alt="Selected image preview"
+									alt="Xem trước ảnh đã chọn"
 									width={1200}
 									height={800}
 									className="h-52 w-full object-cover"
@@ -165,10 +165,10 @@ export function CreatePost() {
 								onClick={handlePickImage}
 								disabled={isSubmitting}
 								className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-								title="Add Image"
+								title="Thêm ảnh"
 							>
 								<ImageIcon size={18} />
-								<span>Photo</span>
+								<span>Ảnh</span>
 							</button>
 
 							<button
@@ -179,7 +179,7 @@ export function CreatePost() {
 								}
 								className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 							>
-								<span>{isSubmitting ? "Posting..." : "Post"}</span>
+								<span>{isSubmitting ? "Đang đăng..." : "Đăng"}</span>
 								<Send size={16} />
 							</button>
 						</div>

@@ -14,9 +14,9 @@ export function ChatEmptyState({ onNewMessage }: ChatEmptyStateProps) {
 				<div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
 					<IconInbox className="size-8 text-primary/60" />
 				</div>
-				<h4 className="text-lg font-semibold text-foreground">Your messages</h4>
+				<h4 className="text-lg font-semibold text-foreground">Tin nhắn của bạn</h4>
 				<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-					Select a person to display their chat or start a new conversation.
+					Chọn một người để xem đoạn chat hoặc bắt đầu cuộc trò chuyện mới.
 				</p>
 				{onNewMessage && (
 					<Button
@@ -25,7 +25,7 @@ export function ChatEmptyState({ onNewMessage }: ChatEmptyStateProps) {
 						id="new-message-btn"
 					>
 						<IconPencil className="mr-2 size-4" />
-						New message
+						Tin nhắn mới
 					</Button>
 				)}
 			</div>

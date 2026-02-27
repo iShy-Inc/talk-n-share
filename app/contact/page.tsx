@@ -32,7 +32,7 @@ export default function ContactPage() {
 		// Simulate API call
 		await new Promise((resolve) => setTimeout(resolve, 1500));
 		setIsLoading(false);
-		toast.success("Message sent successfully! We'll get back to you soon.");
+		toast.success("Gửi tin nhắn thành công! Chúng tôi sẽ phản hồi bạn sớm.");
 		// Reset form logic here
 	};
 
@@ -42,11 +42,11 @@ export default function ContactPage() {
 			<div className="relative overflow-hidden border-b bg-card py-16 text-center shadow-sm md:py-24">
 				<div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-transparent" />
 				<h1 className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl">
-					Get in <span className="text-primary">Touch</span>
+					Liên hệ <span className="text-primary">với chúng tôi</span>
 				</h1>
 				<p className="mx-auto max-w-xl text-lg text-muted-foreground">
-					Have questions about Talk-N-Share? Feedback on our matching system? Or
-					just want to say hi? We&apos;d love to hear from you.
+					Bạn có câu hỏi về Talk-N-Share, góp ý về hệ thống ghép đôi, hoặc chỉ
+					muốn chào một câu? Chúng tôi rất muốn lắng nghe bạn.
 				</p>
 			</div>
 
@@ -55,17 +55,17 @@ export default function ContactPage() {
 					{/* Contact Form */}
 					<Card className="border-0 shadow-lg">
 						<CardHeader>
-							<CardTitle>Send us a message</CardTitle>
+							<CardTitle>Gửi tin nhắn cho chúng tôi</CardTitle>
 							<CardDescription>
-								Fill out the form below and our team will respond within 24
-								hours.
+								Điền biểu mẫu bên dưới, đội ngũ của chúng tôi sẽ phản hồi trong
+								vòng 24 giờ.
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<form onSubmit={handleSubmit} className="space-y-6">
 								<div className="grid gap-4 sm:grid-cols-2">
 									<div className="space-y-2">
-										<Label htmlFor="name">Name</Label>
+										<Label htmlFor="name">Tên</Label>
 										<Input id="name" placeholder="Group 3" required />
 									</div>
 									<div className="space-y-2">
@@ -79,18 +79,18 @@ export default function ContactPage() {
 									</div>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="subject">Subject</Label>
+									<Label htmlFor="subject">Chủ đề</Label>
 									<Input
 										id="subject"
-										placeholder="Feedback / Inquiry"
+										placeholder="Góp ý / Câu hỏi"
 										required
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="message">Message</Label>
+									<Label htmlFor="message">Tin nhắn</Label>
 									<Textarea
 										id="message"
-										placeholder="Tell us what's on your mind..."
+										placeholder="Hãy cho chúng tôi biết điều bạn đang quan tâm..."
 										className="min-h-[150px]"
 										required
 									/>
@@ -99,12 +99,12 @@ export default function ContactPage() {
 									{isLoading ? (
 										<span className="flex items-center gap-2">
 											<span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-											Sending...
+											Đang gửi...
 										</span>
 									) : (
 										<span className="flex items-center gap-2">
 											<IconSend className="size-4" />
-											Send Message
+											Gửi tin nhắn
 										</span>
 									)}
 								</Button>
@@ -121,7 +121,7 @@ export default function ContactPage() {
 									<div className="mb-4 inline-flex rounded-full bg-primary/10 p-3 text-primary group-hover:scale-110 transition-transform">
 										<IconMail className="size-6" />
 									</div>
-									<h3 className="mb-1 font-semibold">Email Us</h3>
+									<h3 className="mb-1 font-semibold">Email liên hệ</h3>
 									<p className="text-sm text-muted-foreground">
 										group3@ssg104.com
 									</p>
@@ -133,7 +133,7 @@ export default function ContactPage() {
 									<div className="mb-4 inline-flex rounded-full bg-primary/10 p-3 text-primary group-hover:scale-110 transition-transform">
 										<IconMapPin className="size-6" />
 									</div>
-									<h3 className="mb-1 font-semibold">Visit Us</h3>
+									<h3 className="mb-1 font-semibold">Địa chỉ</h3>
 									<p className="text-sm text-muted-foreground">
 										Group 3 - SSG104
 									</p>
@@ -147,34 +147,32 @@ export default function ContactPage() {
 						{/* FAQ Section */}
 						<Card>
 							<CardHeader>
-								<CardTitle>Frequently Asked Questions</CardTitle>
+								<CardTitle>Câu hỏi thường gặp</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<div className="rounded-lg border p-4">
 									<h4 className="font-semibold text-sm">
-										Is Talk-N-Share really anonymous?
+										Talk-N-Share có thực sự ẩn danh không?
 									</h4>
 									<p className="mt-1 text-sm text-muted-foreground">
-										Yes! By default, your profile is hidden. You only reveal
-										your identity when you choose to, typically after a mutual
-										match connection.
+										Có! Mặc định hồ sơ của bạn sẽ được ẩn. Bạn chỉ hiện danh tính
+										khi bạn muốn, thường là sau khi ghép đôi thành công.
 									</p>
 								</div>
 								<div className="rounded-lg border p-4">
 									<h4 className="font-semibold text-sm">
-										How does matching work?
+										Hệ thống ghép đôi hoạt động như thế nào?
 									</h4>
 									<p className="mt-1 text-sm text-muted-foreground">
-										Unless you specify filters, our smart algorithm pairs you
-										with users who share similar interests or are in compatible
-										locations.
+										Nếu bạn không đặt bộ lọc, thuật toán sẽ ghép bạn với người
+										dùng có sở thích hoặc khu vực phù hợp.
 									</p>
 								</div>
 								<div className="rounded-lg border p-4">
-									<h4 className="font-semibold text-sm">Is it free to use?</h4>
+									<h4 className="font-semibold text-sm">Sử dụng có miễn phí không?</h4>
 									<p className="mt-1 text-sm text-muted-foreground">
-										Absolutely. All core features including posting, matching,
-										and chatting are completely free.
+										Hoàn toàn miễn phí. Các tính năng cốt lõi như đăng bài, ghép
+										đôi và trò chuyện đều miễn phí.
 									</p>
 								</div>
 							</CardContent>

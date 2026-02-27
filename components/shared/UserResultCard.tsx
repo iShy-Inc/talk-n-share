@@ -59,7 +59,7 @@ export function UserResultCard({
 							className="h-8 rounded-full px-4"
 						>
 							<IconMessageCircle className="mr-1.5 size-4" />
-							Send Message
+							Gửi tin nhắn
 						</Button>
 					)}
 				</div>

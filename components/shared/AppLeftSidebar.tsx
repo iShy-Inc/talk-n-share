@@ -19,10 +19,10 @@ interface AppLeftSidebarProps {
 }
 
 const navItems = [
-	{ label: "Home", href: "/", icon: IconHome },
-	{ label: "Profile", href: "/profile", icon: IconUser },
-	{ label: "Messages", href: "/messages", icon: IconMessage },
-	{ label: "Match", href: "/match", icon: IconSparkles },
+	{ label: "Trang chủ", href: "/", icon: IconHome },
+	{ label: "Hồ sơ", href: "/profile", icon: IconUser },
+	{ label: "Tin nhắn", href: "/messages", icon: IconMessage },
+	{ label: "Ghép đôi", href: "/match", icon: IconSparkles },
 ];
 
 export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
@@ -39,10 +39,10 @@ export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 						profile?.location
 							? profile?.location
 							: profile?.role === "admin"
-								? "Administrator"
+								? "Quản trị viên"
 								: profile?.role === "moder"
-									? "Moderator"
-									: "Talk N Share Member"
+									? "Kiểm duyệt viên"
+									: "Thành viên Talk N Share"
 					}
 					avatarUrl={profile?.avatar_url ?? undefined}
 				/>

@@ -225,10 +225,10 @@ export default function OnboardingPage() {
 			if (error) throw error;
 
 			await queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
-			toast.success("Profile setup completed");
+			toast.success("Hoàn tất thiết lập hồ sơ");
 			router.replace("/profile?tab=settings&section=general");
 		} catch (error: any) {
-			toast.error(error?.message ?? "Failed to save onboarding profile");
+			toast.error(error?.message ?? "Lưu hồ sơ khởi tạo thất bại");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -238,23 +238,23 @@ export default function OnboardingPage() {
 		<div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-10">
 			<Card className="w-full border-border/60 bg-card/90 shadow-xl">
 					<CardHeader>
-						<CardTitle>Complete Your Anonymous Profile</CardTitle>
+						<CardTitle>Hoàn thiện hồ sơ ẩn danh</CardTitle>
 						<p className="text-sm text-muted-foreground">
-							Step {step} of 4. Required: name, gender, location, visibility.
+							Bước {step}/4. Bắt buộc: tên, giới tính, địa điểm, chế độ hiển thị.
 						</p>
 					</CardHeader>
 				<CardContent className="space-y-6">
 					{step === 1 && (
 						<div className="space-y-4">
 							<div className="flex items-center justify-between">
-								<Label>Choose an anonymous name</Label>
+								<Label>Chọn tên ẩn danh</Label>
 								<Button
 									type="button"
 									variant="outline"
 									size="sm"
 									onClick={() => setNameVersion((v) => v + 1)}
 								>
-									Regenerate
+									Tạo lại
 								</Button>
 							</div>
 							<div className="grid grid-cols-2 gap-2 md:grid-cols-3">
@@ -283,7 +283,7 @@ export default function OnboardingPage() {
 					{step === 2 && (
 						<div className="space-y-4">
 							<div>
-								<Label htmlFor="birth-date">Birth date</Label>
+								<Label htmlFor="birth-date">Ngày sinh</Label>
 								<Input
 									id="birth-date"
 									type="date"
@@ -293,39 +293,39 @@ export default function OnboardingPage() {
 								/>
 							</div>
 							<div>
-								<Label>Birthday privacy</Label>
+								<Label>Quyền riêng tư ngày sinh</Label>
 								<Select
 									value={birthVisibility}
 									onValueChange={setBirthVisibility}
 								>
 									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select birthday visibility" />
+										<SelectValue placeholder="Chọn chế độ hiển thị ngày sinh" />
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="full">
-											Show full birthday (day/month/year)
+											Hiển thị đầy đủ (ngày/tháng/năm)
 										</SelectItem>
 										<SelectItem value="month_year">
-											Hide day (month/year only)
+											Ẩn ngày (chỉ tháng/năm)
 										</SelectItem>
-										<SelectItem value="day_month">Show day/month only</SelectItem>
-										<SelectItem value="year_only">Show only year</SelectItem>
+										<SelectItem value="day_month">Chỉ hiển thị ngày/tháng</SelectItem>
+										<SelectItem value="year_only">Chỉ hiển thị năm</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 							<div>
-								<Label>Gender</Label>
+								<Label>Giới tính</Label>
 								<Select
 									value={gender}
 									onValueChange={(v) => setGender(v as any)}
 								>
 									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select your gender" />
+										<SelectValue placeholder="Chọn giới tính" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="male">Male</SelectItem>
-										<SelectItem value="female">Female</SelectItem>
-										<SelectItem value="others">Others</SelectItem>
+										<SelectItem value="male">Nam</SelectItem>
+										<SelectItem value="female">Nữ</SelectItem>
+										<SelectItem value="others">Khác</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
@@ -335,10 +335,10 @@ export default function OnboardingPage() {
 					{step === 3 && (
 						<div className="space-y-4">
 							<div>
-								<Label htmlFor="location">Location</Label>
+								<Label htmlFor="location">Địa điểm</Label>
 								<Select value={location} onValueChange={setLocation}>
 									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select location" />
+										<SelectValue placeholder="Chọn địa điểm" />
 									</SelectTrigger>
 									<SelectContent>
 										{LOCATION_OPTIONS.map((l) => (
@@ -350,35 +350,35 @@ export default function OnboardingPage() {
 								</Select>
 							</div>
 							<div>
-								<Label htmlFor="onboarding-bio">Bio</Label>
+								<Label htmlFor="onboarding-bio">Tiểu sử</Label>
 								<Textarea
 									id="onboarding-bio"
-									placeholder="Tell people a little bit about yourself (optional)..."
+									placeholder="Giới thiệu một chút về bạn (không bắt buộc)..."
 									value={bio}
 									onChange={(e) => setBio(e.target.value)}
 									className="min-h-[110px] resize-none"
 								/>
 							</div>
 							<div>
-								<Label>Relationship</Label>
+								<Label>Mối quan hệ</Label>
 								<Select value={relationship} onValueChange={setRelationship}>
 									<SelectTrigger className="w-full">
-										<SelectValue placeholder="Select relationship status" />
+										<SelectValue placeholder="Chọn trạng thái mối quan hệ" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="single">Single</SelectItem>
+										<SelectItem value="single">Độc thân</SelectItem>
 										<SelectItem value="in_relationship">
-											In a relationship
+											Đang trong mối quan hệ
 										</SelectItem>
-										<SelectItem value="married">Married</SelectItem>
-										<SelectItem value="complicated">Complicated</SelectItem>
-										<SelectItem value="private">Prefer not to say</SelectItem>
+										<SelectItem value="married">Đã kết hôn</SelectItem>
+										<SelectItem value="complicated">Phức tạp</SelectItem>
+										<SelectItem value="private">Không muốn tiết lộ</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 							<div className="rounded-xl border border-border bg-muted/20 p-3">
 								<p className="text-xs text-muted-foreground">
-									Zodiac is auto-detected from birth date
+									Cung hoàng đạo được tự động xác định theo ngày sinh
 								</p>
 								<p className="text-sm font-semibold">{birthDate ? zodiac : "—"}</p>
 							</div>
@@ -387,7 +387,7 @@ export default function OnboardingPage() {
 
 					{step === 4 && (
 						<div className="space-y-4">
-							<Label>Profile visibility</Label>
+							<Label>Hiển thị hồ sơ</Label>
 							<div className="space-y-2 rounded-xl border border-border p-3">
 								<div className="flex items-center gap-2">
 									<Checkbox
@@ -396,7 +396,7 @@ export default function OnboardingPage() {
 											checked ? setIsPublic(true) : null
 										}
 									/>
-									<span className="text-sm">Public profile</span>
+									<span className="text-sm">Hồ sơ công khai</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Checkbox
@@ -405,20 +405,23 @@ export default function OnboardingPage() {
 											checked ? setIsPublic(false) : null
 										}
 									/>
-									<span className="text-sm">Private profile</span>
+									<span className="text-sm">Hồ sơ riêng tư</span>
 								</div>
 							</div>
 
 							<div className="rounded-xl border border-border bg-muted/30 p-3 text-sm">
 								<p>
-									Anonymous Name: <strong>{selectedName}</strong>
+									Tên ẩn danh: <strong>{selectedName}</strong>
 								</p>
-								<p>Location: {location}</p>
-								<p>Bio: {bio || "—"}</p>
-								<p>Relationship: {relationship === "private" ? "Prefer not to say" : relationship}</p>
-								<p>Birthday privacy: {birthVisibility}</p>
-								<p>Zodiac: {birthDate ? zodiac : "—"}</p>
-								<p>Gender: {gender}</p>
+								<p>Địa điểm: {location}</p>
+								<p>Tiểu sử: {bio || "—"}</p>
+								<p>
+									Mối quan hệ:{" "}
+									{relationship === "private" ? "Không muốn tiết lộ" : relationship}
+								</p>
+								<p>Quyền riêng tư ngày sinh: {birthVisibility}</p>
+								<p>Cung hoàng đạo: {birthDate ? zodiac : "—"}</p>
+								<p>Giới tính: {gender}</p>
 							</div>
 						</div>
 					)}
@@ -430,7 +433,7 @@ export default function OnboardingPage() {
 							onClick={() => setStep((s) => Math.max(1, s - 1))}
 							disabled={step === 1 || isSubmitting}
 						>
-							Back
+							Quay lại
 						</Button>
 
 						{step < 4 ? (
@@ -444,7 +447,7 @@ export default function OnboardingPage() {
 									(step === 3 && !canGoNextStep3)
 								}
 							>
-								Next
+								Tiếp theo
 							</Button>
 						) : (
 							<Button
@@ -452,7 +455,7 @@ export default function OnboardingPage() {
 								onClick={handleSaveProfile}
 								disabled={!canSubmit || isSubmitting}
 							>
-								{isSubmitting ? "Saving..." : "Finish"}
+								{isSubmitting ? "Đang lưu..." : "Hoàn tất"}
 							</Button>
 						)}
 					</div>

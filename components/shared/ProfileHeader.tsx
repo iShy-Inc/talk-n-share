@@ -86,7 +86,7 @@ export function ProfileHeader({
 					variant="secondary"
 					className="absolute right-3 top-3 z-10 size-7 rounded-full bg-black/45 text-white hover:bg-black/60"
 					onClick={refreshCover}
-					title="Refresh cover image"
+					title="Làm mới ảnh bìa"
 				>
 					<IconRefresh className="size-4" />
 				</Button>
@@ -122,7 +122,7 @@ export function ProfileHeader({
 							{actionSlot}
 							<span className="inline-flex items-center gap-1.5">
 								<IconCalendarMonth className="size-4" />
-								Join from {formattedJoinDate}
+								Tham gia từ {formattedJoinDate}
 							</span>
 						</div>
 					)}
@@ -145,7 +145,7 @@ export function ProfileHeader({
 						{birthday && (
 							<span className="inline-flex items-center gap-1.5">
 								<IconCalendarMonth className="size-4" />
-								Birthday: {birthday}
+								Sinh nhật: {birthday}
 							</span>
 						)}
 						{zodiac && (

@@ -233,7 +233,7 @@ export default function PostsPage() {
 															: "destructive"
 													}
 												>
-													{post.status === "approved" ? "Approved" : "Pending"}
+													{post.status === "approved" ? "Đã duyệt" : "Pending"}
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">

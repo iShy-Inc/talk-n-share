@@ -20,10 +20,10 @@ interface AccountSettingsProps {
 export function AccountSettings({ onDeleteAccount }: AccountSettingsProps) {
 	return (
 		<div>
-			<h3 className="text-base font-semibold">Delete Account</h3>
+			<h3 className="text-base font-semibold">Xóa tài khoản</h3>
 			<p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-				This action is irreversible and will permanently delete all your data
-				associated with the account.
+				Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn toàn bộ dữ liệu
+				liên quan đến tài khoản của bạn.
 			</p>
 
 			<AlertDialog>
@@ -33,21 +33,21 @@ export function AccountSettings({ onDeleteAccount }: AccountSettingsProps) {
 						className="mt-6 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
 						id="delete-account-btn"
 					>
-						Delete My Account
+						Xóa tài khoản của tôi
 					</Button>
 				</AlertDialogTrigger>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+						<AlertDialogTitle>Bạn chắc chắn muốn tiếp tục?</AlertDialogTitle>
 						<AlertDialogDescription>
-							This will permanently delete your account and all associated data.
-							This action cannot be undone.
+							Tài khoản và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn. Hành
+							động này không thể hoàn tác.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogCancel>Hủy</AlertDialogCancel>
 						<AlertDialogAction variant="destructive" onClick={onDeleteAccount}>
-							Yes, delete my account
+							Đồng ý, xóa tài khoản
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

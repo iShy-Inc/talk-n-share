@@ -16,10 +16,7 @@ import { Label } from "@/components/ui/label";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuGroup,
 	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -93,6 +90,7 @@ type ThreadComment = BaseCommentData & {
 };
 
 const COMMENTS_PAGE_SIZE = 20;
+const POST_PREVIEW_CHAR_LIMIT = 280;
 
 export function PostCard({ post }: PostCardProps) {
 	const user = useAuthStore((state) => state.user);
@@ -120,6 +118,7 @@ export function PostCard({ post }: PostCardProps) {
 	const [isTogglingLike, setIsTogglingLike] = useState(false);
 	const [isReposting, setIsReposting] = useState(false);
 	const [isReposted, setIsReposted] = useState(false);
+	const [isContentExpanded, setIsContentExpanded] = useState(false);
 	const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
@@ -476,6 +475,12 @@ export function PostCard({ post }: PostCardProps) {
 		}
 	};
 
+	const postContent = post.content ?? "";
+	const shouldTruncateContent = postContent.length > POST_PREVIEW_CHAR_LIMIT;
+	const previewContent = shouldTruncateContent
+		? `${postContent.slice(0, POST_PREVIEW_CHAR_LIMIT).trimEnd()}...`
+		: postContent;
+
 	const renderThread = (items: ThreadComment[], depth = 0) =>
 		items.map((comment) => (
 			<div key={comment.id} className={depth > 0 ? "ml-8 mt-2" : "mt-3"}>
@@ -527,39 +532,44 @@ export function PostCard({ post }: PostCardProps) {
 				{isAuthor && (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" size="icon">
+							<Button variant="ghost" size="icon-sm" className="rounded-full">
 								<MoreHorizontal size={20} />
 								<span className="sr-only">More</span>
 							</Button>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent>
-							<DropdownMenuGroup>
-								<DropdownMenuLabel>Edit</DropdownMenuLabel>
-								<DropdownMenuItem onSelect={() => setIsEditing(true)}>
-									<span className="flex items-center gap-2 text-primary">
-										<Pencil size={16} className="hidden md:inline-block" />
-										Update
-									</span>
-								</DropdownMenuItem>
-							</DropdownMenuGroup>
-							<DropdownMenuGroup>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem onSelect={() => setIsDeleteConfirmOpen(true)}>
-									<span className="flex items-center gap-2 text-red-500">
-										<Trash2 size={16} className="hidden md:inline-block" />
-										Delete
-									</span>
-								</DropdownMenuItem>
-							</DropdownMenuGroup>
+						<DropdownMenuContent align="end" className="w-44">
+							<DropdownMenuItem
+								onSelect={() => setIsEditing(true)}
+								className="cursor-pointer"
+							>
+								<Pencil size={16} className="mr-2" />
+								Edit post
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onSelect={() => setIsDeleteConfirmOpen(true)}
+								className="cursor-pointer text-destructive focus:text-destructive"
+							>
+								<Trash2 size={16} className="mr-2" />
+								Xóa bài viết
+							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				)}
 			</div>
 
 			<div className="mb-4">
-				<p className="whitespace-pre-wrap text-base leading-relaxed">
-					{post.content}
+				<p className="overflow-hidden whitespace-pre-wrap break-words text-base leading-relaxed [overflow-wrap:anywhere]">
+					{isContentExpanded ? postContent : previewContent}
 				</p>
+				{shouldTruncateContent && (
+					<button
+						type="button"
+						onClick={() => setIsContentExpanded((prev) => !prev)}
+						className="mt-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+					>
+						{isContentExpanded ? "Show less" : "Show more"}
+					</button>
+				)}
 				{post.image_url && (
 					<button
 						type="button"
@@ -670,7 +680,7 @@ export function PostCard({ post }: PostCardProps) {
 				<DialogContent>
 					<form onSubmit={handleUpdatePost}>
 						<DialogHeader>
-							<DialogTitle>Update Post</DialogTitle>
+							<DialogTitle>Cập nhật bài viết</DialogTitle>
 							<DialogDescription>Update your post content</DialogDescription>
 						</DialogHeader>
 						<FieldGroup className="py-4">
@@ -702,7 +712,7 @@ export function PostCard({ post }: PostCardProps) {
 				<DialogContent>
 					<form onSubmit={handleSubmitReport}>
 						<DialogHeader>
-							<DialogTitle>Report Post</DialogTitle>
+							<DialogTitle>Báo cáo bài viết</DialogTitle>
 							<DialogDescription>
 								Share why this post should be reviewed.
 							</DialogDescription>

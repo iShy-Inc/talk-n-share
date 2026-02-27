@@ -80,8 +80,8 @@ export default function MainRoutesLayout({
 
 			return withCommon.map((u: any) => ({
 				id: u.id,
-				name: u.display_name ?? "User",
-				title: u.location ?? "Talk N Share Member",
+				name: u.display_name ?? "Người dùng",
+				title: u.location ?? "Thành viên Talk N Share",
 				avatar: u.avatar_url,
 			})) as SuggestedFriend[];
 		},

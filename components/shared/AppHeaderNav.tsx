@@ -53,7 +53,7 @@ export function AppHeaderNav() {
 						<Input
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							placeholder="Search posts, people..."
+							placeholder="Tìm bài viết, người dùng..."
 							className="h-9 rounded-full pl-9"
 						/>
 					</div>
@@ -62,7 +62,7 @@ export function AppHeaderNav() {
 				<Link
 					href="/notify"
 					className="relative inline-flex size-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-					title="Notifications"
+					title="Thông báo"
 				>
 					<IconBell className="size-5" />
 					{unreadCount > 0 && (
@@ -80,11 +80,11 @@ export function AppHeaderNav() {
 						className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
 					>
 						<IconLogout className="mr-1 size-4" />
-						Logout
+						Đăng xuất
 					</Button>
 				) : (
 					<Button asChild size="sm" className="rounded-full">
-						<Link href="/login">Sign In / Sign Up</Link>
+						<Link href="/login">Đăng nhập / Đăng ký</Link>
 					</Button>
 				)}
 			</div>

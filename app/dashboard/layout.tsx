@@ -22,27 +22,27 @@ import { useAdminRole } from "@/hooks/useAdminRole";
 
 const sidebarLinks = [
 	{
-		label: "Overview",
+		label: "Tổng quan",
 		href: "/dashboard",
 		icon: IconLayoutDashboard,
 	},
 	{
-		label: "Posts",
+		label: "Bài viết",
 		href: "/dashboard/posts",
 		icon: IconArticle,
 	},
 	{
-		label: "Users",
+		label: "Người dùng",
 		href: "/dashboard/users",
 		icon: IconUsers,
 	},
 	{
-		label: "Comments",
+		label: "Bình luận",
 		href: "/dashboard/comments",
 		icon: IconMessageCircle,
 	},
 	{
-		label: "Reports",
+		label: "Báo cáo",
 		href: "/dashboard/reports",
 		icon: IconFlag,
 	},
@@ -67,7 +67,7 @@ export default function DashboardLayout({
 			(link) =>
 				pathname === link.href ||
 				(link.href !== "/dashboard" && pathname.startsWith(link.href)),
-		)?.label ?? "Dashboard";
+		)?.label ?? "Bảng điều khiển";
 
 	// Loading state
 	if (loading) {
@@ -78,9 +78,9 @@ export default function DashboardLayout({
 						<IconLoader2 className="size-8 animate-spin text-primary" />
 					</div>
 					<div>
-						<p className="text-sm font-medium">Verifying access...</p>
+						<p className="text-sm font-medium">Đang xác minh quyền truy cập...</p>
 						<p className="mt-1 text-xs text-muted-foreground">
-							Checking your admin permissions
+							Đang kiểm tra quyền quản trị của bạn
 						</p>
 					</div>
 				</div>
@@ -97,14 +97,14 @@ export default function DashboardLayout({
 						<IconShieldLock className="size-10 text-destructive" />
 					</div>
 					<div>
-						<h1 className="text-xl font-bold">Access Denied</h1>
+						<h1 className="text-xl font-bold">Truy cập bị từ chối</h1>
 						<p className="mt-2 max-w-sm text-sm text-muted-foreground">
-							You don&apos;t have permission to access the dashboard.
+							Bạn không có quyền truy cập bảng điều khiển.
 						</p>
 					</div>
 					<Button onClick={() => router.push("/")} variant="default" size="lg">
 						<IconChevronLeft className="size-4" />
-						Back to Home
+						Về trang chủ
 					</Button>
 				</div>
 			</div>
@@ -139,7 +139,7 @@ export default function DashboardLayout({
 								Talk N Share
 							</h1>
 							<p className="text-xs text-muted-foreground">
-								{isModer ? "Moderator Workspace" : "Admin Workspace"}
+								{isModer ? "Không gian kiểm duyệt" : "Không gian quản trị"}
 							</p>
 						</div>
 					</Link>
@@ -193,7 +193,7 @@ export default function DashboardLayout({
 						className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
 					>
 						<IconChevronLeft className="size-4" />
-						Back to App
+						Quay lại ứng dụng
 					</Link>
 				</div>
 			</aside>
@@ -213,7 +213,7 @@ export default function DashboardLayout({
 					</div>
 					<div className="flex items-center gap-2 rounded-full border border-border/70 bg-card/70 px-3 py-1.5 text-xs text-muted-foreground">
 						<IconShield className="size-3.5" />
-						<span className="capitalize">{role ?? "moderator"}</span>
+						<span className="capitalize">{role ?? "kiểm duyệt"}</span>
 					</div>
 				</header>
 

@@ -64,7 +64,7 @@ export default function SignupPage() {
 	const handleSignup = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!agreedToTerms) {
-			toast.error("You must agree to the Terms and Privacy Policy");
+			toast.error("You must agree to the Terms and Chính sách riêng tư");
 			return;
 		}
 		if (password !== confirmPassword) {
@@ -88,7 +88,9 @@ export default function SignupPage() {
 		}
 
 		if (data?.user) {
-			toast.success("Account created! Check your email to verify your account.");
+			toast.success(
+				"Tạo tài khoản thành công! Vui lòng kiểm tra email để xác minh tài khoản.",
+			);
 			router.push("/signup-thank-you?email=" + encodeURIComponent(email));
 		}
 		setIsLoading(false);
@@ -114,10 +116,10 @@ export default function SignupPage() {
 			<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
 				<CardHeader className="space-y-1 text-center">
 					<CardTitle className="text-2xl font-bold tracking-tight">
-						Create an account
+						Tạo tài khoản
 					</CardTitle>
 					<CardDescription>
-						Enter your details to create your account
+						Nhập thông tin để tạo tài khoản mới
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="grid gap-4">
@@ -145,7 +147,7 @@ export default function SignupPage() {
 						</div>
 						<div className="relative flex justify-center text-xs uppercase">
 							<span className="bg-background px-2 text-muted-foreground">
-								Or continue with
+								Hoặc tiếp tục với
 							</span>
 						</div>
 					</div>
@@ -163,7 +165,7 @@ export default function SignupPage() {
 							/>
 						</div>
 						<div className="grid gap-2">
-							<Label htmlFor="password">Password</Label>
+							<Label htmlFor="password">Mật khẩu</Label>
 							<Input
 								id="password"
 								type="password"
@@ -175,7 +177,7 @@ export default function SignupPage() {
 							/>
 						</div>
 						<div className="grid gap-2">
-							<Label htmlFor="confirmPassword">Confirm Password</Label>
+							<Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
 							<Input
 								id="confirmPassword"
 								type="password"
@@ -199,30 +201,30 @@ export default function SignupPage() {
 								htmlFor="terms"
 								className="text-xs leading-normal font-normal text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 							>
-								I agree to the{" "}
+								Tôi đồng ý với{" "}
 								<a href="#" className="underline hover:text-primary">
-									Terms of Service
+									Điều khoản dịch vụ
 								</a>{" "}
-								and{" "}
+								và{" "}
 								<a href="#" className="underline hover:text-primary">
-									Privacy Policy
+									Chính sách riêng tư
 								</a>
 								.
 							</Label>
 						</div>
 						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Creating Account..." : "Sign Up"}
+							{isLoading ? "Đang tạo tài khoản..." : "Đăng ký"}
 						</Button>
 					</form>
 				</CardContent>
 				<CardFooter className="flex justify-center">
 					<p className="text-sm text-muted-foreground">
-						Already have an account?{" "}
+						Đã có tài khoản?{" "}
 						<Link
 							href="/login"
 							className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
 						>
-							Sign in
+							Đăng nhập
 						</Link>
 					</p>
 				</CardFooter>

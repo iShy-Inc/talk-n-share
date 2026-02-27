@@ -100,10 +100,10 @@ export default function LoginPage() {
 			<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
 				<CardHeader className="space-y-1 text-center">
 					<CardTitle className="text-2xl font-bold tracking-tight">
-						Welcome back
+						Chào mừng quay lại
 					</CardTitle>
 					<CardDescription>
-						Enter your credentials to access your account
+						Nhập thông tin để truy cập tài khoản của bạn
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="grid gap-4">
@@ -131,7 +131,7 @@ export default function LoginPage() {
 						</div>
 						<div className="relative flex justify-center text-xs uppercase">
 							<span className="bg-background px-2 text-muted-foreground">
-								Or continue with
+								Hoặc tiếp tục với
 							</span>
 						</div>
 					</div>
@@ -150,12 +150,12 @@ export default function LoginPage() {
 						</div>
 						<div className="grid gap-2">
 							<div className="flex items-center justify-between">
-								<Label htmlFor="password">Password</Label>
+								<Label htmlFor="password">Mật khẩu</Label>
 								<Link
 									href="/forgot"
 									className="text-xs text-primary underline-offset-4 hover:underline"
 								>
-									Forgot password?
+									Quên mật khẩu?
 								</Link>
 							</div>
 							<Input
@@ -178,22 +178,22 @@ export default function LoginPage() {
 								htmlFor="remember"
 								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 							>
-								Remember me
+								Ghi nhớ đăng nhập
 							</Label>
 						</div>
 						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Signing In..." : "Sign In"}
+							{isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
 						</Button>
 					</form>
 				</CardContent>
 				<CardFooter className="flex justify-center">
 					<p className="text-sm text-muted-foreground">
-						Don&apos;t have an account?{" "}
+						Chưa có tài khoản?{" "}
 						<Link
 							href="/signup"
 							className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
 						>
-							Sign up
+							Đăng ký
 						</Link>
 					</p>
 				</CardFooter>

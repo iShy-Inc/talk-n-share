@@ -102,13 +102,13 @@ export function GeneralSettingsForm({
 
 			{/* Inputs */}
 			<div className="space-y-2">
-				<Label htmlFor="settings-display-name">Display name</Label>
+				<Label htmlFor="settings-display-name">Tên hiển thị</Label>
 				<div className="relative">
 					<Input
 						id="settings-display-name"
 						value={displayName}
 						onChange={(e) => setDisplayName(e.target.value)}
-						placeholder="Display name"
+						placeholder="Tên hiển thị"
 						className="pr-10"
 					/>
 					<Button
@@ -117,7 +117,7 @@ export function GeneralSettingsForm({
 						variant="ghost"
 						size="icon"
 						className="absolute right-1 top-1 h-8 w-8"
-						title="Generate random name"
+						title="Tạo tên ngẫu nhiên"
 					>
 						<RefreshCw className="h-4 w-4" />
 					</Button>
@@ -140,13 +140,13 @@ export function GeneralSettingsForm({
 			<Textarea
 				value={bio}
 				onChange={(e) => setBio(e.target.value)}
-				placeholder="Bio"
+				placeholder="Tiểu sử"
 				className="min-h-[120px] resize-none"
 				id="settings-bio"
 			/>
 			<Select value={location} onValueChange={setLocation}>
 				<SelectTrigger className="w-full">
-					<SelectValue placeholder="Select location" />
+					<SelectValue placeholder="Chọn địa điểm" />
 				</SelectTrigger>
 				<SelectContent>
 					{LOCATION_OPTIONS.map((loc) => (
@@ -157,7 +157,7 @@ export function GeneralSettingsForm({
 				</SelectContent>
 			</Select>
 			<Button type="submit" className="w-40" id="settings-save-btn">
-				Save Changes
+				Lưu thay đổi
 			</Button>
 		</form>
 	);

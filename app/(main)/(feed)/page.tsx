@@ -6,6 +6,8 @@ import { usePosts } from "@/hooks/usePosts";
 import { useAuthStore } from "@/store/useAuthStore";
 import useProfile from "@/hooks/useProfile";
 import { CreatePost } from "@/components/feed/CreatePost";
+import { FeedEngagementCard } from "@/components/feed/FeedEngagementCard";
+import { StoryIdeasSection } from "@/components/feed/StoryIdeasSection";
 import { PostCard } from "@/components/feed/PostCard";
 import { CommentList, CommentData } from "@/components/feed/CommentList";
 import { Button } from "@/components/ui/button";
@@ -59,15 +61,19 @@ export default function FeedPage() {
 	return (
 		<>
 			{user ? (
-				<CreatePost />
+				<>
+					<CreatePost />
+					<FeedEngagementCard />
+					<StoryIdeasSection />
+				</>
 			) : (
 				<div className="mb-6 rounded-xl border border-border bg-card p-6 text-center shadow-sm">
-					<h3 className="text-lg font-semibold">Join the conversation</h3>
+					<h3 className="text-lg font-semibold">Tham gia cuộc trò chuyện</h3>
 					<p className="mb-4 text-sm text-muted-foreground">
-						Sign in to share your thoughts and connect with others.
+						Đăng nhập để chia sẻ suy nghĩ và kết nối với mọi người.
 					</p>
 					<Button onClick={() => router.push("/login")}>
-						Sign In / Sign Up
+						Đăng nhập / Đăng ký
 					</Button>
 				</div>
 			)}
@@ -75,10 +81,10 @@ export default function FeedPage() {
 			{posts.length === 0 && (
 				<div className="rounded-2xl border border-border bg-card py-16 text-center">
 					<p className="text-lg font-medium text-muted-foreground">
-						No posts yet
+						Chưa có bài viết nào
 					</p>
 					<p className="mt-1 text-sm text-muted-foreground/70">
-						Be the first to share something!
+						Hãy là người đầu tiên chia sẻ điều gì đó!
 					</p>
 				</div>
 			)}
@@ -101,7 +107,7 @@ export default function FeedPage() {
 									onClick={() => setExpandedPostId(null)}
 									className="mt-3 text-xs text-muted-foreground hover:text-foreground"
 								>
-									Hide comments
+									Ẩn bình luận
 								</button>
 							</div>
 						) : (
@@ -110,8 +116,7 @@ export default function FeedPage() {
 									onClick={() => setExpandedPostId(post.id)}
 									className="mt-1 text-xs text-muted-foreground hover:text-foreground"
 								>
-									View {post.comments_count} comment
-									{post.comments_count !== 1 ? "s" : ""}
+									Xem {post.comments_count} bình luận
 								</button>
 							)
 						)}
@@ -127,7 +132,7 @@ export default function FeedPage() {
 						className="rounded-full px-6"
 						id="load-more-posts"
 					>
-						Load more
+						Tải thêm
 					</Button>
 				</div>
 			)}

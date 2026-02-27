@@ -14,7 +14,7 @@ interface ChatInputProps {
 
 export function ChatInput({
 	onSend,
-	placeholder = "Message ...",
+	placeholder = "Nhập tin nhắn...",
 	avatarUrl,
 	disabled = false,
 }: ChatInputProps) {

@@ -55,7 +55,7 @@ export function CommentList({
 					<Input
 						value={commentText}
 						onChange={(e) => setCommentText(e.target.value)}
-						placeholder="Share your thoughts here..."
+						placeholder="Viết bình luận của bạn..."
 						className="rounded-xl"
 						id="comment-input"
 					/>

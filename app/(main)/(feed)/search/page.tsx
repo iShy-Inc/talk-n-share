@@ -102,12 +102,12 @@ export default function SearchPage() {
 				targetIsPublic: targetUser.is_public,
 			});
 			if (result.kind === "request_sent") {
-				toast.success("Message request sent to this private user.");
+				toast.success("Đã gửi yêu cầu nhắn tin tới tài khoản riêng tư này.");
 				return;
 			}
 			router.push(`/messages?sessionId=${result.sessionId}`);
 		} catch {
-			toast.error("Unable to start conversation.");
+			toast.error("Không thể bắt đầu cuộc trò chuyện.");
 		}
 	};
 
@@ -120,7 +120,7 @@ export default function SearchPage() {
 					<Input
 						value={searchInput}
 						onChange={(e) => setSearchInput(e.target.value)}
-						placeholder="Search for posts, people, or keywords..."
+						placeholder="Tìm bài viết, người dùng hoặc từ khóa..."
 						className="h-12 rounded-full border-border bg-card pl-12 pr-12 text-base shadow-sm focus-visible:ring-primary/20"
 					/>
 					{searchInput && (
@@ -138,9 +138,9 @@ export default function SearchPage() {
 				{query && (
 					<div className="flex gap-2 overflow-x-auto pb-2">
 						{[
-							{ id: "all", label: "All" },
-							{ id: "posts", label: "Posts" },
-							{ id: "people", label: "People" },
+							{ id: "all", label: "Tất cả" },
+							{ id: "posts", label: "Bài viết" },
+							{ id: "people", label: "Mọi người" },
 						].map((tab) => (
 							<Button
 								key={tab.id}
@@ -164,10 +164,10 @@ export default function SearchPage() {
 							<IconSearch className="size-8 opacity-50" />
 						</div>
 						<h3 className="text-lg font-medium text-foreground">
-							Search Talk N Share
+							Tìm kiếm Talk N Share
 						</h3>
 						<p className="max-w-xs text-sm">
-							Find posts, people, and conversations that matter to you.
+							Tìm bài viết, người dùng và cuộc trò chuyện phù hợp với bạn.
 						</p>
 					</div>
 				) : (
@@ -176,7 +176,7 @@ export default function SearchPage() {
 						{(activeTab === "all" || activeTab === "people") && (
 							<div className="space-y-4">
 								{activeTab === "all" && people.length > 0 && (
-									<h2 className="text-lg font-semibold">People</h2>
+									<h2 className="text-lg font-semibold">Mọi người</h2>
 								)}
 								{isLoadingPeople ? (
 									<div className="space-y-3">
@@ -204,7 +204,7 @@ export default function SearchPage() {
 								) : (
 									activeTab === "people" && (
 										<p className="text-center text-muted-foreground">
-											No people found for &quot;{query}&quot;
+											Không tìm thấy người dùng cho &quot;{query}&quot;
 										</p>
 									)
 								)}
@@ -215,7 +215,7 @@ export default function SearchPage() {
 						{(activeTab === "all" || activeTab === "posts") && (
 							<div className="space-y-4">
 								{activeTab === "all" && posts.length > 0 && (
-									<h2 className="text-lg font-semibold">Posts</h2>
+									<h2 className="text-lg font-semibold">Bài viết</h2>
 								)}
 								{isLoadingPosts ? (
 									<div className="space-y-4">
@@ -235,7 +235,7 @@ export default function SearchPage() {
 								) : (
 									activeTab === "posts" && (
 										<p className="text-center text-muted-foreground">
-											No posts found for &quot;{query}&quot;
+											Không tìm thấy bài viết cho &quot;{query}&quot;
 										</p>
 									)
 								)}
@@ -248,7 +248,7 @@ export default function SearchPage() {
 							people.length === 0 &&
 							posts.length === 0 && (
 								<div className="py-12 text-center text-muted-foreground">
-									<p>No results found for &quot;{query}&quot;</p>
+									<p>Không có kết quả cho &quot;{query}&quot;</p>
 								</div>
 							)}
 					</div>
