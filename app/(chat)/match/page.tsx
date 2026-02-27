@@ -104,7 +104,7 @@ export default function MatchPage() {
 						current_user_id: user.id,
 						p_gender: pendingCriteria.gender,
 						p_region: pendingCriteria.location,
-						p_zodiac: pendingCriteria.interests,
+						p_zodiac: pendingCriteria.zodiac,
 					},
 				);
 				if (matchError) throw matchError;
