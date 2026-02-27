@@ -26,7 +26,7 @@ export const THEME_STYLES = [
 ] as const;
 
 export type ThemeStyle = (typeof THEME_STYLES)[number]["value"];
-const DEFAULT_THEME_STYLE: ThemeStyle = "original";
+const DEFAULT_THEME_STYLE: ThemeStyle = "spotify";
 
 type ThemeStyleContextValue = {
 	themeStyle: ThemeStyle;

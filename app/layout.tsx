@@ -10,6 +10,7 @@ import siteConfig from "@/configs/site";
 import { MobileDock } from "@/components/shared";
 import { RouteProgressBar } from "@/components/shared/RouteProgressBar";
 import { ScrollToTopButton } from "@/components/shared/ScrollToTopButton";
+import { ThemeProfileBanner } from "@/components/shared/ThemeProfileBanner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -49,6 +50,7 @@ export default function RootLayout({
 							<Suspense fallback={null}>
 								<RouteProgressBar />
 							</Suspense>
+							<ThemeProfileBanner />
 							{children}
 							<ScrollToTopButton />
 							<MobileDock />
