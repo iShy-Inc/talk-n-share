@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -10,12 +10,12 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { IconMapPin, IconUsers, IconHeart } from "@tabler/icons-react";
-import useProfile from "@/hooks/useProfile";
 import { LOCATION_OPTIONS } from "@/app/onboarding/page";
 
 export type MatchCriteria = {
-	type: "gender" | "location" | "interests";
-	value: string;
+	gender: string;
+	location: string;
+	interests: string;
 };
 
 interface MatchOptionsProps {
@@ -23,15 +23,40 @@ interface MatchOptionsProps {
 }
 
 export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
-	const { profile } = useProfile();
 	const [criteriaType, setCriteriaType] = useState<
 		"gender" | "location" | "interests"
 	>("interests");
-	const [criteriaValue, setCriteriaValue] = useState("");
+	const [gender, setGender] = useState("");
+	const [location, setLocation] = useState("");
+	const [interests, setInterests] = useState("");
+
+	const interestOptions = useMemo(() => {
+		const zodiacs = [
+			"Aries",
+			"Taurus",
+			"Gemini",
+			"Cancer",
+			"Leo",
+			"Virgo",
+			"Libra",
+			"Scorpio",
+			"Sagittarius",
+			"Capricorn",
+			"Aquarius",
+			"Pisces",
+		];
+		return ["any", ...zodiacs];
+	}, []);
 
 	const handleStart = () => {
-		onStartMatch({ type: criteriaType, value: criteriaValue });
+		onStartMatch({
+			gender,
+			location,
+			interests,
+		});
 	};
+
+	const canStart = Boolean(gender && location && interests);
 
 	return (
 		<div className="flex flex-col items-center justify-center space-y-8 p-8 text-center">
@@ -85,7 +110,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 				<div className="space-y-2 text-left">
 					<label className="text-sm font-medium">Select Preference</label>
 					{criteriaType === "gender" && (
-						<Select value={criteriaValue} onValueChange={setCriteriaValue}>
+						<Select value={gender} onValueChange={setGender}>
 							<SelectTrigger>
 								<SelectValue placeholder="Select gender" />
 							</SelectTrigger>
@@ -93,16 +118,17 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 								<SelectItem value="any">Any Gender</SelectItem>
 								<SelectItem value="male">Male</SelectItem>
 								<SelectItem value="female">Female</SelectItem>
+								<SelectItem value="others">Others</SelectItem>
 							</SelectContent>
 						</Select>
 					)}
-
 					{criteriaType === "location" && (
-						<Select value={criteriaValue} onValueChange={setCriteriaValue}>
+						<Select value={location} onValueChange={setLocation}>
 							<SelectTrigger>
 								<SelectValue placeholder="Select location" />
 							</SelectTrigger>
 							<SelectContent>
+								<SelectItem value="any">Any Location</SelectItem>
 								{LOCATION_OPTIONS.map((loc) => (
 									<SelectItem key={loc} value={loc}>
 										{loc}
@@ -111,29 +137,55 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 							</SelectContent>
 						</Select>
 					)}
-
 					{criteriaType === "interests" && (
-						<Select value={criteriaValue} onValueChange={setCriteriaValue}>
+						<Select value={interests} onValueChange={setInterests}>
 							<SelectTrigger>
 								<SelectValue placeholder="Select an interest" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="any">Any Interest</SelectItem>
-								<SelectItem value="coding">Coding</SelectItem>
-								<SelectItem value="music">Music</SelectItem>
-								<SelectItem value="movies">Movies</SelectItem>
-								<SelectItem value="travel">Travel</SelectItem>
-								<SelectItem value="gaming">Gaming</SelectItem>
+								{interestOptions.map((value) => (
+									<SelectItem key={value} value={value}>
+										{value === "any" ? "Any Interest" : value}
+									</SelectItem>
+								))}
 							</SelectContent>
 						</Select>
 					)}
+				</div>
+
+				<div className="grid grid-cols-3 gap-2 text-[11px]">
+					<div
+						className={`rounded-md border px-2 py-1.5 text-center ${
+							gender ? "border-primary/40 bg-primary/10 text-foreground" : "text-muted-foreground"
+						}`}
+					>
+						{gender ? `Gender: ${gender}` : "Gender: missing"}
+					</div>
+					<div
+						className={`rounded-md border px-2 py-1.5 text-center ${
+							location
+								? "border-primary/40 bg-primary/10 text-foreground"
+								: "text-muted-foreground"
+						}`}
+					>
+						{location ? `Location: ${location}` : "Location: missing"}
+					</div>
+					<div
+						className={`rounded-md border px-2 py-1.5 text-center ${
+							interests
+								? "border-primary/40 bg-primary/10 text-foreground"
+								: "text-muted-foreground"
+						}`}
+					>
+						{interests ? `Interest: ${interests}` : "Interest: missing"}
+					</div>
 				</div>
 
 				<Button
 					size="lg"
 					className="w-full rounded-full"
 					onClick={handleStart}
-					disabled={!criteriaValue}
+					disabled={!canStart}
 				>
 					Start Matching
 				</Button>

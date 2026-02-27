@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+
+import {
+	ADJECTIVES,
+	NOUNS,
+	randomInt,
+	buildAnonymousNames,
+} from "@/app/onboarding/page";
+import { useQuery } from "@tanstack/react-query";
+import { createClient } from "@/utils/supabase/client";
+import { RefreshCw } from "lucide-react";
 
 interface GeneralSettingsFormProps {
 	initialValues?: {
@@ -38,6 +48,7 @@ interface GeneralSettingsFormProps {
 	onAvatarSelect?: (avatarUrl: string) => void;
 	onAvatarCategoryChange?: (category: AvatarCategoryKey) => void;
 }
+const supabase = createClient();
 
 export function GeneralSettingsForm({
 	initialValues,
@@ -50,6 +61,25 @@ export function GeneralSettingsForm({
 	const [displayName, setDisplayName] = useState(
 		initialValues?.display_name ?? "",
 	);
+	const [nameVersion, setNameVersion] = useState(0);
+	const { data: allNames = [] } = useQuery({
+		queryKey: ["all-profile-names"],
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from("profiles")
+				.select("display_name")
+				.not("display_name", "is", null);
+			if (error) throw error;
+			return (data ?? [])
+				.map((row: any) => row.display_name as string)
+				.filter(Boolean);
+		},
+	});
+	const availableNames = useMemo(() => {
+		void nameVersion;
+		const taken = new Set(allNames);
+		return buildAnonymousNames(taken, 6);
+	}, [allNames, nameVersion]);
 	const [bio, setBio] = useState(initialValues?.bio ?? "");
 	const [location, setLocation] = useState(initialValues?.location ?? "");
 	const [birthDate, setBirthDate] = useState(initialValues?.birth_date ?? "");
@@ -66,7 +96,7 @@ export function GeneralSettingsForm({
 			is_public: isPublic,
 		});
 	};
-
+	
 	return (
 		<form
 			onSubmit={handleSubmit}
@@ -80,12 +110,42 @@ export function GeneralSettingsForm({
 			/>
 
 			{/* Inputs */}
-			<Input
-				value={displayName}
-				onChange={(e) => setDisplayName(e.target.value)}
-				placeholder="Display name"
-				id="settings-display-name"
-			/>
+			<div className="space-y-2">
+				<Label htmlFor="settings-display-name">Display name</Label>
+				<div className="relative">
+					<Input
+						id="settings-display-name"
+						value={displayName}
+						onChange={(e) => setDisplayName(e.target.value)}
+						placeholder="Display name"
+						className="pr-10"
+					/>
+					<Button
+						type="button"
+						onClick={() => setNameVersion((v) => v + 1)}
+						variant="ghost"
+						size="icon"
+						className="absolute right-1 top-1 h-8 w-8"
+						title="Generate random name"
+					>
+						<RefreshCw className="h-4 w-4" />
+					</Button>
+				</div>
+				<div className="flex flex-wrap gap-2">
+					{availableNames.map((name) => (
+						<Button
+							type="button"
+							key={name}
+							variant="outline"
+							size="sm"
+							onClick={() => setDisplayName(name)}
+							className="rounded-full"
+						>
+							{name}
+						</Button>
+					))}
+				</div>
+			</div>
 			<Textarea
 				value={bio}
 				onChange={(e) => setBio(e.target.value)}

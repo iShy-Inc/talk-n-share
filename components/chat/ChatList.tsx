@@ -8,6 +8,8 @@ export interface ChatContact {
 	name: string;
 	avatar?: string;
 	lastMessage?: string;
+	latestMessageAt?: string | null;
+	latestReceivedAt?: string | null;
 	isActive?: boolean;
 	isPublic?: boolean;
 }
@@ -49,9 +51,7 @@ export function ChatList({
 						</div>
 					)}
 					<div className="min-w-0 flex-1">
-						<p className="truncate text-sm font-semibold">
-							{contact.name}
-						</p>
+						<p className="truncate text-sm font-semibold">{contact.name}</p>
 						{contact.lastMessage && (
 							<p className="mt-0.5 truncate text-xs text-muted-foreground">
 								{contact.lastMessage}
@@ -64,10 +64,10 @@ export function ChatList({
 			{onNewMessage && (
 				<button
 					onClick={onNewMessage}
-					className="mt-auto border-t border-border px-4 py-4 text-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+					className="mt-auto flex items-center justify-center gap-2 border-t border-border px-4 py-4 mb-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 					id="new-message-sidebar-btn"
 				>
-					<IconPencil className="mr-2 inline-block size-4" />
+					<IconPencil className="size-4" />
 					New Message
 				</button>
 			)}

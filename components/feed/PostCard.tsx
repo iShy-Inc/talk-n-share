@@ -117,6 +117,7 @@ export function PostCard({ post }: PostCardProps) {
 	const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 	const [isLiked, setIsLiked] = useState(false);
 	const [isTogglingLike, setIsTogglingLike] = useState(false);
+	const [isReposting, setIsReposting] = useState(false);
 	const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
@@ -423,6 +424,29 @@ export function PostCard({ post }: PostCardProps) {
 		}
 	};
 
+	const handleRepost = async (e: React.MouseEvent) => {
+		if (!handleAuthAction(e) || !user || isReposting) return;
+		try {
+			setIsReposting(true);
+			const { error } = await supabase.from("post_reposts").insert({
+				post_id: post.id,
+				reposter_id: user.id,
+			});
+			if (error) {
+				if (error.code === "23505") {
+					toast("You already reposted this post.");
+					return;
+				}
+				throw error;
+			}
+			toast.success("Reposted successfully");
+		} catch {
+			toast.error("Failed to repost");
+		} finally {
+			setIsReposting(false);
+		}
+	};
+
 	const renderThread = (items: ThreadComment[], depth = 0) =>
 		items.map((comment) => (
 			<div key={comment.id} className={depth > 0 ? "ml-8 mt-2" : "mt-3"}>
@@ -438,7 +462,10 @@ export function PostCard({ post }: PostCardProps) {
 		));
 
 	return (
-		<div className="mb-4 w-full rounded-xl border bg-card p-4 text-card-foreground shadow-sm transition-shadow duration-200 hover:shadow-md">
+		<div
+			id={`post-${post.id}`}
+			className="mb-4 w-full rounded-xl border bg-card p-4 text-card-foreground shadow-sm transition-shadow duration-200 hover:shadow-md"
+		>
 			<div className="mb-3 flex items-start justify-between">
 				<div className="flex items-center gap-3">
 					<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-secondary">
@@ -769,13 +796,10 @@ export function PostCard({ post }: PostCardProps) {
 				</div>
 				<div className="flex gap-4">
 					<button
-						className={`transition-colors ${
-							isLiked
-								? "text-primary"
-								: "text-muted-foreground hover:text-foreground"
-						}`}
-						title={isLiked ? "Unsave" : "Save"}
-						onClick={handleToggleLike}
+						className="text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+						title="Repost"
+						onClick={handleRepost}
+						disabled={isReposting}
 					>
 						<Share2 size={18} />
 					</button>

@@ -221,6 +221,110 @@ body {
 	--shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
 }
 
+:root[data-theme-style="zinc"] {
+	--primary: oklch(0.3532 0 0);
+	--primary-foreground: oklch(0.9851 0 0);
+	--ring: oklch(0.5560 0 0);
+	--chart-1: oklch(0.5560 0 0);
+	--chart-2: oklch(0.7051 0.1069 63.8060);
+	--chart-3: oklch(0.6732 0.1653 35.9920);
+	--chart-4: oklch(0.6701 0.1597 250.4118);
+	--chart-5: oklch(0.6069 0.2167 292.6885);
+	--sidebar-primary: oklch(0.3532 0 0);
+	--sidebar-ring: oklch(0.5560 0 0);
+}
+
+.dark[data-theme-style="zinc"] {
+	--primary: oklch(0.8724 0 0);
+	--primary-foreground: oklch(0.2046 0 0);
+	--ring: oklch(0.7679 0 0);
+	--chart-1: oklch(0.7679 0 0);
+	--chart-2: oklch(0.7665 0.1295 66.2048);
+	--chart-3: oklch(0.7051 0.1868 42.2138);
+	--chart-4: oklch(0.6992 0.1475 249.4583);
+	--chart-5: oklch(0.6478 0.2051 295.4793);
+	--sidebar-primary: oklch(0.8724 0 0);
+	--sidebar-ring: oklch(0.7679 0 0);
+}
+
+:root[data-theme-style="blue"] {
+	--primary: oklch(0.6231 0.1880 259.8145);
+	--primary-foreground: oklch(0.9851 0 0);
+	--ring: oklch(0.6231 0.1880 259.8145);
+	--chart-1: oklch(0.6231 0.1880 259.8145);
+	--chart-2: oklch(0.6959 0.1491 162.4796);
+	--chart-3: oklch(0.7090 0.1592 293.5412);
+	--chart-4: oklch(0.7686 0.1647 70.0804);
+	--chart-5: oklch(0.6056 0.2189 292.7172);
+	--sidebar-primary: oklch(0.6231 0.1880 259.8145);
+	--sidebar-ring: oklch(0.6231 0.1880 259.8145);
+}
+
+.dark[data-theme-style="blue"] {
+	--primary: oklch(0.7137 0.1434 254.6240);
+	--primary-foreground: oklch(0.1822 0 0);
+	--ring: oklch(0.7137 0.1434 254.6240);
+	--chart-1: oklch(0.7137 0.1434 254.6240);
+	--chart-2: oklch(0.8003 0.1821 151.7110);
+	--chart-3: oklch(0.8369 0.1644 84.4286);
+	--chart-4: oklch(0.7090 0.1592 293.5412);
+	--chart-5: oklch(0.7845 0.1325 181.9120);
+	--sidebar-primary: oklch(0.7137 0.1434 254.6240);
+	--sidebar-ring: oklch(0.7137 0.1434 254.6240);
+}
+
+:root[data-theme-style="rose"] {
+	--primary: oklch(0.6454 0.2466 16.4395);
+	--primary-foreground: oklch(0.9851 0 0);
+	--ring: oklch(0.6454 0.2466 16.4395);
+	--chart-1: oklch(0.6454 0.2466 16.4395);
+	--chart-2: oklch(0.6056 0.2189 292.7172);
+	--chart-3: oklch(0.6231 0.1880 259.8145);
+	--chart-4: oklch(0.7686 0.1647 70.0804);
+	--chart-5: oklch(0.6959 0.1491 162.4796);
+	--sidebar-primary: oklch(0.6454 0.2466 16.4395);
+	--sidebar-ring: oklch(0.6454 0.2466 16.4395);
+}
+
+.dark[data-theme-style="rose"] {
+	--primary: oklch(0.6981 0.2141 22.9627);
+	--primary-foreground: oklch(0.1822 0 0);
+	--ring: oklch(0.6981 0.2141 22.9627);
+	--chart-1: oklch(0.6981 0.2141 22.9627);
+	--chart-2: oklch(0.7090 0.1592 293.5412);
+	--chart-3: oklch(0.7137 0.1434 254.6240);
+	--chart-4: oklch(0.8369 0.1644 84.4286);
+	--chart-5: oklch(0.8003 0.1821 151.7110);
+	--sidebar-primary: oklch(0.6981 0.2141 22.9627);
+	--sidebar-ring: oklch(0.6981 0.2141 22.9627);
+}
+
+:root[data-theme-style="amber"] {
+	--primary: oklch(0.7686 0.1647 70.0804);
+	--primary-foreground: oklch(0.2626 0.0147 166.4589);
+	--ring: oklch(0.7686 0.1647 70.0804);
+	--chart-1: oklch(0.7686 0.1647 70.0804);
+	--chart-2: oklch(0.8348 0.1302 160.9080);
+	--chart-3: oklch(0.6231 0.1880 259.8145);
+	--chart-4: oklch(0.6056 0.2189 292.7172);
+	--chart-5: oklch(0.6454 0.2466 16.4395);
+	--sidebar-primary: oklch(0.7686 0.1647 70.0804);
+	--sidebar-ring: oklch(0.7686 0.1647 70.0804);
+}
+
+.dark[data-theme-style="amber"] {
+	--primary: oklch(0.8369 0.1644 84.4286);
+	--primary-foreground: oklch(0.1822 0 0);
+	--ring: oklch(0.8369 0.1644 84.4286);
+	--chart-1: oklch(0.8369 0.1644 84.4286);
+	--chart-2: oklch(0.8003 0.1821 151.7110);
+	--chart-3: oklch(0.7137 0.1434 254.6240);
+	--chart-4: oklch(0.7090 0.1592 293.5412);
+	--chart-5: oklch(0.6981 0.2141 22.9627);
+	--sidebar-primary: oklch(0.8369 0.1644 84.4286);
+	--sidebar-ring: oklch(0.8369 0.1644 84.4286);
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;

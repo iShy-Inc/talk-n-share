@@ -17,6 +17,7 @@ import {
 } from "@/components/shared/SettingsLayout";
 import { GeneralSettingsForm } from "@/components/shared/GeneralSettingsForm";
 import { AccountSettings } from "@/components/shared/AccountSettings";
+import { ThemeSettings } from "@/components/shared/ThemeSettings";
 import { PostCard } from "@/components/feed/PostCard";
 import {
 	AvatarCategoryKey,
@@ -43,6 +44,7 @@ const visitorTabs: ProfileTab[] = [
 
 const settingsMenuItems: SettingsMenuItem[] = [
 	{ label: "General", value: "general" },
+	{ label: "Appearance", value: "appearance" },
 	{ label: "Account", value: "account" },
 	{ label: "Logout", value: "logout" },
 ];
@@ -361,6 +363,7 @@ export default function ProfilePage() {
 					{settingsTab === "account" && (
 						<AccountSettings onDeleteAccount={handleDeleteAccount} />
 					)}
+					{settingsTab === "appearance" && <ThemeSettings />}
 				</SettingsLayout>
 			)}
 		</>

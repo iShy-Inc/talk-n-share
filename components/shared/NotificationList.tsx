@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { NotificationItem } from "./NotificationItem";
 
 export interface NotificationData {
@@ -14,16 +15,35 @@ export interface NotificationData {
 interface NotificationListProps {
 	notifications: NotificationData[];
 	onClickNotification?: (id: string) => void;
+	onReadNotification?: (id: string) => void;
+	onHideNotification?: (id: string) => void;
+	onDeleteNotification?: (id: string) => void;
+	onReadAll?: () => void;
 }
 
 export function NotificationList({
 	notifications,
 	onClickNotification,
+	onReadNotification,
+	onHideNotification,
+	onDeleteNotification,
+	onReadAll,
 }: NotificationListProps) {
+	const unreadCount = notifications.filter((item) => !item.isRead).length;
+
 	return (
 		<Card className="overflow-hidden border shadow-sm">
-			<CardHeader className="border-b border-border px-5 py-4">
+			<CardHeader className="flex flex-row items-center justify-between border-b border-border px-5 py-4">
 				<CardTitle className="text-base">Notifications</CardTitle>
+				<Button
+					size="xs"
+					variant="outline"
+					type="button"
+					onClick={onReadAll}
+					disabled={unreadCount === 0}
+				>
+					Read all
+				</Button>
 			</CardHeader>
 			<CardContent className="p-0">
 				{notifications.length === 0 ? (
@@ -37,11 +57,15 @@ export function NotificationList({
 					notifications.map((notification) => (
 						<NotificationItem
 							key={notification.id}
+							id={notification.id}
 							avatarUrl={notification.avatarUrl}
 							content={notification.content}
 							timeAgo={notification.timeAgo}
 							isRead={notification.isRead}
 							onClick={() => onClickNotification?.(notification.id)}
+							onRead={onReadNotification}
+							onHide={onHideNotification}
+							onDelete={onDeleteNotification}
 						/>
 					))
 				)}

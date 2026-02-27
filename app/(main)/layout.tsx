@@ -20,6 +20,7 @@ export default function MainRoutesLayout({
 	const pathname = usePathname();
 	const router = useRouter();
 	const { profile, loading: isLoadingProfile } = useProfile();
+	const isMessagesPage = pathname.startsWith("/messages");
 
 	useEffect(() => {
 		if (!user || isLoadingProfile) return;
@@ -53,8 +54,13 @@ export default function MainRoutesLayout({
 
 	return (
 		<MainLayout
-			leftSidebar={<AppLeftSidebar profile={profile} />}
-			rightSidebar={<AppRightSidebar suggestedFriends={suggestedFriends} />}
+			hideSidebars={isMessagesPage}
+			leftSidebar={isMessagesPage ? null : <AppLeftSidebar profile={profile} />}
+			rightSidebar={
+				isMessagesPage ? null : (
+					<AppRightSidebar suggestedFriends={suggestedFriends} />
+				)
+			}
 		>
 			{children}
 		</MainLayout>

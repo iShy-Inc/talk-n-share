@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
 import { useChat } from "@/hooks/useChat";
@@ -46,6 +47,36 @@ export default function MessagesPage() {
 				.or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
 				.order("created_at", { ascending: false });
 			if (error) throw error;
+			const sessionIds = (sessions ?? []).map((session) => session.id);
+			if (sessionIds.length === 0) return [];
+
+			const { data: latestMessages, error: latestMessagesError } =
+				await supabase
+					.from("messages")
+					.select("match_id, content, created_at, sender_id")
+					.in("match_id", sessionIds)
+					.order("created_at", { ascending: false });
+			if (latestMessagesError) throw latestMessagesError;
+
+			const latestBySession = new Map<
+				string,
+				(typeof latestMessages)[number]
+			>();
+			const latestReceivedBySession = new Map<
+				string,
+				(typeof latestMessages)[number]
+			>();
+			for (const message of latestMessages ?? []) {
+				if (!latestBySession.has(message.match_id)) {
+					latestBySession.set(message.match_id, message);
+				}
+				if (
+					message.sender_id !== user.id &&
+					!latestReceivedBySession.has(message.match_id)
+				) {
+					latestReceivedBySession.set(message.match_id, message);
+				}
+			}
 
 			const otherUserIds = Array.from(
 				new Set(
@@ -67,17 +98,39 @@ export default function MessagesPage() {
 				(profiles ?? []).map((profile) => [profile.id, profile]),
 			);
 
-			return (sessions ?? []).map((session) => {
-				const otherId =
-					session.user1_id === user.id ? session.user2_id : session.user1_id;
-				const otherProfile = profileMap.get(otherId);
+			return (sessions ?? [])
+				.map((session) => {
+					const otherId =
+						session.user1_id === user.id ? session.user2_id : session.user1_id;
+					const otherProfile = profileMap.get(otherId);
+					const latest = latestBySession.get(session.id);
+					const latestReceived = latestReceivedBySession.get(session.id);
 					return {
 						id: session.id,
 						name: otherProfile?.display_name ?? "Unknown",
 						avatar: otherProfile?.avatar_url ?? undefined,
-						lastMessage: "",
+						lastMessage: latest?.content ?? "",
+						latestMessageAt: latest?.created_at ?? session.created_at,
+						latestReceivedAt: latestReceived?.created_at ?? null,
 						isPublic: otherProfile?.is_public ?? true,
 					} as ChatContact;
+				})
+				.sort((a, b) => {
+					const receivedA = a.latestReceivedAt
+						? new Date(a.latestReceivedAt).getTime()
+						: 0;
+					const receivedB = b.latestReceivedAt
+						? new Date(b.latestReceivedAt).getTime()
+						: 0;
+					if (receivedB !== receivedA) return receivedB - receivedA;
+
+					const latestA = a.latestMessageAt
+						? new Date(a.latestMessageAt).getTime()
+						: 0;
+					const latestB = b.latestMessageAt
+						? new Date(b.latestMessageAt).getTime()
+						: 0;
+					return latestB - latestA;
 				});
 		},
 		enabled: !!user,
@@ -113,6 +166,33 @@ export default function MessagesPage() {
 			queryKey: ["unread-messages-count", user.id],
 		});
 	}, [user, activeSessionId, messages.length, queryClient]);
+
+	useEffect(() => {
+		if (!user) return;
+		const channel = supabase
+			.channel(`chat-sessions-live:${user.id}`)
+			.on(
+				"postgres_changes",
+				{
+					event: "INSERT",
+					schema: "public",
+					table: "messages",
+				},
+				(payload) => {
+					const matchId = (payload.new as { match_id?: string }).match_id;
+					if (!matchId) return;
+					if (!contacts.some((contact) => contact.id === matchId)) return;
+					queryClient.invalidateQueries({
+						queryKey: ["chat-sessions", user.id],
+					});
+				},
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [user, contacts, queryClient]);
 
 	const handleSelectContact = (contactId: string) => {
 		setActiveSessionId(contactId);
@@ -190,7 +270,15 @@ export default function MessagesPage() {
 
 	return (
 		<>
-			<Card className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg">
+			<div className="mb-3">
+				<Button asChild variant="outline" size="sm" className="rounded-xl">
+					<Link href="/">
+						<IconArrowLeft className="mr-2 size-4" />
+						Back to Home
+					</Link>
+				</Button>
+			</div>
+			<div className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg rounded-xl">
 				<div className="flex h-full">
 					<div
 						className={`h-full border-r border-border/80 bg-card lg:block lg:w-80 ${
@@ -296,7 +384,7 @@ export default function MessagesPage() {
 						)}
 					</div>
 				</div>
-			</Card>
+			</div>
 		</>
 	);
 }

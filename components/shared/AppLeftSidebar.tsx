@@ -16,8 +16,8 @@ import {
 } from "@tabler/icons-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
-import { Button } from "../ui/button";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface AppLeftSidebarProps {
 	profile: UserProfile | null;
@@ -36,13 +36,13 @@ const navItems = [
 
 export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 	const user = useAuthStore((state) => state.user);
-	const { unreadCount } = useUnreadMessages();
-
 	const handleLogout = () => {
 		supabase.auth.signOut();
 		window.location.href = "/login";
 		return;
 	};
+	const { unreadCount } = useUnreadMessages();
+	const { unreadCount: unreadNotificationCount } = useNotifications();
 
 	const pathname = usePathname();
 	return (
@@ -84,6 +84,13 @@ export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 									{item.href === "/messages" && unreadCount > 0 && (
 										<span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
 											{unreadCount > 99 ? "99+" : unreadCount}
+										</span>
+									)}
+									{item.href === "/notify" && unreadNotificationCount > 0 && (
+										<span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
+											{unreadNotificationCount > 99
+												? "99+"
+												: unreadNotificationCount}
 										</span>
 									)}
 								</span>

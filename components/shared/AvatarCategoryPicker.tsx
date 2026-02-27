@@ -9,10 +9,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	AVATAR_CATEGORIES,
-	AvatarCategoryKey,
-} from "@/lib/avatar-options";
+import { AVATAR_CATEGORIES, AvatarCategoryKey } from "@/lib/avatar-options";
 
 interface AvatarCategoryPickerProps {
 	selectedCategory: AvatarCategoryKey;
@@ -56,18 +53,19 @@ export function AvatarCategoryPicker({
 						key={avatar.id}
 						type="button"
 						onClick={() => onAvatarSelect(avatar.src)}
-						className={`overflow-hidden rounded-xl border-2 transition ${
+						className={`size-20 overflow-hidden rounded-xl border-2 transition ${
 							selectedAvatar === avatar.src
 								? "border-primary"
 								: "border-transparent hover:border-border"
 						}`}
 					>
+						<span className="hidden sr-only">{avatar.label}</span>
 						<Image
 							src={avatar.src}
 							alt={avatar.label}
 							width={80}
 							height={80}
-							className="h-20 w-full bg-muted/50 object-cover"
+							className="w-full h-full bg-muted/50 object-cover"
 						/>
 					</button>
 				))}

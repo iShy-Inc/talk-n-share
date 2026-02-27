@@ -54,6 +54,31 @@ export const ADJECTIVES = [
 	"Lucky",
 	"Echo",
 	"Calm",
+	"Happy",
+	"Sad",
+	"Angry",
+	"Scared",
+	"Surprised",
+	"Excited",
+	"Bored",
+	"Tired",
+	"Hungry",
+	"Thirsty",
+	"Sleepy",
+	"Energetic",
+	"Calm",
+	"Happy",
+	"Sad",
+	"Angry",
+	"Scared",
+	"Surprised",
+	"Excited",
+	"Bored",
+	"Tired",
+	"Hungry",
+	"Thirsty",
+	"Sleepy",
+	"Energetic",
 ];
 
 export const NOUNS = [
@@ -69,11 +94,23 @@ export const NOUNS = [
 	"Raven",
 	"Whale",
 	"Falcon",
+	"Fox",
+	"Hawk",
+	"Otter",
+	"Panda",
+	"Tiger",
+	"Koala",
+	"Wolf",
+	"Comet",
+	"Breeze",
+	"Raven",
+	"Whale",
+	"Falcon",
 ];
 
-const randomInt = (max: number) => Math.floor(Math.random() * max);
+export const randomInt = (max: number) => Math.floor(Math.random() * max);
 
-const buildAnonymousNames = (taken: Set<string>, total = 12) => {
+export const buildAnonymousNames = (taken: Set<string>, total = 12) => {
 	const result = new Set<string>();
 	let attempts = 0;
 	while (result.size < total && attempts < 300) {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import Providers from "./providers";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeStyleProvider } from "@/components/theme-style-provider";
 import siteConfig from "@/configs/site";
 import { MobileDock } from "@/components/shared";
 
@@ -40,11 +41,13 @@ export default function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<Providers>
-						{children}
-						<MobileDock />
-						<Toaster position="bottom-right" />
-					</Providers>
+					<ThemeStyleProvider>
+						<Providers>
+							{children}
+							<MobileDock />
+							<Toaster position="bottom-right" />
+						</Providers>
+					</ThemeStyleProvider>
 				</ThemeProvider>
 			</body>
 		</html>

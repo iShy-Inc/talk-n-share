@@ -18,6 +18,8 @@ import { IconMessage } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 
 const supabase = createClient();
+const MIN_WAIT_SECONDS = 60;
+const POLL_INTERVAL_MS = 5000;
 
 type MatchStatus = "options" | "loading" | "active";
 
@@ -29,6 +31,10 @@ export default function MatchPage() {
 	const [sessionId, setSessionId] = useState<string | null>(null);
 	const [sessionData, setSessionData] = useState<ChatSession | null>(null);
 	const [partnerProfile, setPartnerProfile] = useState<any>(null);
+	const [pendingCriteria, setPendingCriteria] = useState<MatchCriteria | null>(
+		null,
+	);
+	const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
 	const { messages, sendMessage } = useChat(sessionId ?? "");
 
@@ -40,74 +46,110 @@ export default function MatchPage() {
 	}, [user, isLoadingProfile, profile, router]);
 
 	// Find a match
-	const handleStartMatch = async (criteria: MatchCriteria) => {
+	const handleStartMatch = (criteria: MatchCriteria) => {
 		if (!user) return;
+		setPendingCriteria(criteria);
+		setElapsedSeconds(0);
 		setStatus("loading");
+	};
 
-		try {
-			// Mock matching delay
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+	const handleCancelMatching = async () => {
+		if (!user) return;
+		await supabase.from("matching_queue").delete().eq("user_id", user.id);
+		setPendingCriteria(null);
+		setElapsedSeconds(0);
+		setStatus("options");
+		toast("Matching cancelled.");
+	};
 
-			// 1. Find a random user to match with (excluding self)
-			// In a real app, this would query a matching_queue table
-			const { data: profiles, error } = await supabase
+	useEffect(() => {
+		if (!user || status !== "loading" || !pendingCriteria) return;
+
+		let isDisposed = false;
+		const startedAt = Date.now();
+
+		const activateMatchedSession = async (matchedId: string) => {
+			const { data: session, error: sessionError } = await supabase
+				.from("matches")
+				.select("*")
+				.eq("id", matchedId)
+				.maybeSingle();
+			if (sessionError || !session) {
+				throw sessionError ?? new Error("Matched session not found");
+			}
+
+			const partnerId =
+				session.user1_id === user.id ? session.user2_id : session.user1_id;
+			const { data: partner, error: partnerError } = await supabase
 				.from("profiles")
 				.select("*")
-				.neq("id", user.id)
-				.limit(50); // Fetch a batch to pick random
+				.eq("id", partnerId)
+				.maybeSingle();
+			if (partnerError) throw partnerError;
 
-			if (error || !profiles || profiles.length === 0) {
-				toast.error("No matches found given your criteria. Try again!");
-				setStatus("options");
-				return;
-			}
-
-			// Filter by criteria locally for demo
-			let candidates = profiles;
-			if (criteria.type === "gender" && criteria.value !== "any") {
-				candidates = candidates.filter((p) => p.gender === criteria.value);
-			} else if (criteria.type === "location" && criteria.value !== "any") {
-				// Simulating location match based on region
-				// candidates = candidates.filter(...)
-			}
-
-			if (candidates.length === 0) {
-				toast.error("No matches found. Try broadening criteria.");
-				setStatus("options");
-				return;
-			}
-
-			const randomPartner =
-				candidates[Math.floor(Math.random() * candidates.length)];
-
-			// 2. Create a new chat session
-			// Schema requirements: type, status, is_revealed, user1_liked, user2_liked
-			const { data: session, error: createError } = await supabase
-				.from("matches")
-				.insert({
-					user1_id: user.id,
-					user2_id: randomPartner.id,
-					type: "match",
-					status: "active",
-					is_revealed: false,
-					user1_liked: false,
-					user2_liked: false,
-				})
-				.select()
-				.single();
-
-			if (createError) throw createError;
-
+			if (isDisposed) return;
 			setSessionId(session.id);
 			setSessionData(session as ChatSession);
-			setPartnerProfile(randomPartner);
+			setPartnerProfile(partner ?? null);
+			setPendingCriteria(null);
+			setElapsedSeconds(0);
 			setStatus("active");
-		} catch (err) {
-			console.error("Matching error:", err);
-			toast.error("Failed to start match.");
-			setStatus("options");
-		}
-	};
+		};
+
+		const tryFindMatch = async () => {
+			try {
+				const { data: matchedId, error: matchError } = await supabase.rpc(
+					"find_match_v2",
+					{
+						current_user_id: user.id,
+						p_gender: pendingCriteria.gender,
+						p_region: pendingCriteria.location,
+						p_zodiac: pendingCriteria.interests,
+					},
+				);
+				if (matchError) throw matchError;
+				if (matchedId) {
+					await activateMatchedSession(matchedId);
+				}
+			} catch (error) {
+				console.error("Matching error:", error);
+				if (isDisposed) return;
+				toast.error("Failed to match right now.");
+				setStatus("options");
+				setPendingCriteria(null);
+				setElapsedSeconds(0);
+			}
+		};
+
+		void tryFindMatch();
+
+		const pollId = window.setInterval(() => {
+			void tryFindMatch();
+		}, POLL_INTERVAL_MS);
+
+		const tickerId = window.setInterval(() => {
+			const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+			if (isDisposed) return;
+			setElapsedSeconds(elapsed);
+
+			if (elapsed >= MIN_WAIT_SECONDS) {
+				isDisposed = true;
+				void supabase.from("matching_queue").delete().eq("user_id", user.id);
+				toast("No match found in 60 seconds. Try again.");
+				setStatus("options");
+				setPendingCriteria(null);
+				setElapsedSeconds(0);
+				window.clearInterval(pollId);
+				window.clearInterval(tickerId);
+			}
+		}, 1000);
+
+		return () => {
+			isDisposed = true;
+			window.clearInterval(pollId);
+			window.clearInterval(tickerId);
+		};
+	}, [user, status, pendingCriteria]);
 
 	// Handle End Chat
 	const handleEndChat = async () => {
@@ -218,7 +260,11 @@ export default function MatchPage() {
 				)}
 
 				{status === "loading" && (
-					<MatchLoading onCancel={() => setStatus("options")} />
+					<MatchLoading
+						onCancel={handleCancelMatching}
+						elapsedSeconds={elapsedSeconds}
+						minWaitSeconds={MIN_WAIT_SECONDS}
+					/>
 				)}
 
 				{status === "active" && sessionData && user && (

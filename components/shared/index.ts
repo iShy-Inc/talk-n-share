@@ -12,6 +12,7 @@ export { SettingsLayout } from "./SettingsLayout";
 export type { SettingsMenuItem } from "./SettingsLayout";
 export { GeneralSettingsForm } from "./GeneralSettingsForm";
 export { AccountSettings } from "./AccountSettings";
+export { ThemeSettings } from "./ThemeSettings";
 export { MobileDock } from "./MobileDock";
 export { AppLeftSidebar } from "./AppLeftSidebar";
 export { AppRightSidebar } from "./AppRightSidebar";

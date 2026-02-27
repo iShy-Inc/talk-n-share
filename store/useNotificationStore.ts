@@ -1,13 +1,23 @@
 import { create } from "zustand";
 import { Notification } from "@/types/supabase";
 
+type NotificationSender = {
+	display_name: string | null;
+	avatar_url: string | null;
+};
+
+export type AppNotification = Notification & {
+	sender?: NotificationSender | null;
+};
+
 interface NotificationState {
-	notifications: Notification[];
+	notifications: AppNotification[];
 	unreadCount: number;
 	activeRecipientId: string | null;
-	addNotification: (notif: Notification) => void;
-	setNotifications: (list: Notification[]) => void;
+	upsertNotification: (notif: AppNotification) => void;
+	setNotifications: (list: AppNotification[]) => void;
 	markAsRead: (notificationId?: string) => void;
+	removeNotification: (notificationId: string) => void;
 	reset: () => void;
 }
 
@@ -15,15 +25,13 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 	notifications: [],
 	unreadCount: 0,
 	activeRecipientId: null,
-	addNotification: (notif) =>
+	upsertNotification: (notif) =>
 		set((state) => ({
-			notifications: [
+			notifications: [notif, ...state.notifications.filter((n) => n.id !== notif.id)],
+			unreadCount: [
 				notif,
 				...state.notifications.filter((n) => n.id !== notif.id),
-			],
-			unreadCount:
-				state.unreadCount +
-				(notif.is_read === false || notif.is_read === null ? 1 : 0),
+			].filter((n) => !n.is_read).length,
 		})),
 	setNotifications: (list) =>
 		set({
@@ -47,6 +55,16 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 				n.id === notificationId ? { ...n, is_read: true } : n,
 			);
 
+			return {
+				notifications,
+				unreadCount: notifications.filter((n) => !n.is_read).length,
+			};
+		}),
+	removeNotification: (notificationId) =>
+		set((state) => {
+			const notifications = state.notifications.filter(
+				(n) => n.id !== notificationId,
+			);
 			return {
 				notifications,
 				unreadCount: notifications.filter((n) => !n.is_read).length,

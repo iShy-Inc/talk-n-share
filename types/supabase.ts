@@ -392,6 +392,42 @@ export type Database = {
         }
         Relationships: []
       }
+      post_reposts: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reposter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reposter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reposter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reposts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reposts_reposter_id_fkey"
+            columns: ["reposter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -620,6 +656,7 @@ export type Match = Tables<"matches">
 export type MatchingQueue = Tables<"matching_queue">
 export type Message = Tables<"messages">
 export type Notification = Tables<"notifications">
+export type PostRepost = Tables<"post_reposts">
 export type Report = Tables<"reports">
 
 // Extended UI types with joined and computed fields used in app layer.

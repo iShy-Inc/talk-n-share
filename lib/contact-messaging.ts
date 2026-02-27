@@ -51,6 +51,7 @@ const notifyConversationStarted = async (
 	values: {
 		recipientId: string;
 		senderId: string;
+		sessionId: string;
 		senderDisplayName?: string | null;
 	},
 ) => {
@@ -58,9 +59,9 @@ const notifyConversationStarted = async (
 	await tryInsertNotification(supabase, {
 		recipient_id: values.recipientId,
 		sender_id: values.senderId,
-		link: "/messages",
+		link: `/messages?sessionId=${values.sessionId}`,
 		content: `${senderName} started a conversation with you.`,
-		reference_id: values.senderId,
+		reference_id: values.sessionId,
 	});
 };
 
@@ -118,6 +119,7 @@ export const startOrRequestConversation = async ({
 	await notifyConversationStarted(supabase, {
 		recipientId: targetUserId,
 		senderId: viewerId,
+		sessionId: newSession.id,
 		senderDisplayName: viewerDisplayName,
 	});
 	return { kind: "session_ready", sessionId: newSession.id };

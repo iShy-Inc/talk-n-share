@@ -7,6 +7,7 @@ interface MainLayoutProps {
 	children: ReactNode;
 	leftSidebar: ReactNode;
 	rightSidebar: ReactNode;
+	hideSidebars?: boolean;
 	className?: string;
 }
 
@@ -14,12 +15,14 @@ export function MainLayout({
 	children,
 	leftSidebar,
 	rightSidebar,
+	hideSidebars = false,
 	className,
 }: MainLayoutProps) {
 	return (
 		<div
 			className={cn(
-				"mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 pt-6 pb-24 lg:grid-cols-[260px_1fr_300px] lg:pb-6",
+				"mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 pt-6 pb-24 lg:pb-6",
+				hideSidebars ? "lg:max-w-5xl" : "lg:grid-cols-[260px_1fr_300px]",
 				className,
 			)}
 		>
