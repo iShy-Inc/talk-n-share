@@ -94,9 +94,9 @@ export default function PostsPage() {
 	};
 
 	return (
-		<div className="space-y-7">
-			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
-				<h1 className="text-2xl font-bold tracking-tight">Posts</h1>
+		<div className="animate-fade-up space-y-4 md:space-y-6">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm md:p-5">
+				<h1 className="text-xl font-bold tracking-tight md:text-2xl">Posts</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
 					Review published and pending posts in one cleaner moderation queue.
 				</p>
@@ -158,7 +158,106 @@ export default function PostsPage() {
 							</p>
 						</div>
 					) : (
-						<div className="overflow-x-auto">
+						<>
+							<div className="space-y-3 p-4 md:hidden">
+								{filteredPosts.map((post) => (
+									<div
+										key={post.id}
+										className="rounded-xl border border-border/60 bg-background/70 p-3"
+									>
+										<div className="flex items-start justify-between gap-2">
+											<div className="min-w-0">
+												<p className="line-clamp-2 text-sm">{post.content}</p>
+												<div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+													<span>{post.profiles?.display_name ?? "Anonymous"}</span>
+													<span>•</span>
+													<span>{formatDateDDMMYYYY(post.created_at)}</span>
+												</div>
+											</div>
+											<Badge
+												variant={
+													post.status === "approved" ? "default" : "destructive"
+												}
+											>
+												{post.status === "approved" ? "Đã duyệt" : "Pending"}
+											</Badge>
+										</div>
+										<div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+											<span className="flex items-center gap-1">
+												<IconHeart className="size-3.5" />
+												{post.likes_count}
+											</span>
+											<span className="flex items-center gap-1">
+												<IconMessage className="size-3.5" />
+												{post.comments_count}
+											</span>
+										</div>
+										{post.image_url && (
+											<div className="mt-2">
+												<img
+													src={post.image_url}
+													alt="Post preview"
+													className="h-32 w-full rounded-lg border border-border/60 object-cover"
+												/>
+											</div>
+										)}
+										<div className="mt-2 flex items-center justify-end gap-1">
+											{post.status !== "approved" && (
+												<Button
+													variant="ghost"
+													size="icon-sm"
+													onClick={() => handleApprove(post.id)}
+													title="Approve"
+													id={`approve-post-mobile-${post.id}`}
+												>
+													<IconCheck className="size-4 text-emerald-500" />
+												</Button>
+											)}
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												onClick={() => handleEdit(post)}
+												title="Edit"
+												id={`edit-post-mobile-${post.id}`}
+											>
+												<IconEdit className="size-4" />
+											</Button>
+											<AlertDialog>
+												<AlertDialogTrigger asChild>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														title="Delete"
+														id={`delete-post-mobile-${post.id}`}
+													>
+														<IconTrash className="size-4 text-destructive" />
+													</Button>
+												</AlertDialogTrigger>
+												<AlertDialogContent>
+													<AlertDialogHeader>
+														<AlertDialogTitle>Delete Post</AlertDialogTitle>
+														<AlertDialogDescription>
+															Are you sure you want to delete this post? This
+															action cannot be undone.
+														</AlertDialogDescription>
+													</AlertDialogHeader>
+													<AlertDialogFooter>
+														<AlertDialogCancel>Cancel</AlertDialogCancel>
+														<AlertDialogAction
+															variant="destructive"
+															onClick={() => handleDelete(post.id)}
+														>
+															Delete
+														</AlertDialogAction>
+													</AlertDialogFooter>
+												</AlertDialogContent>
+											</AlertDialog>
+										</div>
+									</div>
+								))}
+							</div>
+
+							<div className="hidden overflow-x-auto md:block">
 							<table className="w-full">
 								<thead>
 									<tr className="border-b border-border/50 bg-muted/30">
@@ -188,10 +287,17 @@ export default function PostsPage() {
 											<td className="max-w-xs px-6 py-4">
 												<p className="line-clamp-2 text-sm">{post.content}</p>
 												{post.image_url && (
-													<Badge variant="outline" className="mt-1 gap-1">
-														<IconPhoto className="size-3" />
-														Image
-													</Badge>
+													<div className="mt-2 space-y-2">
+														<Badge variant="outline" className="gap-1">
+															<IconPhoto className="size-3" />
+															Image
+														</Badge>
+														<img
+															src={post.image_url}
+															alt="Post preview"
+															className="h-20 w-32 rounded-md border border-border/60 object-cover"
+														/>
+													</div>
 												)}
 											</td>
 											<td className="px-6 py-4">
@@ -298,6 +404,7 @@ export default function PostsPage() {
 								</tbody>
 							</table>
 						</div>
+						</>
 					)}
 				</CardContent>
 			</Card>

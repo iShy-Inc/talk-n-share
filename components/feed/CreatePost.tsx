@@ -103,7 +103,7 @@ export function CreatePost() {
 	};
 
 	return (
-		<div className="mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+		<div className="animate-fade-up mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:shadow-md">
 			<form onSubmit={handleSubmit}>
 				<label htmlFor="image-upload" className="sr-only">
 					Tải ảnh lên
@@ -164,7 +164,7 @@ export function CreatePost() {
 								type="button"
 								onClick={handlePickImage}
 								disabled={isSubmitting}
-								className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+								className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:bg-muted hover:text-foreground"
 								title="Thêm ảnh"
 							>
 								<ImageIcon size={18} />
@@ -177,7 +177,7 @@ export function CreatePost() {
 									(post.content.trim().length === 0 && !selectedImageFile) ||
 									isSubmitting
 								}
-								className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+								className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								<span>{isSubmitting ? "Đang đăng..." : "Đăng"}</span>
 								<Send size={16} />

@@ -24,7 +24,7 @@ export function SettingsLayout({
 	children,
 }: SettingsLayoutProps) {
 	return (
-		<Card className="overflow-hidden border shadow-sm">
+		<Card className="overflow-hidden border shadow-sm py-0">
 			<CardHeader className="border-b border-border px-6 py-5">
 				<CardTitle className="text-lg">{title}</CardTitle>
 			</CardHeader>

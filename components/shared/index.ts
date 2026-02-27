@@ -19,3 +19,4 @@ export { AppLeftSidebar } from "./AppLeftSidebar";
 export { AppRightSidebar } from "./AppRightSidebar";
 export { MainLayout } from "./MainLayout";
 export { UserResultCard } from "./UserResultCard";
+export { SuggestedFriendsFacebookCard } from "./SuggestedFriendsFacebookCard";

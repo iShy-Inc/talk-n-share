@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -9,7 +9,18 @@ import {
 	IconX,
 	IconAlertTriangle,
 	IconUserCheck,
+	IconFlag3,
 } from "@tabler/icons-react";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -24,10 +35,14 @@ import {
 import type { Message } from "@/types/supabase";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
+import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
+import { toast } from "sonner";
 
 interface ActiveMatchChatProps {
 	messages: Message[];
 	currentUserId: string;
+	partnerUserId?: string;
 	partnerLiked: boolean;
 	userLiked: boolean;
 	isRevealed: boolean;
@@ -53,6 +68,76 @@ export function ActiveMatchChat({
 	onEndChat,
 }: ActiveMatchChatProps) {
 	const [showEndDialog, setShowEndDialog] = useState(false);
+	const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+	const [reportReason, setReportReason] = useState("harassment");
+	const [reportEvidenceUrl, setReportEvidenceUrl] = useState<string | null>(
+		null,
+	);
+	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+	const supabase = createClient();
+
+	const handleReportEvidenceSelected = async (
+		event: ChangeEvent<HTMLInputElement>,
+	) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+		if (!file.type.startsWith("image/")) {
+			toast.error("Vui lòng chọn file ảnh.");
+			return;
+		}
+
+		try {
+			setIsUploadingEvidence(true);
+			const { publicUrl } = await uploadFileToBucket({
+				bucket: STORAGE_BUCKETS.REPORT_EVIDENCE,
+				file,
+				ownerId: currentUserId,
+			});
+			setReportEvidenceUrl(publicUrl);
+			toast.success("Đã tải ảnh bằng chứng.");
+		} catch {
+			toast.error("Không thể tải ảnh bằng chứng.");
+		} finally {
+			setIsUploadingEvidence(false);
+			event.target.value = "";
+		}
+	};
+
+	const handleSubmitReport = async (event: FormEvent) => {
+		event.preventDefault();
+		if (!partnerUserId) {
+			toast.error("Không xác định được người cần báo cáo.");
+			return;
+		}
+		if (!reportEvidenceUrl) {
+			toast.error("Bắt buộc phải có ảnh bằng chứng.");
+			return;
+		}
+
+		try {
+			setIsSubmittingReport(true);
+			const { error } = await supabase.from("reports").insert({
+				reporter_id: currentUserId,
+				reported_user_id: partnerUserId,
+				target_type: "user",
+				target_id: null,
+				reason: reportReason,
+				status: "pending",
+				evidence_image_url: reportEvidenceUrl,
+			});
+			if (error) throw error;
+
+			toast.success("Đã gửi báo cáo người dùng.");
+			setIsReportDialogOpen(false);
+			setReportReason("harassment");
+			setReportEvidenceUrl(null);
+		} catch {
+			toast.error("Gửi báo cáo thất bại.");
+		} finally {
+			setIsSubmittingReport(false);
+		}
+	};
 
 	return (
 		<div className="flex h-full flex-col bg-background">
@@ -146,6 +231,16 @@ export function ActiveMatchChat({
 							</AlertDialogFooter>
 						</AlertDialogContent>
 					</AlertDialog>
+
+					<Button
+						size="sm"
+						variant="ghost"
+						className="text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+						onClick={() => setIsReportDialogOpen(true)}
+					>
+						<IconFlag3 className="mr-1 size-4" />
+						Báo cáo
+					</Button>
 				</div>
 			</div>
 
@@ -177,6 +272,82 @@ export function ActiveMatchChat({
 
 			{/* Input Area */}
 			<ChatInput onSend={onSendMessage} />
+
+			<Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+				<DialogContent className="sm:max-w-md">
+					<form onSubmit={handleSubmitReport} className="space-y-4">
+						<DialogHeader>
+							<DialogTitle>Báo cáo người dùng</DialogTitle>
+							<DialogDescription>
+								Vui lòng cung cấp lý do và ảnh bằng chứng. Ảnh bằng chứng là bắt
+								buộc.
+							</DialogDescription>
+						</DialogHeader>
+
+						<div className="space-y-2">
+							<Label htmlFor="match-report-reason">Lý do</Label>
+							<select
+								id="match-report-reason"
+								className="h-9 w-full rounded-4xl border border-input bg-input/30 px-3 text-sm outline-none focus-visible:border-ring"
+								value={reportReason}
+								onChange={(e) => setReportReason(e.target.value)}
+							>
+								<option value="harassment">Quấy rối</option>
+								<option value="hate_speech">Ngôn từ thù ghét</option>
+								<option value="sexual_content">Nội dung nhạy cảm</option>
+								<option value="threat">Đe dọa</option>
+								<option value="scam">Lừa đảo</option>
+								<option value="other">Khác</option>
+							</select>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="match-report-evidence">
+								Ảnh bằng chứng <span className="text-destructive">*</span>
+							</Label>
+							<Input
+								id="match-report-evidence"
+								type="file"
+								accept="image/*"
+								required
+								onChange={handleReportEvidenceSelected}
+							/>
+							{reportEvidenceUrl && (
+								<a
+									href={reportEvidenceUrl}
+									target="_blank"
+									rel="noreferrer"
+									className="text-xs font-medium text-primary underline underline-offset-2"
+								>
+									Xem ảnh đã tải lên
+								</a>
+							)}
+						</div>
+
+						<DialogFooter>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => setIsReportDialogOpen(false)}
+							>
+								Hủy
+							</Button>
+							<Button
+								type="submit"
+								disabled={
+									isUploadingEvidence ||
+									isSubmittingReport ||
+									!reportEvidenceUrl ||
+									!partnerUserId
+								}
+								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							>
+								Gửi báo cáo
+							</Button>
+						</DialogFooter>
+					</form>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

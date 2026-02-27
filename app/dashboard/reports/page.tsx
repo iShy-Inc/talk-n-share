@@ -86,9 +86,9 @@ export default function ReportsPage() {
 	};
 
 	return (
-		<div className="space-y-7">
-			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
-				<h1 className="text-2xl font-bold tracking-tight">Reports</h1>
+		<div className="animate-fade-up space-y-4 md:space-y-6">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm md:p-5">
+				<h1 className="text-xl font-bold tracking-tight md:text-2xl">Reports</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
 					Prioritize pending reports and resolve abuse faster.
 				</p>
@@ -154,7 +154,120 @@ export default function ReportsPage() {
 							</p>
 						</div>
 					) : (
-						<div className="overflow-x-auto">
+						<>
+							<div className="space-y-3 p-4 md:hidden">
+								{filteredReports.map((report) => {
+									const safeStatus: ReportStatus = report.status ?? "pending";
+									const TargetIcon = targetTypeIcons[report.target_type];
+									return (
+										<div
+											key={report.id}
+											className="rounded-xl border border-border/60 bg-background/70 p-3"
+										>
+											<div className="flex items-center justify-between gap-2">
+												<div>
+													<p className="text-sm font-semibold">
+														{report.reporter_name ?? "Unknown"}
+													</p>
+													<p className="text-xs text-muted-foreground">
+														{report.reporter_id}
+													</p>
+												</div>
+												<Badge
+													variant={
+														statusColors[safeStatus] as
+															| "default"
+															| "secondary"
+															| "destructive"
+															| "outline"
+													}
+													className="capitalize"
+												>
+													{safeStatus}
+												</Badge>
+											</div>
+											<div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+												<TargetIcon className="size-3.5" />
+												<span className="capitalize">{report.target_type}</span>
+												<span>•</span>
+												<span>{formatDateDDMMYYYY(report.created_at)}</span>
+											</div>
+											<p className="mt-2 text-sm font-medium">{report.reason}</p>
+											{report.description && (
+												<p className="mt-1 text-xs text-muted-foreground">
+													{report.description}
+												</p>
+											)}
+											{report.evidence_image_url && (
+												<a
+													href={report.evidence_image_url}
+													target="_blank"
+													rel="noreferrer"
+													className="mt-1 inline-block text-xs text-primary hover:underline"
+												>
+													View evidence
+												</a>
+											)}
+											<div className="mt-2 flex items-center justify-end gap-1">
+												{safeStatus === "pending" && (
+													<>
+														<Button
+															variant="ghost"
+															size="icon-sm"
+															onClick={() => handleResolve(report.id, "resolved")}
+															title="Resolve"
+															id={`resolve-report-mobile-${report.id}`}
+														>
+															<IconCheckbox className="size-4 text-emerald-500" />
+														</Button>
+														<Button
+															variant="ghost"
+															size="icon-sm"
+															onClick={() => handleResolve(report.id, "dismissed")}
+															title="Dismiss"
+															id={`dismiss-report-mobile-${report.id}`}
+														>
+															<IconEyeOff className="size-4 text-amber-500" />
+														</Button>
+													</>
+												)}
+												<AlertDialog>
+													<AlertDialogTrigger asChild>
+														<Button
+															variant="ghost"
+															size="icon-sm"
+															title="Delete"
+															id={`delete-report-mobile-${report.id}`}
+														>
+															<IconTrash className="size-4 text-destructive" />
+														</Button>
+													</AlertDialogTrigger>
+													<AlertDialogContent>
+														<AlertDialogHeader>
+															<AlertDialogTitle>Delete Report</AlertDialogTitle>
+															<AlertDialogDescription>
+																Are you sure you want to delete this report? This
+																action cannot be undone.
+															</AlertDialogDescription>
+														</AlertDialogHeader>
+														<AlertDialogFooter>
+															<AlertDialogCancel>Cancel</AlertDialogCancel>
+															<AlertDialogAction
+																variant="destructive"
+																onClick={() => handleDelete(report.id)}
+															>
+																Delete
+															</AlertDialogAction>
+														</AlertDialogFooter>
+													</AlertDialogContent>
+												</AlertDialog>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+
+							<div className="hidden overflow-x-auto md:block">
 							<table className="w-full">
 								<thead>
 									<tr className="border-b border-border/50 bg-muted/30">
@@ -311,6 +424,7 @@ export default function ReportsPage() {
 								</tbody>
 							</table>
 						</div>
+						</>
 					)}
 				</CardContent>
 			</Card>

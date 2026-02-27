@@ -22,7 +22,7 @@ export function CommentItem({
 	onReply,
 }: CommentItemProps) {
 	return (
-		<div className="flex gap-3 rounded-xl bg-muted/50 p-4">
+		<div className="flex gap-3 rounded-xl border border-border/70 bg-card p-4">
 			{authorAvatar ? (
 				<img
 					src={authorAvatar}
@@ -43,13 +43,13 @@ export function CommentItem({
 							Tác giả
 						</span>
 					)}
-					<span className="ml-auto text-xs text-muted-foreground">
+					<span className="ml-auto text-xs text-foreground/70">
 						{timeAgo}
 					</span>
 				</div>
 
 				{authorRole && (
-					<span className="mt-0.5 block text-xs text-muted-foreground">
+					<span className="mt-0.5 block text-xs text-foreground/70">
 						{authorRole}
 					</span>
 				)}

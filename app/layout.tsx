@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeStyleProvider } from "@/components/theme-style-provider";
 import siteConfig from "@/configs/site";
 import { MobileDock } from "@/components/shared";
+import { RouteProgressBar } from "@/components/shared/RouteProgressBar";
+import { ScrollToTopButton } from "@/components/shared/ScrollToTopButton";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -43,7 +45,9 @@ export default function RootLayout({
 				>
 					<ThemeStyleProvider>
 						<Providers>
+							<RouteProgressBar />
 							{children}
+							<ScrollToTopButton />
 							<MobileDock />
 							<Toaster position="bottom-right" />
 						</Providers>

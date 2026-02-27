@@ -9,33 +9,43 @@ import {
 	IconBell,
 	IconSearch,
 	IconSparkles,
-	IconLogout,
+	IconMoon,
+	IconSun,
+	IconLayoutDashboard,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/useAuthStore";
-import { createClient } from "@/utils/supabase/client";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNotifications } from "@/hooks/useNotifications";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import { useAuthStore } from "@/store/useAuthStore";
+import { createClient } from "@/utils/supabase/client";
+import { IconLogout } from "@tabler/icons-react";
+import useProfile from "@/hooks/useProfile";
 
 const navItems = [
-	{ label: "Trang chủ", href: "/", icon: IconHome },
-	{ label: "Hồ sơ", href: "/profile", icon: IconUser },
-	{ label: "Tin nhắn", href: "/messages", icon: IconMessage },
-	{ label: "Thông báo", href: "/notify", icon: IconBell },
-	{ label: "Tìm kiếm", href: "/search", icon: IconSearch },
-	{ label: "Ghép đôi", href: "/match", icon: IconSparkles },
+	{ href: "/", icon: IconHome, key: "home" },
+	{ href: "/search", icon: IconSearch, key: "search" },
+	{ href: "/match", icon: IconSparkles, key: "match" },
+	{ href: "/messages", icon: IconMessage, key: "messages" },
+	{ href: "/notify", icon: IconBell, key: "notify" },
+	{ href: "/profile", icon: IconUser, key: "profile" },
 ];
-const supabase = createClient();
 
 export function MobileDock() {
 	const pathname = usePathname();
 	const user = useAuthStore((state) => state.user);
+	const { profile } = useProfile();
 	const { unreadCount: unreadMessageCount } = useUnreadMessages();
 	const { unreadCount: unreadNotificationCount } = useNotifications();
-	const handleLogout = () => {
-		supabase.auth.signOut();
+	const { theme, resolvedTheme, setTheme } = useTheme();
+	const isDark = (resolvedTheme ?? theme) === "dark";
+	const canAccessDashboard = profile?.role === "admin" || profile?.role === "moder";
+	const supabase = createClient();
+
+	const handleLogout = async () => {
+		await supabase.auth.signOut();
 		window.location.href = "/login";
-		return;
 	};
 	// Don't show on auth pages or dashboard
 	if (
@@ -48,8 +58,52 @@ export function MobileDock() {
 	}
 
 	return (
-		<div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
-			<nav className="flex items-center justify-around rounded-2xl border border-border/50 bg-background/80 p-2 shadow-lg backdrop-blur-md">
+		<div className="fixed bottom-0 left-0 right-0 z-50 animate-fade-in-soft lg:hidden">
+			<div className="pointer-events-none mx-auto w-full max-w-xl px-4">
+				{user && (
+					<Button
+						type="button"
+						size="sm"
+						variant="secondary"
+						onClick={handleLogout}
+						className="pointer-events-auto fixed right-4 top-4 z-[60] rounded-full border border-border/80 bg-background/95 px-3 text-red-600 shadow-md backdrop-blur"
+						title="Đăng xuất"
+					>
+						<IconLogout className="size-5" />
+						<span className="ml-1 text-xs font-semibold">Đăng xuất</span>
+					</Button>
+				)}
+				<Button
+					type="button"
+					size="icon"
+					variant="secondary"
+					onClick={() => setTheme(isDark ? "light" : "dark")}
+						className="pointer-events-auto absolute bottom-20 right-4 z-[60] rounded-full border border-border/80 shadow-md animate-glow-pulse"
+					title={isDark ? "Chuyển sang sáng" : "Chuyển sang tối"}
+				>
+					{isDark ? (
+						<IconSun className="size-5" />
+					) : (
+						<IconMoon className="size-5" />
+					)}
+				</Button>
+				{user && canAccessDashboard && (
+					<Button
+						asChild
+						type="button"
+						size="icon"
+						variant="secondary"
+						className="pointer-events-auto absolute bottom-20 left-4 z-[60] rounded-full border border-border/80 shadow-md animate-glow-pulse"
+						title="Dashboard quản trị"
+					>
+						<Link href="/dashboard">
+							<IconLayoutDashboard className="size-5" />
+						</Link>
+					</Button>
+				)}
+			</div>
+			<div className="border-t border-border/70 bg-background/95 backdrop-blur">
+			<nav className="mx-auto flex h-16 w-full max-w-xl items-center justify-around px-1">
 				{navItems.map((item) => {
 					const isActive =
 						pathname === item.href ||
@@ -57,37 +111,29 @@ export function MobileDock() {
 
 					return (
 						<Link
-							key={item.href}
+							key={item.key}
 							href={item.href}
 							className={cn(
-								"relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs font-medium transition-all duration-300",
+								"relative flex size-11 items-center justify-center rounded-full transition-all duration-300",
 								isActive
-									? "bg-primary/10 text-primary"
-									: "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+									? "bg-primary/10 text-foreground"
+									: "text-foreground/70 hover:bg-accent hover:text-foreground",
 							)}
 						>
 							<item.icon
 								className={cn(
 									"size-6 transition-transform",
-									isActive && "scale-110",
+									isActive && "scale-105",
 								)}
-								stroke={isActive ? 2.5 : 2}
+								stroke={isActive ? 2.6 : 2.2}
 							/>
-							<span
-								className={cn(
-									"text-[10px]",
-									isActive ? "font-semibold" : "font-normal",
-								)}
-							>
-								{item.label}
-							</span>
 							{item.href === "/messages" && unreadMessageCount > 0 && (
-								<span className="absolute right-2 top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+								<span className="absolute right-0 top-0 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
 									{unreadMessageCount > 99 ? "99+" : unreadMessageCount}
 								</span>
 							)}
 							{item.href === "/notify" && unreadNotificationCount > 0 && (
-								<span className="absolute right-2 top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+								<span className="absolute right-0 top-0 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
 									{unreadNotificationCount > 99
 										? "99+"
 										: unreadNotificationCount}
@@ -96,17 +142,8 @@ export function MobileDock() {
 						</Link>
 					);
 				})}
-				{user && (
-					<Link
-						href="#"
-						onClick={handleLogout}
-						className="text-red-500 hover:text-red-600 flex flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-2 text-xs font-medium transition-all duration-300"
-					>
-						<IconLogout className="size-5" />
-						Đăng xuất
-					</Link>
-				)}
 			</nav>
+			</div>
 		</div>
 	);
 }

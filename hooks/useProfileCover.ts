@@ -37,32 +37,29 @@ const getSeedNumber = (value: string) => {
 
 export const useProfileCover = () => {
 	const user = useAuthStore((state) => state.user);
-	const activeSession = useAuthStore((state) => state.activeSession);
+	const userKey = user?.id ?? "guest";
 	const bumpCoverNonce = useProfileCoverStore((state) => state.bumpCoverNonce);
-	const sessionKey = `${user?.id ?? "guest"}-${activeSession?.refresh_token ?? "anon"}`;
 	const refreshNonce = useProfileCoverStore(
-		(state) => state.coverNonceBySession[sessionKey] ?? 0,
+		(state) => state.coverNonceByUser[userKey] ?? 0,
 	);
 
-	const sessionSignature = `${sessionKey}-${refreshNonce}`;
 	const fallbackCoverUrl = useMemo(() => {
-		const seed = getSeedNumber(sessionSignature);
+		const seed = getSeedNumber(`${userKey}-${refreshNonce}`);
 		return FALLBACK_COVER_IMAGES[seed % FALLBACK_COVER_IMAGES.length];
-	}, [sessionSignature]);
-	const coverUrl = fallbackCoverUrl;
-	const activeCoverUrl = coverUrl;
+	}, [userKey, refreshNonce]);
 
 	const refreshCover = () => {
-		bumpCoverNonce(sessionKey);
+		bumpCoverNonce(userKey);
 	};
 
 	const markCoverAsFailed = () => {
-		// No-op: cover now always uses fallback pool URLs.
+		// Auto-fallback to another persisted cover when a URL fails.
+		bumpCoverNonce(userKey);
 	};
 
 	return {
-		coverUrl,
-		activeCoverUrl,
+		coverUrl: fallbackCoverUrl,
+		activeCoverUrl: fallbackCoverUrl,
 		refreshCover,
 		markCoverAsFailed,
 	};

@@ -32,7 +32,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 
 	const interestOptions = useMemo(() => {
 		const zodiacs = [
-			"Bạch Dương",
+			"Aries",
 			"Taurus",
 			"Gemini",
 			"Cancer",
@@ -65,19 +65,19 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 					<IconUsers className="size-10 text-primary" />
 				</div>
 				<h2 className="text-2xl font-bold">Tìm người phù hợp</h2>
-				<p className="max-w-md text-muted-foreground">
+				<p className="max-w-md text-foreground/75">
 					Kết nối ẩn danh với người phù hợp theo tiêu chí của bạn.
 				</p>
 			</div>
 
 			<div className="w-full max-w-sm space-y-4">
-				<div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
+				<div className="grid grid-cols-3 gap-2 rounded-lg bg-accent p-1">
 					<button
 						onClick={() => setCriteriaType("gender")}
 						className={`flex flex-col items-center justify-center rounded-md p-2 text-xs font-medium transition-all ${
 							criteriaType === "gender"
 								? "bg-background text-foreground shadow-sm"
-								: "text-muted-foreground hover:text-foreground"
+								: "text-foreground/70 hover:text-foreground"
 						}`}
 					>
 						<IconUsers className="mb-1 size-5" />
@@ -88,7 +88,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 						className={`flex flex-col items-center justify-center rounded-md p-2 text-xs font-medium transition-all ${
 							criteriaType === "location"
 								? "bg-background text-foreground shadow-sm"
-								: "text-muted-foreground hover:text-foreground"
+								: "text-foreground/70 hover:text-foreground"
 						}`}
 					>
 						<IconMapPin className="mb-1 size-5" />
@@ -99,7 +99,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 						className={`flex flex-col items-center justify-center rounded-md p-2 text-xs font-medium transition-all ${
 							criteriaType === "zodiac"
 								? "bg-background text-foreground shadow-sm"
-								: "text-muted-foreground hover:text-foreground"
+								: "text-foreground/70 hover:text-foreground"
 						}`}
 					>
 						<IconSparkles className="mb-1 size-5" />
@@ -158,16 +158,18 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 						className={`rounded-md border px-2 py-1.5 text-center ${
 							gender
 								? "border-primary/40 bg-primary/10 text-foreground"
-								: "text-muted-foreground"
+								: "text-foreground/65"
 						}`}
 					>
-						{gender ? `Giới tính: ${gender}` : "Giới tính: chưa chọn"}
+						{gender
+							? `Giới tính: ${gender.charAt(0).toUpperCase() + gender.slice(1)}`
+							: "Giới tính: chưa chọn"}
 					</div>
 					<div
 						className={`rounded-md border px-2 py-1.5 text-center ${
 							location
 								? "border-primary/40 bg-primary/10 text-foreground"
-								: "text-muted-foreground"
+								: "text-foreground/65"
 						}`}
 					>
 						{location ? `Khu vực: ${location}` : "Khu vực: chưa chọn"}
@@ -176,7 +178,7 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 						className={`rounded-md border px-2 py-1.5 text-center ${
 							zodiac
 								? "border-primary/40 bg-primary/10 text-foreground"
-								: "text-muted-foreground"
+								: "text-foreground/65"
 						}`}
 					>
 						{zodiac ? `Cung hoàng đạo: ${zodiac}` : "Cung hoàng đạo: chưa chọn"}

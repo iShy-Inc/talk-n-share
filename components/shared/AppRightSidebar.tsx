@@ -14,7 +14,7 @@ export function AppRightSidebar({
 	className,
 }: AppRightSidebarProps) {
 	return (
-		<aside className={cn("hidden lg:block", className)}>
+		<aside className={cn("hidden animate-fade-up animate-delay-1 lg:block", className)}>
 			<div className="sticky top-6 space-y-4">
 				<SuggestedFriends friends={suggestedFriends} />
 				<SidebarFooter />

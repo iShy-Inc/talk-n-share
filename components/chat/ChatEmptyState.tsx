@@ -1,6 +1,6 @@
 "use client";
 
-import { IconInbox, IconPencil } from "@tabler/icons-react";
+import { IconMessageCircle2, IconPencil } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatEmptyStateProps {
@@ -9,19 +9,19 @@ interface ChatEmptyStateProps {
 
 export function ChatEmptyState({ onNewMessage }: ChatEmptyStateProps) {
 	return (
-		<div className="flex h-full flex-1 items-center justify-center bg-card">
+		<div className="flex h-full flex-1 items-center justify-center bg-muted/20">
 			<div className="max-w-sm text-center">
-				<div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-					<IconInbox className="size-8 text-primary/60" />
+				<div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-[#0084ff]/15">
+					<IconMessageCircle2 className="size-8 text-[#0084ff]" />
 				</div>
-				<h4 className="text-lg font-semibold text-foreground">Tin nhắn của bạn</h4>
+				<h4 className="text-lg font-semibold text-foreground">Chọn một đoạn chat</h4>
 				<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-					Chọn một người để xem đoạn chat hoặc bắt đầu cuộc trò chuyện mới.
+					Mở cuộc trò chuyện có sẵn hoặc bắt đầu nhắn tin với người mới.
 				</p>
 				{onNewMessage && (
 					<Button
 						onClick={onNewMessage}
-						className="mt-6 rounded-full px-6"
+						className="mt-6 rounded-full bg-[#0084ff] px-6 hover:bg-[#0b74dd]"
 						id="new-message-btn"
 					>
 						<IconPencil className="mr-2 size-4" />

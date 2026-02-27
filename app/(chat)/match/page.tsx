@@ -14,7 +14,7 @@ import {
 import { useChat } from "@/hooks/useChat";
 import { ChatSession } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
-import { IconMessage } from "@tabler/icons-react";
+import { IconHome, IconMessage } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 const supabase = createClient();
@@ -240,20 +240,29 @@ export default function MatchPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background p-4 md:p-8">
 			<div className="relative mx-auto h-[600px] w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-				{/* Top Bar for navigation if not in active chat */}
-				{status !== "active" && (
-					<div className="absolute top-4 right-4 z-10">
+				<div className="pointer-events-none absolute left-0 right-0 top-4 z-10 flex items-center justify-between px-4">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => router.push("/")}
+						className="pointer-events-auto text-muted-foreground hover:text-foreground"
+					>
+						<IconHome className="mr-2 size-4" />
+						Trang chủ
+					</Button>
+
+					{status !== "active" && (
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={goToHistory}
-							className="text-muted-foreground hover:text-foreground"
+							className="pointer-events-auto text-muted-foreground hover:text-foreground"
 						>
 							<IconMessage className="mr-2 size-4" />
 							Lịch sử
 						</Button>
-					</div>
-				)}
+					)}
+				</div>
 
 				{status === "options" && (
 					<MatchOptions onStartMatch={handleStartMatch} />
@@ -271,6 +280,11 @@ export default function MatchPage() {
 					<ActiveMatchChat
 						messages={messages}
 						currentUserId={user.id}
+						partnerUserId={
+							user.id === sessionData.user1_id
+								? sessionData.user2_id
+								: sessionData.user1_id
+						}
 						partnerLiked={
 							user.id === sessionData.user1_id
 								? (sessionData.user2_liked ?? false)

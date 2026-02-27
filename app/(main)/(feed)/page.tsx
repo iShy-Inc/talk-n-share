@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePosts } from "@/hooks/usePosts";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -10,12 +10,22 @@ import { FeedEngagementCard } from "@/components/feed/FeedEngagementCard";
 import { StoryIdeasSection } from "@/components/feed/StoryIdeasSection";
 import { PostCard } from "@/components/feed/PostCard";
 import { CommentList, CommentData } from "@/components/feed/CommentList";
+import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
+import { SuggestedFriendsFacebookCard } from "@/components/shared/SuggestedFriendsFacebookCard";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 
 const supabase = createClient();
+
+const hashString = (input: string) => {
+	let hash = 0;
+	for (let i = 0; i < input.length; i += 1) {
+		hash = (hash * 31 + input.charCodeAt(i)) % 2147483647;
+	}
+	return Math.abs(hash);
+};
 
 export default function FeedPage() {
 	const user = useAuthStore((state) => state.user);
@@ -58,6 +68,95 @@ export default function FeedPage() {
 		});
 	};
 
+	const { data: suggestedFriends = [] } = useQuery({
+		queryKey: [
+			"feed-inline-suggested-friends",
+			user?.id,
+			profile?.location,
+			profile?.gender,
+			profile?.zodiac,
+			profile?.relationship,
+		],
+		queryFn: async () => {
+			if (!user) return [];
+			const { data, error } = await supabase
+				.from("profiles")
+				.select("id, display_name, avatar_url, location, gender, zodiac, relationship")
+				.eq("is_public", true)
+				.neq("id", user.id)
+				.limit(40);
+			if (error) throw error;
+
+			const current = {
+				location: profile?.location ?? null,
+				gender: profile?.gender ?? null,
+				zodiac: profile?.zodiac ?? null,
+				relationship: profile?.relationship ?? null,
+			};
+
+			return (data ?? [])
+				.map((u: any) => {
+					let commonCount = 0;
+					if (current.location && u.location === current.location) commonCount += 1;
+					if (current.gender && u.gender === current.gender) commonCount += 1;
+					if (current.zodiac && u.zodiac === current.zodiac) commonCount += 1;
+					if (
+						current.relationship &&
+						u.relationship === current.relationship
+					) {
+						commonCount += 1;
+					}
+					return { ...u, commonCount };
+				})
+				.filter((u: any) => u.commonCount > 0)
+				.sort((a: any, b: any) => b.commonCount - a.commonCount)
+				.slice(0, 4)
+				.map((u: any) => ({
+					id: u.id,
+					name: u.display_name ?? "Người dùng",
+					title: u.location ?? "Thành viên Talk N Share",
+					avatar: u.avatar_url ?? undefined,
+				})) as SuggestedFriend[];
+		},
+		enabled: !!user && !!profile,
+	});
+
+	const inlineSuggestedInsertIndex = useMemo(() => {
+		if (posts.length < 3) return null;
+		const min = Math.max(1, Math.floor(posts.length * 0.35));
+		const max = Math.max(min, Math.floor(posts.length * 0.7));
+		const seedSource = `${user?.id ?? "guest"}-${posts
+			.slice(0, 3)
+			.map((p) => p.id)
+			.join("-")}`;
+		const hashed = hashString(seedSource);
+		return min + (hashed % (max - min + 1));
+	}, [posts, user?.id]);
+
+	const shouldShowInlineSuggested =
+		user && suggestedFriends.length > 0 && inlineSuggestedInsertIndex !== null;
+
+	const postItemsWithInlineSuggested = useMemo(() => {
+		if (!shouldShowInlineSuggested) {
+			return posts.map((post) => ({ type: "post" as const, post }));
+		}
+
+		return posts.flatMap((post, index) => {
+			const items: Array<
+				| { type: "post"; post: (typeof posts)[number] }
+				| { type: "suggested" }
+			> = [{ type: "post", post }];
+
+			if (
+				inlineSuggestedInsertIndex !== null &&
+				index === Math.min(inlineSuggestedInsertIndex, posts.length - 1)
+			) {
+				items.push({ type: "suggested" });
+			}
+			return items;
+		});
+	}, [posts, shouldShowInlineSuggested, inlineSuggestedInsertIndex]);
+
 	return (
 		<>
 			{user ? (
@@ -89,40 +188,54 @@ export default function FeedPage() {
 				</div>
 			)}
 
-			{posts.map((post) => (
-				<div key={post.id}>
-					<PostCard post={post} />
+			{postItemsWithInlineSuggested.map((item, idx) => {
+				if (item.type === "suggested") {
+					return (
+						<div key={`inline-suggested-${idx}`} className="my-2">
+							<SuggestedFriendsFacebookCard
+								friends={suggestedFriends}
+								className="md:hidden"
+							/>
+						</div>
+					);
+				}
 
-					{/* Comment toggle */}
-					<div className="px-1">
-						{expandedPostId === post.id ? (
-							<div className="mt-2 rounded-xl border border-border bg-card p-4">
-								<CommentList
-									comments={comments}
-									currentUserAvatar={profile?.avatar_url ?? undefined}
-									onSubmitComment={handleAddComment}
-									onReply={() => {}}
-								/>
-								<button
-									onClick={() => setExpandedPostId(null)}
-									className="mt-3 text-xs text-muted-foreground hover:text-foreground"
-								>
-									Ẩn bình luận
-								</button>
-							</div>
-						) : (
-							(post.comments_count ?? 0) > 0 && (
-								<button
-									onClick={() => setExpandedPostId(post.id)}
-									className="mt-1 text-xs text-muted-foreground hover:text-foreground"
-								>
-									Xem {post.comments_count} bình luận
-								</button>
-							)
-						)}
+				const post = item.post;
+				return (
+					<div key={post.id}>
+						<PostCard post={post} />
+
+						{/* Comment toggle */}
+						<div className="px-1">
+							{expandedPostId === post.id ? (
+								<div className="mt-2 rounded-xl border border-border bg-card p-4">
+									<CommentList
+										comments={comments}
+										currentUserAvatar={profile?.avatar_url ?? undefined}
+										onSubmitComment={handleAddComment}
+										onReply={() => {}}
+									/>
+									<button
+										onClick={() => setExpandedPostId(null)}
+										className="mt-3 text-xs text-muted-foreground hover:text-foreground"
+									>
+										Ẩn bình luận
+									</button>
+								</div>
+							) : (
+								(post.comments_count ?? 0) > 0 && (
+									<button
+										onClick={() => setExpandedPostId(post.id)}
+										className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+									>
+										Xem {post.comments_count} bình luận
+									</button>
+								)
+							)}
+						</div>
 					</div>
-				</div>
-			))}
+				);
+			})}
 
 			{hasNextPage && (
 				<div className="flex justify-center py-4">

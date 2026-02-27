@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { IconSend } from "@tabler/icons-react";
+import {
+	IconCirclePlus,
+	IconMoodSmile,
+	IconSend,
+	IconSticker2,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -34,7 +39,16 @@ export function ChatInput({
 	};
 
 	return (
-		<div className="flex items-center gap-3 border-t border-border px-4 py-3">
+		<div className="flex items-center gap-2 border-t border-border/70 bg-card px-3 py-2.5">
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				className="shrink-0 rounded-full text-primary"
+				disabled={disabled}
+			>
+				<IconCirclePlus className="size-5" />
+			</Button>
 			{avatarUrl && (
 				<img
 					src={avatarUrl}
@@ -48,14 +62,32 @@ export function ChatInput({
 				onKeyDown={handleKeyDown}
 				placeholder={placeholder}
 				disabled={disabled}
-				className="rounded-full"
+				className="h-10 rounded-full border-0 bg-muted"
 				id="chat-message-input"
 			/>
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				className="shrink-0 rounded-full text-primary"
+				disabled={disabled}
+			>
+				<IconMoodSmile className="size-5" />
+			</Button>
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				className="shrink-0 rounded-full text-primary"
+				disabled={disabled}
+			>
+				<IconSticker2 className="size-5" />
+			</Button>
 			<Button
 				onClick={handleSend}
 				disabled={!message.trim() || disabled}
 				size="icon"
-				className="shrink-0 rounded-full"
+				className="shrink-0 rounded-full bg-[#0084ff] hover:bg-[#0b74dd]"
 				id="chat-send-btn"
 			>
 				<IconSend className="size-4" />

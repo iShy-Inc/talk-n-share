@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useDashboardStats } from "@/hooks/useDashboard";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import {
@@ -74,17 +75,19 @@ export default function DashboardPage() {
 	];
 
 	return (
-		<div className="space-y-7">
+		<div className="animate-fade-up space-y-4 md:space-y-6">
 			{/* Page Title */}
-			<div className="rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm backdrop-blur-sm">
-				<h1 className="text-2xl font-bold tracking-tight">Trung tâm vận hành</h1>
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm backdrop-blur-sm md:p-6">
+				<h1 className="text-xl font-bold tracking-tight md:text-2xl">
+					Trung tâm vận hành
+				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
 					A clean overview of platform health, moderation load, and key actions.
 				</p>
 			</div>
 
 			{/* Stats Grid */}
-			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 				{statCards.map((card) => (
 					<Card
 						key={card.label}
@@ -94,10 +97,10 @@ export default function DashboardPage() {
 						<CardContent className="relative p-6">
 							<div className="flex items-center justify-between">
 								<div>
-									<p className="text-sm font-medium text-muted-foreground">
+									<p className="text-xs font-medium text-muted-foreground sm:text-sm">
 										{card.label}
 									</p>
-									<p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+									<p className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
 										{isLoading ? (
 											<span className="inline-block h-9 w-16 animate-pulse rounded-lg bg-muted" />
 										) : (
@@ -189,7 +192,7 @@ export default function DashboardPage() {
 								(action) => !(isModer && action.href === "/dashboard/users"),
 							)
 							.map((action) => (
-								<a
+								<Link
 									key={action.label}
 									href={action.href}
 									className="group flex flex-col gap-2 rounded-2xl border border-border/50 p-4 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
@@ -203,7 +206,7 @@ export default function DashboardPage() {
 											{action.desc}
 										</p>
 									</div>
-								</a>
+								</Link>
 							))}
 					</div>
 				</CardContent>

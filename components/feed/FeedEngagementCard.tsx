@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { IconCompass, IconMessageCircleQuestion, IconSparkles } from "@tabler/icons-react";
+import {
+	IconCompass,
+	IconHeartHandshake,
+	IconMessageCircleQuestion,
+	IconSparkles,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
 const PROMPTS = [
@@ -28,6 +33,16 @@ export function FeedEngagementCard() {
 			</div>
 
 			<div className="mt-3 flex flex-wrap gap-2">
+				<Button
+					asChild
+					size="sm"
+					className="rounded-full bg-red-600 text-white hover:bg-red-700"
+				>
+					<Link href="/support">
+						<IconHeartHandshake className="mr-1.5 size-4" />
+						Cần hỗ trợ ngay
+					</Link>
+				</Button>
 				<Button asChild size="sm" variant="secondary" className="rounded-full">
 					<Link href="/search">
 						<IconCompass className="mr-1.5 size-4" />

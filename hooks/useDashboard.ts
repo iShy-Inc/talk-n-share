@@ -102,10 +102,14 @@ export const useDashboardComments = () => {
 		queryFn: async () => {
 			const { data, error } = await supabase
 				.from("comments")
-				.select("*")
+				.select("*, profiles!comments_author_id_fkey(display_name, avatar_url)")
 				.order("created_at", { ascending: false });
 			if (error) throw error;
-			return (data ?? []) as CommentWithAuthor[];
+			return (data ?? []).map((comment: any) => ({
+				...comment,
+				author_name: comment.profiles?.display_name ?? null,
+				author_avatar: comment.profiles?.avatar_url ?? null,
+			})) as CommentWithAuthor[];
 		},
 	});
 

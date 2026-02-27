@@ -8,8 +8,10 @@ import {
 	Flag,
 	Trash2,
 	Pencil,
+	X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,6 +93,7 @@ type ThreadComment = BaseCommentData & {
 
 const COMMENTS_PAGE_SIZE = 20;
 const POST_PREVIEW_CHAR_LIMIT = 280;
+const POST_DIALOG_PREVIEW_CHAR_LIMIT = 900;
 
 export function PostCard({ post }: PostCardProps) {
 	const user = useAuthStore((state) => state.user);
@@ -119,6 +122,7 @@ export function PostCard({ post }: PostCardProps) {
 	const [isReposting, setIsReposting] = useState(false);
 	const [isReposted, setIsReposted] = useState(false);
 	const [isContentExpanded, setIsContentExpanded] = useState(false);
+	const [isDialogContentExpanded, setIsDialogContentExpanded] = useState(false);
 	const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
@@ -184,7 +188,9 @@ export function PostCard({ post }: PostCardProps) {
 			const to = from + COMMENTS_PAGE_SIZE - 1;
 			const { data, error } = await supabase
 				.from("comments")
-				.select("id, parent_id, content, created_at, profiles(display_name, avatar_url)")
+				.select(
+					"id, parent_id, content, created_at, profiles(display_name, avatar_url)",
+				)
 				.eq("post_id", post.id)
 				.order("created_at", { ascending: true })
 				.range(from, to);
@@ -210,7 +216,9 @@ export function PostCard({ post }: PostCardProps) {
 				authorName: c.profiles?.display_name ?? "Anonymous",
 				authorAvatar: c.profiles?.avatar_url ?? undefined,
 				content: c.content ?? "",
-				timeAgo: formatDistanceToNow(new Date(c.created_at), { addSuffix: true }),
+				timeAgo: formatDistanceToNow(new Date(c.created_at), {
+					addSuffix: true,
+				}),
 				createdAt: c.created_at,
 				children: [],
 			});
@@ -250,6 +258,26 @@ export function PostCard({ post }: PostCardProps) {
 		observer.observe(loadMoreRef.current);
 		return () => observer.disconnect();
 	}, [isPostDetailOpen, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+	useEffect(() => {
+		if (!isPostDetailOpen) return;
+
+		const previousOverflow = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setIsPostDetailOpen(false);
+				setIsDialogContentExpanded(false);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => {
+			document.body.style.overflow = previousOverflow;
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [isPostDetailOpen]);
 
 	const handleAuthAction = (e: React.MouseEvent) => {
 		if (!user) {
@@ -467,7 +495,9 @@ export function PostCard({ post }: PostCardProps) {
 				setIsReposted(true);
 				toast.success("Reposted successfully");
 			}
-			queryClient.invalidateQueries({ queryKey: ["post-reposted-by-me", post.id, user.id] });
+			queryClient.invalidateQueries({
+				queryKey: ["post-reposted-by-me", post.id, user.id],
+			});
 		} catch {
 			toast.error("Failed to repost");
 		} finally {
@@ -476,14 +506,26 @@ export function PostCard({ post }: PostCardProps) {
 	};
 
 	const postContent = post.content ?? "";
+	const hasPostImage = Boolean(post.image_url);
+	const hasPostContent = postContent.trim().length > 0;
 	const shouldTruncateContent = postContent.length > POST_PREVIEW_CHAR_LIMIT;
 	const previewContent = shouldTruncateContent
 		? `${postContent.slice(0, POST_PREVIEW_CHAR_LIMIT).trimEnd()}...`
 		: postContent;
+	const shouldTruncateDialogContent =
+		postContent.length > POST_DIALOG_PREVIEW_CHAR_LIMIT;
+	const dialogPreviewContent = shouldTruncateDialogContent
+		? `${postContent.slice(0, POST_DIALOG_PREVIEW_CHAR_LIMIT).trimEnd()}...`
+		: postContent;
 
 	const renderThread = (items: ThreadComment[], depth = 0) =>
 		items.map((comment) => (
-			<div key={comment.id} className={depth > 0 ? "ml-8 mt-2" : "mt-3"}>
+			<div
+				key={comment.id}
+				className={
+					depth > 0 ? "mt-2 border-l border-border/70 pl-3 sm:pl-4" : "mt-3"
+				}
+			>
 				<CommentItem
 					authorName={comment.authorName}
 					authorAvatar={comment.authorAvatar}
@@ -491,9 +533,15 @@ export function PostCard({ post }: PostCardProps) {
 					timeAgo={comment.timeAgo}
 					onReply={() => setReplyToCommentId(comment.id)}
 				/>
-				{comment.children.length > 0 && renderThread(comment.children, depth + 1)}
+				{comment.children.length > 0 &&
+					renderThread(comment.children, depth + 1)}
 			</div>
 		));
+
+	const closePostDetail = () => {
+		setIsPostDetailOpen(false);
+		setIsDialogContentExpanded(false);
+	};
 
 	return (
 		<div
@@ -522,7 +570,7 @@ export function PostCard({ post }: PostCardProps) {
 								<RoleVerifiedBadge role={post.profiles?.role ?? null} />
 							)}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-xs text-foreground/70">
 							{formatDistanceToNow(new Date(post.created_at), {
 								addSuffix: true,
 							})}
@@ -565,7 +613,7 @@ export function PostCard({ post }: PostCardProps) {
 					<button
 						type="button"
 						onClick={() => setIsContentExpanded((prev) => !prev)}
-						className="mt-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+						className="mt-1 text-sm font-medium text-foreground/75 transition-colors hover:text-foreground"
 					>
 						{isContentExpanded ? "Show less" : "Show more"}
 					</button>
@@ -576,6 +624,7 @@ export function PostCard({ post }: PostCardProps) {
 						onClick={() => setIsPostDetailOpen(true)}
 						className="relative mt-3 block h-64 w-full overflow-hidden rounded-lg"
 					>
+						<span className="hidden sr-only">Ảnh</span>
 						<Image
 							src={post.image_url}
 							alt="Post content"
@@ -586,95 +635,160 @@ export function PostCard({ post }: PostCardProps) {
 				)}
 			</div>
 
-			<Dialog open={isPostDetailOpen} onOpenChange={setIsPostDetailOpen}>
-				<DialogContent
-					className="h-[96vh] max-w-[99vw] gap-0 overflow-hidden p-0 lg:max-w-[96vw]"
-					showCloseButton
+			{isPostDetailOpen && (
+				<div
+					className="fixed inset-0 z-[120] bg-black/70"
+					onClick={closePostDetail}
 				>
-					<DialogTitle className="sr-only">Post Detail</DialogTitle>
-					<div className="grid h-full grid-cols-1 lg:grid-cols-[minmax(0,2.4fr)_300px] xl:grid-cols-[minmax(0,2.8fr)_320px]">
-						<div className="relative min-h-[55vh] bg-black lg:min-h-full">
-							{post.image_url ? (
-								<Image
-									src={post.image_url}
-									alt="Post image preview"
-									fill
-									className="object-contain"
-								/>
-							) : (
-								<div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
-									{post.content}
-								</div>
-							)}
-						</div>
-
-						<div className="flex h-full flex-col border-l border-border bg-background">
-							<div className="border-b border-border px-4 py-3">
-								<p className="text-sm font-semibold">
-									{displayName}
-								</p>
-								<p className="text-xs text-muted-foreground">
-									{formatDistanceToNow(new Date(post.created_at), {
-										addSuffix: true,
-									})}
-								</p>
-								{post.content && (
-									<p className="mt-2 text-sm text-foreground">{post.content}</p>
-								)}
-							</div>
-
-							<div className="flex-1 overflow-y-auto px-4 py-3">
-								{isLoadingComments ? (
-									<p className="text-sm text-muted-foreground">
-										Loading comments...
-									</p>
-								) : threadedComments.length > 0 ? (
-									<div>{renderThread(threadedComments)}</div>
+					<div
+						role="dialog"
+						aria-modal="true"
+						className="relative h-[100dvh] w-full overflow-hidden bg-card text-card-foreground sm:mx-auto sm:mt-[2dvh] sm:h-[96dvh] sm:max-w-[99vw] sm:rounded-xl sm:border sm:border-border/80 lg:max-w-[96vw]"
+						onClick={(event) => event.stopPropagation()}
+					>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon-sm"
+							onClick={closePostDetail}
+							className="absolute right-3 top-3 z-20 rounded-full bg-black/55 text-white hover:bg-black/70"
+						>
+							<X className="size-4" />
+						</Button>
+						<div className="grid h-full min-w-0 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,2.4fr)_300px] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,2.8fr)_320px]">
+							<div className="min-h-0 bg-black">
+								{hasPostImage ? (
+									<div className="relative h-full w-full overflow-hidden bg-black">
+										<Image
+											src={post.image_url!}
+											alt="Post image preview"
+											fill
+											className="object-contain"
+										/>
+										{hasPostContent && (
+											<div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden  bg-gradient-to-b from-black/55 via-black/80 to-black/95">
+												<ScrollArea className="h-[30dvh] min-h-28 w-full max-h-[45%]">
+													<div className="flex min-w-0 flex-col items-center p-5 text-sm text-white/95">
+														<p className="mx-auto max-w-3xl whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
+															{isDialogContentExpanded
+																? postContent
+																: dialogPreviewContent}
+														</p>
+														{shouldTruncateDialogContent && (
+															<button
+																type="button"
+																onClick={() =>
+																	setIsDialogContentExpanded((prev) => !prev)
+																}
+																className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
+															>
+																{isDialogContentExpanded
+																	? "Thu gọn"
+																	: "Hiện thêm"}
+															</button>
+														)}
+													</div>
+												</ScrollArea>
+											</div>
+										)}
+									</div>
 								) : (
-									<p className="text-sm text-muted-foreground">
-										No comments yet
-									</p>
-								)}
-
-								<div ref={loadMoreRef} className="h-6" />
-								{isFetchingNextPage && (
-									<p className="text-xs text-muted-foreground">
-										Loading more comments...
-									</p>
-								)}
-							</div>
-
-							<div className="border-t border-border p-3">
-								{replyToCommentId && (
-									<div className="mb-2 flex items-center justify-between rounded-md bg-muted px-2 py-1 text-xs">
-										<span>Replying to comment</span>
-										<button
-											type="button"
-											onClick={() => setReplyToCommentId(null)}
-											className="text-primary"
-										>
-											Cancel
-										</button>
+									<div className="h-full w-full bg-gradient-to-b from-black/75 via-black/85 to-black/95">
+										<ScrollArea className="h-full w-full">
+											<div className="grid min-h-full min-w-0 place-items-center p-8 text-sm text-white/95">
+												<div className="flex w-full max-w-3xl flex-col items-center">
+													<p className="whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
+														{isDialogContentExpanded
+															? postContent
+															: dialogPreviewContent}
+													</p>
+													{shouldTruncateDialogContent && (
+														<button
+															type="button"
+															onClick={() =>
+																setIsDialogContentExpanded((prev) => !prev)
+															}
+															className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
+														>
+															{isDialogContentExpanded ? "Thu gọn" : "Hiện thêm"}
+														</button>
+													)}
+												</div>
+											</div>
+										</ScrollArea>
 									</div>
 								)}
-								<form onSubmit={handleSubmitComment} className="flex gap-2">
-									<Input
-										value={newComment}
-										onChange={(e) => setNewComment(e.target.value)}
-										placeholder="Write a comment..."
-									/>
-									<Button
-										type="submit"
-										disabled={!newComment.trim() || isSubmittingComment}
-									>
-										Send
-									</Button>
-								</form>
+							</div>
+
+							<div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/80 bg-card lg:border-l lg:border-t-0">
+								<div className="min-w-0 border-b border-border/80 px-4 py-3">
+									<p className="truncate text-sm font-semibold">
+										{displayName}
+									</p>
+									<p className="text-xs text-foreground/75">
+										{formatDistanceToNow(new Date(post.created_at), {
+											addSuffix: true,
+										})}
+									</p>
+								</div>
+
+								<ScrollArea className="min-h-0 min-w-0 flex-1">
+									<div className="px-4 py-3">
+										{isLoadingComments ? (
+											<p className="text-sm text-foreground/75">
+												Loading comments...
+											</p>
+										) : threadedComments.length > 0 ? (
+											<div>{renderThread(threadedComments)}</div>
+										) : (
+											<p className="text-sm text-foreground/75">
+												Không có bình luận
+											</p>
+										)}
+
+										<div ref={loadMoreRef} className="h-6" />
+										{isFetchingNextPage && (
+											<p className="text-xs text-foreground/75">
+												Đang tải thêm bình luận...
+											</p>
+										)}
+									</div>
+								</ScrollArea>
+
+								<div className="shrink-0 border-t border-border/80 bg-card p-3">
+									{replyToCommentId && (
+										<div className="mb-2 flex items-center justify-between rounded-md bg-accent px-2 py-1 text-xs">
+											<span>Trả lời bình luận</span>
+											<button
+												type="button"
+												onClick={() => setReplyToCommentId(null)}
+												className="text-primary"
+											>
+												Cancel
+											</button>
+										</div>
+									)}
+									<form onSubmit={handleSubmitComment} className="flex gap-2">
+										<Input
+											value={newComment}
+											onChange={(e) => setNewComment(e.target.value)}
+											placeholder="Write a comment..."
+											className="border-border/80 bg-background"
+										/>
+										<Button
+											type="submit"
+											disabled={!newComment.trim() || isSubmittingComment}
+											className="font-semibold"
+										>
+											Send
+										</Button>
+									</form>
+								</div>
 							</div>
 						</div>
 					</div>
-				</DialogContent>
-			</Dialog>
+				</div>
+			)}
 
 			<Dialog open={isEditing} onOpenChange={setIsEditing}>
 				<DialogContent>
@@ -721,6 +835,7 @@ export function PostCard({ post }: PostCardProps) {
 							<Label htmlFor={`report-reason-${post.id}`}>Reason</Label>
 							<select
 								id={`report-reason-${post.id}`}
+								title="Report reason"
 								value={reportReason}
 								onChange={(e) => setReportReason(e.target.value)}
 								className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none"
@@ -812,47 +927,48 @@ export function PostCard({ post }: PostCardProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			<div className="flex items-center justify-between border-t pt-3">
-				<div className="flex gap-4">
+			<div className="flex flex-wrap items-center gap-2 border-t pt-3">
+				<button
+					className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm transition-colors ${
+						isLiked
+							? "bg-red-500/10 text-red-500"
+							: "text-foreground/70 hover:bg-muted hover:text-red-500"
+					}`}
+					title="Like"
+					onClick={handleToggleLike}
+				>
+					<Heart size={18} className={isLiked ? "fill-current" : ""} />
+					<span>{likeCount}</span>
+				</button>
+
+				<button
+					className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-blue-500"
+					title="Comment"
+					onClick={(e) => {
+						if (!handleAuthAction(e)) return;
+						setIsPostDetailOpen(true);
+					}}
+				>
+					<MessageSquare size={18} />
+					<span>{commentCount}</span>
+				</button>
+
+				<button
+					className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+						isReposted
+							? "bg-emerald-600/10 text-emerald-600"
+							: "text-foreground/70 hover:bg-muted hover:text-foreground"
+					}`}
+					title={isReposted ? "Unrepost" : "Repost"}
+					onClick={handleRepost}
+					disabled={isReposting}
+				>
+					<Share2 size={18} />
+				</button>
+
+				{!isAuthor && (
 					<button
-						className={`group flex items-center gap-1.5 text-sm transition-colors ${
-							isLiked
-								? "text-red-500"
-								: "text-muted-foreground hover:text-red-500"
-						}`}
-						title="Like"
-						onClick={handleToggleLike}
-					>
-						<Heart size={18} className={isLiked ? "fill-current" : ""} />
-						<span>{likeCount}</span>
-					</button>
-					<button
-						className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-blue-500"
-						title="Comment"
-						onClick={(e) => {
-							if (!handleAuthAction(e)) return;
-							setIsPostDetailOpen(true);
-						}}
-					>
-						<MessageSquare size={18} />
-						<span>{commentCount}</span>
-					</button>
-				</div>
-				<div className="flex gap-4">
-					<button
-						className={`transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-							isReposted
-								? "text-emerald-600"
-								: "text-muted-foreground hover:text-foreground"
-						}`}
-						title={isReposted ? "Unrepost" : "Repost"}
-						onClick={handleRepost}
-						disabled={isReposting}
-					>
-						<Share2 size={18} />
-					</button>
-					<button
-						className="text-muted-foreground hover:text-foreground"
+						className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
 						title="Report"
 						onClick={(e) => {
 							if (!handleAuthAction(e)) return;
@@ -861,7 +977,7 @@ export function PostCard({ post }: PostCardProps) {
 					>
 						<Flag size={18} />
 					</button>
-				</div>
+				)}
 			</div>
 		</div>
 	);

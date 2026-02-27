@@ -20,16 +20,16 @@ export function ChatBubble({
 	return (
 		<div
 			className={cn(
-				"flex",
+				"flex w-full",
 				variant === "sent" ? "justify-end" : "justify-start",
 			)}
 		>
 			<div
 				className={cn(
-					"max-w-[60%] rounded-2xl px-4 py-3 text-sm",
+					"max-w-[80%] rounded-3xl px-4 py-2.5 text-sm shadow-sm md:max-w-[70%]",
 					variant === "sent"
-						? "bg-primary text-primary-foreground"
-						: "bg-muted text-foreground",
+						? "rounded-br-md bg-[#0084ff] text-white"
+						: "rounded-bl-md bg-muted text-foreground",
 				)}
 			>
 				{senderName && variant === "received" && (
@@ -39,7 +39,7 @@ export function ChatBubble({
 				<span
 					className={cn(
 						"mt-1.5 block text-[11px]",
-						variant === "sent" ? "opacity-70" : "text-muted-foreground",
+						variant === "sent" ? "text-white/75" : "text-muted-foreground",
 					)}
 				>
 					{timestamp}

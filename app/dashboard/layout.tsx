@@ -199,9 +199,9 @@ export default function DashboardLayout({
 			</aside>
 
 			{/* Main area */}
-			<div className="flex flex-1 flex-col">
+			<div className="flex min-w-0 flex-1 flex-col">
 				{/* Top bar */}
-				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/70 bg-background/70 px-6 backdrop-blur-md">
+				<header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/70 bg-background/70 px-3 backdrop-blur-md sm:px-4 lg:px-6">
 					<Button
 						onClick={() => setSidebarOpen(true)}
 						className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground lg:hidden"
@@ -218,7 +218,9 @@ export default function DashboardLayout({
 				</header>
 
 				{/* Content */}
-				<main className="flex-1 overflow-y-auto p-6">{children}</main>
+				<main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+					<div className="mx-auto w-full max-w-7xl">{children}</div>
+				</main>
 			</div>
 		</div>
 	);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useDashboardComments } from "@/hooks/useDashboard";
 import { CommentWithAuthor } from "@/types/supabase";
 import {
@@ -30,6 +31,7 @@ import {
 	IconEdit,
 	IconMessageCircle,
 	IconExternalLink,
+	IconUser,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { formatDateDDMMYYYY } from "@/utils/helpers/date";
@@ -46,7 +48,8 @@ export default function CommentsPage() {
 	const filteredComments = comments.filter(
 		(comment) =>
 			(comment.content ?? "").toLowerCase().includes(search.toLowerCase()) ||
-			(comment.author_name ?? "").toLowerCase().includes(search.toLowerCase()),
+			(comment.author_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+			comment.author_id.toLowerCase().includes(search.toLowerCase()),
 	);
 
 	const handleEdit = (comment: CommentWithAuthor) => {
@@ -76,9 +79,9 @@ export default function CommentsPage() {
 	};
 
 	return (
-		<div className="space-y-7">
-			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
-				<h1 className="text-2xl font-bold tracking-tight">Comments</h1>
+		<div className="animate-fade-up space-y-4 md:space-y-6">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm md:p-5">
+				<h1 className="text-xl font-bold tracking-tight md:text-2xl">Comments</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
 					Keep discussions healthy with quick editing and removal tools.
 				</p>
@@ -90,7 +93,7 @@ export default function CommentsPage() {
 					<div className="relative">
 						<IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
-							placeholder="Search comments by content or author..."
+							placeholder="Search comments by content, author, or author id..."
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
 							className="pl-9"
@@ -101,7 +104,7 @@ export default function CommentsPage() {
 			</Card>
 
 			{/* Comments Table */}
-			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm overflow-hidden">
+			<Card className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardHeader>
 					<CardTitle>All Comments ({filteredComments.length})</CardTitle>
 					<CardDescription>Review and moderate user comments</CardDescription>
@@ -124,7 +127,97 @@ export default function CommentsPage() {
 							</p>
 						</div>
 					) : (
-						<div className="overflow-x-auto">
+						<>
+							<div className="divide-y divide-border/40 p-4 md:hidden">
+								{filteredComments.map((comment) => (
+									<div key={comment.id} className="space-y-3 py-3">
+										<div className="flex items-start justify-between gap-2">
+											<div className="min-w-0">
+												<div className="flex items-center gap-2">
+													{comment.author_avatar ? (
+														<img
+															src={comment.author_avatar}
+															alt=""
+															className="size-7 rounded-full object-cover"
+														/>
+													) : (
+														<div className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-600 text-[10px] font-bold text-white">
+															{(comment.author_name ?? "A")[0]?.toUpperCase()}
+														</div>
+													)}
+													<p className="truncate text-sm font-semibold">
+														{comment.author_name ?? "Anonymous"}
+													</p>
+												</div>
+												<p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+													<IconUser className="size-3.5" />
+													{comment.author_id}
+												</p>
+											</div>
+											<p className="shrink-0 text-xs text-muted-foreground">
+												{formatDateDDMMYYYY(comment.created_at)}
+											</p>
+										</div>
+
+										<p className="text-sm text-muted-foreground">
+											{comment.content}
+										</p>
+
+										<div className="flex items-center justify-between gap-2">
+											<Link
+												href={`/#post-${comment.post_id}`}
+												className="inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+											>
+												<IconExternalLink className="size-3.5" />
+												Xem bài viết: {comment.post_id.slice(0, 8)}...
+											</Link>
+											<div className="flex items-center gap-1">
+												<Button
+													variant="ghost"
+													size="icon-sm"
+													onClick={() => handleEdit(comment)}
+													title="Edit"
+													id={`edit-comment-mobile-${comment.id}`}
+												>
+													<IconEdit className="size-4" />
+												</Button>
+												<AlertDialog>
+													<AlertDialogTrigger asChild>
+														<Button
+															variant="ghost"
+															size="icon-sm"
+															title="Delete"
+															id={`delete-comment-mobile-${comment.id}`}
+														>
+															<IconTrash className="size-4 text-destructive" />
+														</Button>
+													</AlertDialogTrigger>
+													<AlertDialogContent>
+														<AlertDialogHeader>
+															<AlertDialogTitle>Delete Comment</AlertDialogTitle>
+															<AlertDialogDescription>
+																Are you sure you want to delete this comment?
+																This action cannot be undone.
+															</AlertDialogDescription>
+														</AlertDialogHeader>
+														<AlertDialogFooter>
+															<AlertDialogCancel>Cancel</AlertDialogCancel>
+															<AlertDialogAction
+																variant="destructive"
+																onClick={() => handleDelete(comment.id)}
+															>
+																Delete
+															</AlertDialogAction>
+														</AlertDialogFooter>
+													</AlertDialogContent>
+												</AlertDialog>
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+
+							<div className="hidden overflow-x-auto md:block">
 							<table className="w-full">
 								<thead>
 									<tr className="border-b border-border/50 bg-muted/30">
@@ -132,10 +225,13 @@ export default function CommentsPage() {
 											Author
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+											Author ID
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 											Content
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-											Post ID
+											Post Link
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 											Date
@@ -166,16 +262,22 @@ export default function CommentsPage() {
 													</span>
 												</div>
 											</td>
+											<td className="px-6 py-4 text-xs text-muted-foreground">
+												{comment.author_id}
+											</td>
 											<td className="max-w-md px-6 py-4">
 												<p className="line-clamp-2 text-sm text-muted-foreground">
 													{comment.content}
 												</p>
 											</td>
 											<td className="px-6 py-4">
-												<div className="flex items-center gap-1 text-xs text-muted-foreground">
+												<Link
+													href={`/#post-${comment.post_id}`}
+													className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+												>
 													<IconExternalLink className="size-3" />
 													{comment.post_id.slice(0, 8)}...
-												</div>
+												</Link>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
 												{formatDateDDMMYYYY(comment.created_at)}
@@ -230,6 +332,7 @@ export default function CommentsPage() {
 								</tbody>
 							</table>
 						</div>
+						</>
 					)}
 				</CardContent>
 			</Card>

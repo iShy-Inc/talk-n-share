@@ -15,6 +15,10 @@ import { cn } from "@/lib/utils";
 import useProfile from "@/hooks/useProfile";
 import { startOrRequestConversation } from "@/lib/contact-messaging";
 import { toast } from "sonner";
+import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
+import { SuggestedFriendsFacebookCard } from "@/components/shared/SuggestedFriendsFacebookCard";
+import { hasSelfHarmSignal } from "@/lib/self-harm-support";
+import { IconHeartHandshake } from "@tabler/icons-react";
 
 const supabase = createClient();
 
@@ -29,6 +33,7 @@ export default function SearchPage() {
 
 	const [searchInput, setSearchInput] = useState(query);
 	const [activeTab, setActiveTab] = useState<Tab>("all");
+	const hasSafetySignal = hasSelfHarmSignal(searchInput || query);
 
 	// Update input when URL query changes
 	useEffect(() => {
@@ -72,6 +77,62 @@ export default function SearchPage() {
 			return data ?? [];
 		},
 		enabled: !!query && (activeTab === "all" || activeTab === "people"),
+	});
+
+	const { data: suggestedFriends = [] } = useQuery({
+		queryKey: [
+			"search-inline-suggested-friends",
+			user?.id,
+			profile?.location,
+			profile?.gender,
+			profile?.zodiac,
+			profile?.relationship,
+		],
+		queryFn: async () => {
+			if (!user) return [];
+			const { data, error } = await supabase
+				.from("profiles")
+				.select("id, display_name, avatar_url, location, gender, zodiac, relationship")
+				.eq("is_public", true)
+				.neq("id", user.id)
+				.limit(40);
+			if (error) throw error;
+
+			const current = {
+				location: profile?.location ?? null,
+				gender: profile?.gender ?? null,
+				zodiac: profile?.zodiac ?? null,
+				relationship: profile?.relationship ?? null,
+			};
+
+			const scored = (data ?? [])
+				.map((u: any) => {
+					let commonCount = 0;
+					if (current.location && u.location === current.location) commonCount += 1;
+					if (current.gender && u.gender === current.gender) commonCount += 1;
+					if (current.zodiac && u.zodiac === current.zodiac) commonCount += 1;
+					if (
+						current.relationship &&
+						u.relationship === current.relationship
+					) {
+						commonCount += 1;
+					}
+					return { ...u, commonCount };
+				})
+				.sort((a: any, b: any) => b.commonCount - a.commonCount);
+
+			const picked = scored.some((u: any) => u.commonCount > 0)
+				? scored.filter((u: any) => u.commonCount > 0)
+				: scored;
+
+			return picked.slice(0, 5).map((u: any) => ({
+					id: u.id,
+					name: u.display_name ?? "Người dùng",
+					title: u.location ?? "Thành viên Talk N Share",
+					avatar: u.avatar_url ?? undefined,
+				})) as SuggestedFriend[];
+		},
+		enabled: !!user && !!profile,
 	});
 
 	const handleSearch = (e: React.FormEvent) => {
@@ -157,6 +218,38 @@ export default function SearchPage() {
 					</div>
 				)}
 
+				{hasSafetySignal && (
+					<div className="rounded-2xl border border-amber-500/35 bg-amber-50/80 p-4 text-amber-900 shadow-sm dark:bg-amber-500/10 dark:text-amber-100">
+						<div className="flex items-start gap-3">
+							<IconHeartHandshake className="mt-0.5 size-5 shrink-0" />
+							<div className="space-y-2">
+								<p className="text-sm font-semibold">
+									Bạn đang rất quan trọng, và bạn không một mình.
+								</p>
+								<p className="text-sm">
+									Nếu bạn đang thấy quá tải hoặc có ý nghĩ tự làm hại bản thân,
+									hãy kết nối hỗ trợ ngay. Có người sẵn sàng lắng nghe bạn.
+								</p>
+								<div className="flex flex-wrap gap-2">
+									<Button
+										onClick={() =>
+											router.push(
+												`/support${query ? `?q=${encodeURIComponent(query)}` : ""}`,
+											)
+										}
+										className="rounded-full"
+									>
+										Xem hỗ trợ ngay
+									</Button>
+									<Button asChild variant="outline" className="rounded-full">
+										<a href="tel:115">Gọi 115 (khẩn cấp)</a>
+									</Button>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+
 				{/* Results */}
 				{!query ? (
 					<div className="flex min-h-[300px] flex-col items-center justify-center text-center text-muted-foreground">
@@ -172,6 +265,11 @@ export default function SearchPage() {
 					</div>
 				) : (
 					<div className="space-y-8">
+						{(activeTab === "all" || activeTab === "posts") &&
+							suggestedFriends.length > 0 && (
+								<SuggestedFriendsFacebookCard friends={suggestedFriends} />
+							)}
+
 						{/* People Results */}
 						{(activeTab === "all" || activeTab === "people") && (
 							<div className="space-y-4">

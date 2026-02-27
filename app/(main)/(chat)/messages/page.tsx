@@ -15,7 +15,13 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { ContactPicker, PickerContact } from "@/components/chat/ContactPicker";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { IconArrowLeft } from "@tabler/icons-react";
+import {
+	IconArrowLeft,
+	IconDots,
+	IconInfoCircle,
+	IconPhoneCall,
+	IconVideo,
+} from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOrRequestConversation } from "@/lib/contact-messaging";
@@ -234,7 +240,7 @@ export default function MessagesPage() {
 
 	const pickerContacts: PickerContact[] = allUsers.map((u: any) => ({
 		id: u.id,
-		name: u.display_name ?? "User",
+		name: u.display_name ?? "Người dùng",
 		avatar: u.avatar_url,
 	}));
 
@@ -263,15 +269,16 @@ export default function MessagesPage() {
 		enabled: !!activeSessionId,
 	});
 
-	const activeContactName =
-		contacts.find((contact) => contact.id === activeSessionId)?.name ??
-		"Conversation";
+	const activeContact = contacts.find(
+		(contact) => contact.id === activeSessionId,
+	);
+	const activeContactName = activeContact?.name ?? "Cuộc trò chuyện";
 	const showConversation = !!activeSessionId && !showContactPicker;
 	const showList = !showConversation && !showContactPicker;
 
 	return (
 		<>
-			<div className="mb-3">
+			<div className="mb-2">
 				<Button asChild variant="outline" size="sm" className="rounded-xl">
 					<Link href="/">
 						<IconArrowLeft className="mr-2 size-4" />
@@ -279,36 +286,28 @@ export default function MessagesPage() {
 					</Link>
 				</Button>
 			</div>
-			<Card className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg">
+			<div className="mx-auto rounded-xl h-[calc(100dvh-8.8rem)] min-h-[620px] w-full overflow-hidden border-border border-1 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
 				<div className="flex h-full">
 					<div
-						className={`h-full border-r border-border/80 bg-card lg:block lg:w-80 ${
+						className={`h-full border-r border-border/60 bg-card lg:block lg:w-[360px] ${
 							showList ? "block w-full" : "hidden"
 						}`}
 					>
-						<div className="border-b border-border/80 px-5 py-4">
-							<h3 className="text-base font-semibold">Tin nhắn</h3>
-							<p className="mt-0.5 text-xs text-muted-foreground">
-								{contacts.length} cuộc trò chuyện
-							</p>
-						</div>
-						<div className="h-[calc(100%-65px)] overflow-y-auto">
-							<ChatList
-								contacts={contacts}
-								activeContactId={activeSessionId ?? undefined}
-								onSelectContact={handleSelectContact}
-								onNewMessage={handleNewMessage}
-							/>
-						</div>
+						<ChatList
+							contacts={contacts}
+							activeContactId={activeSessionId ?? undefined}
+							onSelectContact={handleSelectContact}
+							onNewMessage={handleNewMessage}
+						/>
 					</div>
 
 					<div
-						className={`h-full bg-background/40 lg:flex lg:flex-1 lg:flex-col ${
+						className={`h-full bg-[#f0f2f5] lg:flex lg:flex-1 lg:flex-col ${
 							showList ? "hidden lg:flex" : "flex w-full flex-col"
 						}`}
 					>
 						{showContactPicker ? (
-							<div className="flex h-full flex-col items-center justify-center p-4 sm:p-6">
+							<div className="flex h-full flex-col items-center justify-center bg-card p-4 sm:p-6">
 								<div className="w-full max-w-md">
 									<Button
 										variant="ghost"
@@ -327,31 +326,76 @@ export default function MessagesPage() {
 							</div>
 						) : showConversation ? (
 							<div className="flex h-full flex-col">
-								<div className="flex items-center gap-3 border-b border-border/80 bg-card px-4 py-3 sm:px-5">
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										onClick={() => {
-											setActiveSessionId(null);
-										}}
-										className="lg:hidden"
-										id="back-to-conversations"
-									>
-										<IconArrowLeft className="size-4" />
-									</Button>
-									<div>
-										<p className="text-sm font-semibold">{activeContactName}</p>
-										<p className="text-xs text-muted-foreground">
-											{messages.length} message
-											{messages.length !== 1 ? "s" : ""}
-										</p>
+								<div className="flex items-center justify-between border-b border-border/70 bg-card px-3 py-2.5 sm:px-4">
+									<div className="flex items-center gap-3">
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											onClick={() => {
+												setActiveSessionId(null);
+											}}
+											className="lg:hidden"
+											id="back-to-conversations"
+										>
+											<IconArrowLeft className="size-4" />
+										</Button>
+										{activeContact?.avatar ? (
+											<img
+												src={activeContact.avatar}
+												alt=""
+												className="size-10 rounded-full object-cover"
+											/>
+										) : (
+											<div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+												{activeContactName[0]?.toUpperCase()}
+											</div>
+										)}
+										<div>
+											<p className="text-sm font-semibold">
+												{activeContactName}
+											</p>
+											<p className="text-xs text-foreground/70">
+												Đang hoạt động
+											</p>
+										</div>
+									</div>
+
+									<div className="flex items-center gap-1">
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="rounded-full"
+										>
+											<IconPhoneCall className="size-4 text-[#0084ff]" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="rounded-full"
+										>
+											<IconVideo className="size-4 text-[#0084ff]" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="rounded-full"
+										>
+											<IconInfoCircle className="size-4 text-[#0084ff]" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="rounded-full"
+										>
+											<IconDots className="size-4 text-[#0084ff]" />
+										</Button>
 									</div>
 								</div>
 
-								<div className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-background to-muted/20 p-4 sm:p-6">
+								<div className="flex-1 space-y-3 overflow-y-auto p-4 sm:p-6">
 									{messages.length === 0 ? (
 										<div className="flex h-full items-center justify-center">
-											<p className="text-center text-sm text-muted-foreground">
+											<p className="text-center text-sm text-foreground/70">
 												Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.
 											</p>
 										</div>
@@ -360,7 +404,7 @@ export default function MessagesPage() {
 											<ChatBubble
 												key={msg.id}
 												content={msg.content ?? ""}
-												timestamp={format(new Date(msg.created_at), "h:mm a")}
+												timestamp={format(new Date(msg.created_at), "HH:mm")}
 												variant={
 													msg.sender_id === user?.id ? "sent" : "received"
 												}
@@ -376,16 +420,48 @@ export default function MessagesPage() {
 									<div ref={messagesEndRef} />
 								</div>
 
-								<div className="bg-card">
-									<ChatInput onSend={handleSendMessage} avatarUrl={undefined} />
+								<div className="bg-card px-1 pb-1">
+									<ChatInput
+										onSend={handleSendMessage}
+										avatarUrl={profile?.avatar_url ?? undefined}
+									/>
 								</div>
 							</div>
 						) : (
 							<ChatEmptyState onNewMessage={handleNewMessage} />
 						)}
 					</div>
+
+					{showConversation && (
+						<div className="hidden w-[300px] border-l border-border/70 bg-card p-4 xl:block">
+							<div className="flex flex-col items-center border-b border-border/70 pb-4">
+								{activeContact?.avatar ? (
+									<img
+										src={activeContact.avatar}
+										alt=""
+										className="size-20 rounded-full object-cover"
+									/>
+								) : (
+									<div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
+										{activeContactName[0]?.toUpperCase()}
+									</div>
+								)}
+								<p className="mt-3 text-base font-semibold">
+									{activeContactName}
+								</p>
+								<p className="text-xs text-foreground/70">
+									{messages.length} tin nhắn
+								</p>
+							</div>
+							<div className="pt-4 text-sm text-foreground/70">
+								<p className="rounded-xl bg-accent p-3">
+									Khu vực thông tin cuộc trò chuyện theo phong cách Messenger.
+								</p>
+							</div>
+						</div>
+					)}
 				</div>
-			</Card>
+			</div>
 		</>
 	);
 }

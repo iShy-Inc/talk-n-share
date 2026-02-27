@@ -6,22 +6,29 @@ import { useState } from "react";
 import {
 	IconBell,
 	IconBolt,
+	IconLayoutDashboard,
 	IconLogout,
+	IconMoon,
 	IconSearch,
+	IconSun,
 } from "@tabler/icons-react";
 import { createClient } from "@/utils/supabase/client";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import useProfile from "@/hooks/useProfile";
 
 const supabase = createClient();
 
 export function AppHeaderNav() {
 	const user = useAuthStore((state) => state.user);
+	const { profile } = useProfile();
 	const router = useRouter();
 	const { unreadCount } = useNotifications();
 	const [search, setSearch] = useState("");
+	const { theme, resolvedTheme, setTheme } = useTheme();
 
 	const handleLogout = async () => {
 		await supabase.auth.signOut();
@@ -34,14 +41,17 @@ export function AppHeaderNav() {
 		router.push(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
 	};
 
+	const isDark = (resolvedTheme ?? theme) === "dark";
+	const canAccessDashboard = profile?.role === "admin" || profile?.role === "moder";
+
 	return (
-		<header className="sticky top-0 z-40 hidden border-b border-border/60 bg-background/85 backdrop-blur-md lg:block">
+		<header className="animate-slide-down-soft sticky top-0 z-40 hidden border-b border-border/60 bg-background/85 backdrop-blur-md lg:block">
 			<div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-4">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-1.5 transition-colors hover:bg-card"
+					className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
 				>
-					<span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+					<span className="animate-float-soft inline-flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
 						<IconBolt className="size-4.5" />
 					</span>
 					<span className="text-sm font-semibold tracking-tight">Talk N Share</span>
@@ -71,6 +81,30 @@ export function AppHeaderNav() {
 						</span>
 					)}
 				</Link>
+
+				{user && canAccessDashboard && (
+					<Button asChild variant="ghost" size="sm" className="rounded-full">
+						<Link href="/dashboard">
+							<IconLayoutDashboard className="mr-1 size-4" />
+							Dashboard
+						</Link>
+					</Button>
+				)}
+
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon-sm"
+					onClick={() => setTheme(isDark ? "light" : "dark")}
+					className="rounded-full border border-border/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+					title={isDark ? "Chuyển sang sáng" : "Chuyển sang tối"}
+				>
+					{isDark ? (
+						<IconSun className="size-4.5" />
+					) : (
+						<IconMoon className="size-4.5" />
+					)}
+				</Button>
 
 				{user ? (
 					<Button

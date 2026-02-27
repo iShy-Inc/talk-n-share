@@ -27,56 +27,56 @@ export function ContactPicker({ contacts, onSelect }: ContactPickerProps) {
 	);
 
 	return (
-		<Card className="w-full max-w-md border shadow-lg">
-			<CardContent className="p-6">
+		<Card className="w-full max-w-md overflow-hidden border shadow-lg">
+			<CardContent className="p-0">
 				{/* Search input */}
-				<div className="relative mb-6">
+				<div className="relative border-b border-border/70 p-4">
 					<IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						placeholder="New message to:"
-						className="rounded-xl bg-muted/50 pl-9"
+						placeholder="Tin nhắn mới đến:"
+						className="rounded-full border-0 bg-muted pl-9"
 						id="contact-picker-search"
 					/>
 				</div>
 
 				{/* Contact list */}
-				<div className="space-y-5">
+				<div className="max-h-[60vh] space-y-1 overflow-y-auto p-3">
 					{filtered.map((contact) => (
 						<button
 							key={contact.id}
 							onClick={() => onSelect(contact)}
-							className="flex w-full items-center gap-4 rounded-lg text-left transition-all hover:translate-x-1"
+							className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/70"
 							id={`pick-contact-${contact.id}`}
 						>
 							{contact.avatar ? (
 								<img
 									src={contact.avatar}
 									alt=""
-									className="size-14 shrink-0 rounded-full object-cover"
-								/>
-							) : (
-								<div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-									{contact.name[0]?.toUpperCase()}
-								</div>
-							)}
-							<div>
-								<p className="font-semibold">{contact.name}</p>
-								{contact.title && (
-									<p className="text-sm text-muted-foreground">
-										{contact.title}
-									</p>
-								)}
+								className="size-11 shrink-0 rounded-full object-cover"
+							/>
+						) : (
+							<div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+								{contact.name[0]?.toUpperCase()}
 							</div>
-						</button>
-					))}
-					{filtered.length === 0 && (
-						<p className="py-4 text-center text-sm text-muted-foreground">
-							No contacts found
-						</p>
-					)}
-				</div>
+						)}
+						<div className="min-w-0">
+							<p className="truncate font-semibold">{contact.name}</p>
+							{contact.title && (
+								<p className="truncate text-sm text-muted-foreground">
+									{contact.title}
+								</p>
+							)}
+						</div>
+					</button>
+				))}
+				{filtered.length === 0 && (
+					<p className="py-4 text-center text-sm text-muted-foreground">
+						Không tìm thấy liên hệ
+					</p>
+				)}
+			</div>
 			</CardContent>
 		</Card>
 	);

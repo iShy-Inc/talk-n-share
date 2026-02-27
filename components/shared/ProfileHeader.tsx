@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +43,8 @@ interface ProfileHeaderProps {
 	onTabChange?: (tab: string) => void;
 }
 
+const BIO_PREVIEW_CHAR_LIMIT = 220;
+
 export function ProfileHeader({
 	name,
 	username,
@@ -62,8 +64,14 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
 	const { coverUrl, activeCoverUrl, markCoverAsFailed, refreshCover } =
 		useProfileCover();
+	const [isBioExpanded, setIsBioExpanded] = useState(false);
 
 	const formattedJoinDate = formatDateDDMMYYYY(joinDate);
+	const normalizedBio = bio?.trim() ?? "";
+	const shouldTruncateBio = normalizedBio.length > BIO_PREVIEW_CHAR_LIMIT;
+	const bioPreview = shouldTruncateBio
+		? `${normalizedBio.slice(0, BIO_PREVIEW_CHAR_LIMIT).trimEnd()}...`
+		: normalizedBio;
 
 	return (
 		<div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -84,7 +92,7 @@ export function ProfileHeader({
 					type="button"
 					size="icon-xs"
 					variant="secondary"
-					className="absolute right-3 top-3 z-10 size-7 rounded-full bg-black/45 text-white hover:bg-black/60"
+					className="absolute right-3 bottom-3 z-10 size-7 rounded-full bg-black/55 text-white hover:bg-black/70 md:top-3 md:bottom-auto"
 					onClick={refreshCover}
 					title="Làm mới ảnh bìa"
 				>
@@ -113,12 +121,10 @@ export function ProfileHeader({
 							<h2 className="text-xl font-bold tracking-tight">{name}</h2>
 							<RoleVerifiedBadge role={role} />
 						</div>
-						{username && (
-							<p className="text-sm text-muted-foreground">@{username}</p>
-						)}
+						{username && <p className="text-sm text-foreground/75">@{username}</p>}
 					</div>
 					{joinDate && (
-						<div className="mt-2 flex flex-col items-end gap-2 text-xs text-muted-foreground">
+						<div className="mt-2 flex flex-col items-end gap-2 text-xs text-foreground/70">
 							{actionSlot}
 							<span className="inline-flex items-center gap-1.5">
 								<IconCalendarMonth className="size-4" />
@@ -129,13 +135,24 @@ export function ProfileHeader({
 				</div>
 
 				{bio && (
-					<p className="mt-3 whitespace-pre-line text-sm text-foreground">
-						{bio}
-					</p>
+					<div className="mt-3">
+						<p className="max-w-full whitespace-pre-line break-words text-sm text-foreground [overflow-wrap:anywhere]">
+							{isBioExpanded ? normalizedBio : bioPreview}
+						</p>
+						{shouldTruncateBio && (
+							<button
+								type="button"
+								onClick={() => setIsBioExpanded((prev) => !prev)}
+								className="mt-1 text-sm font-medium text-foreground/75 transition-colors hover:text-foreground"
+							>
+								{isBioExpanded ? "Thu gọn" : "Hiện thêm"}
+							</button>
+						)}
+					</div>
 				)}
 
 					{(title || birthday || zodiac || relationship) && (
-						<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+						<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground/70">
 						{title && (
 							<span className="inline-flex items-center gap-1.5">
 								<IconMapPin className="size-4" />
@@ -170,7 +187,7 @@ export function ProfileHeader({
 								<span className="font-semibold text-foreground">
 									{stat.value}
 								</span>
-								<span className="ml-1 text-muted-foreground">{stat.label}</span>
+								<span className="ml-1 text-foreground/70">{stat.label}</span>
 							</div>
 						))}
 					</div>
