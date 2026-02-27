@@ -55,6 +55,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { getAnonymousDisplayName } from "@/lib/anonymous-name";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
@@ -635,160 +636,167 @@ export function PostCard({ post }: PostCardProps) {
 				)}
 			</div>
 
-			{isPostDetailOpen && (
-				<div
-					className="fixed inset-0 z-[120] bg-black/70"
-					onClick={closePostDetail}
-				>
+			{isPostDetailOpen &&
+				typeof window !== "undefined" &&
+				createPortal(
 					<div
-						role="dialog"
-						aria-modal="true"
-						className="relative h-[100dvh] w-full overflow-hidden bg-card text-card-foreground sm:mx-auto sm:mt-[2dvh] sm:h-[96dvh] sm:max-w-[99vw] sm:rounded-xl sm:border sm:border-border/80 lg:max-w-[96vw]"
-						onClick={(event) => event.stopPropagation()}
+						className="fixed inset-0 z-[260] bg-black/70"
+						onClick={closePostDetail}
 					>
-						<Button
-							type="button"
-							variant="secondary"
-							size="icon-sm"
-							onClick={closePostDetail}
-							className="absolute right-3 top-3 z-20 rounded-full bg-black/55 text-white hover:bg-black/70"
-						>
-							<X className="size-4" />
-						</Button>
-						<div className="grid h-full min-w-0 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,2.4fr)_300px] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,2.8fr)_320px]">
-							<div className="min-h-0 bg-black">
-								{hasPostImage ? (
-									<div className="relative h-full w-full overflow-hidden bg-black">
-										<Image
-											src={post.image_url!}
-											alt="Post image preview"
-											fill
-											className="object-contain"
-										/>
-										{hasPostContent && (
-											<div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden  bg-gradient-to-b from-black/55 via-black/80 to-black/95">
-												<ScrollArea className="h-[30dvh] min-h-28 w-full max-h-[45%]">
-													<div className="flex min-w-0 flex-col items-center p-5 text-sm text-white/95">
-														<p className="mx-auto max-w-3xl whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
-															{isDialogContentExpanded
-																? postContent
-																: dialogPreviewContent}
-														</p>
-														{shouldTruncateDialogContent && (
-															<button
-																type="button"
-																onClick={() =>
-																	setIsDialogContentExpanded((prev) => !prev)
-																}
-																className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
-															>
+						<div className="flex h-full w-full items-center justify-center p-0 sm:p-3">
+							<div
+								role="dialog"
+								aria-modal="true"
+								onClick={(event) => event.stopPropagation()}
+								className="relative flex h-[100dvh] w-[100vw] flex-col overflow-hidden bg-card text-card-foreground sm:h-[96dvh] sm:w-[96vw] sm:rounded-xl sm:border sm:border-border/80 lg:h-[92dvh] lg:w-[80vw] xl:w-[1200px]"
+							>
+								<Button
+									type="button"
+									variant="secondary"
+									size="icon-sm"
+									onClick={closePostDetail}
+									className="absolute right-3 top-3 z-20 rounded-full bg-black/55 text-white hover:bg-black/70"
+								>
+									<X className="size-4" />
+								</Button>
+								<div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1.35fr)_minmax(260px,0.65fr)] lg:grid-cols-[minmax(0,70%)_minmax(0,30%)] lg:grid-rows-[minmax(0,1fr)]">
+									<div className="min-h-0 bg-black">
+										{hasPostImage ? (
+											<div className="relative h-full w-full overflow-hidden bg-black">
+												<Image
+													src={post.image_url!}
+													alt="Post image preview"
+													fill
+													className="object-contain"
+												/>
+												{hasPostContent && (
+													<div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden bg-gradient-to-b from-black/55 via-black/80 to-black/95">
+														<ScrollArea className="h-[30dvh] min-h-28 w-full max-h-[45%]">
+															<div className="flex min-w-0 flex-col items-center p-5 text-sm text-white/95">
+																<p className="mx-auto max-w-3xl whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
+																	{isDialogContentExpanded
+																		? postContent
+																		: dialogPreviewContent}
+																</p>
+																{shouldTruncateDialogContent && (
+																	<button
+																		type="button"
+																		onClick={() =>
+																			setIsDialogContentExpanded((prev) => !prev)
+																		}
+																		className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
+																	>
+																		{isDialogContentExpanded
+																			? "Thu gọn"
+																			: "Hiện thêm"}
+																	</button>
+																)}
+															</div>
+														</ScrollArea>
+													</div>
+												)}
+											</div>
+										) : (
+											<div className="h-full w-full bg-gradient-to-b from-black/75 via-black/85 to-black/95">
+												<ScrollArea className="h-full w-full">
+													<div className="grid min-h-full min-w-0 place-items-center p-8 text-sm text-white/95">
+														<div className="flex w-full max-w-3xl flex-col items-center">
+															<p className="whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
 																{isDialogContentExpanded
-																	? "Thu gọn"
-																	: "Hiện thêm"}
-															</button>
-														)}
+																	? postContent
+																	: dialogPreviewContent}
+															</p>
+															{shouldTruncateDialogContent && (
+																<button
+																	type="button"
+																	onClick={() =>
+																		setIsDialogContentExpanded((prev) => !prev)
+																	}
+																	className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
+																>
+																	{isDialogContentExpanded
+																		? "Thu gọn"
+																		: "Hiện thêm"}
+																</button>
+															)}
+														</div>
 													</div>
 												</ScrollArea>
 											</div>
 										)}
 									</div>
-								) : (
-									<div className="h-full w-full bg-gradient-to-b from-black/75 via-black/85 to-black/95">
-										<ScrollArea className="h-full w-full">
-											<div className="grid min-h-full min-w-0 place-items-center p-8 text-sm text-white/95">
-												<div className="flex w-full max-w-3xl flex-col items-center">
-													<p className="whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
-														{isDialogContentExpanded
-															? postContent
-															: dialogPreviewContent}
+
+									<div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/80 bg-card lg:border-l lg:border-t-0">
+										<div className="min-w-0 border-b border-border/80 px-4 py-3">
+											<p className="truncate text-sm font-semibold">
+												{displayName}
+											</p>
+											<p className="text-xs text-foreground/75">
+												{formatDistanceToNow(new Date(post.created_at), {
+													addSuffix: true,
+												})}
+											</p>
+										</div>
+
+										<ScrollArea className="h-0 min-h-0 min-w-0 flex-1">
+											<div className="px-4 py-3">
+												{isLoadingComments ? (
+													<p className="text-sm text-foreground/75">
+														Loading comments...
 													</p>
-													{shouldTruncateDialogContent && (
-														<button
-															type="button"
-															onClick={() =>
-																setIsDialogContentExpanded((prev) => !prev)
-															}
-															className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
-														>
-															{isDialogContentExpanded ? "Thu gọn" : "Hiện thêm"}
-														</button>
-													)}
-												</div>
+												) : threadedComments.length > 0 ? (
+													<div>{renderThread(threadedComments)}</div>
+												) : (
+													<p className="text-sm text-foreground/75">
+														Không có bình luận
+													</p>
+												)}
+
+												<div ref={loadMoreRef} className="h-6" />
+												{isFetchingNextPage && (
+													<p className="text-xs text-foreground/75">
+														Đang tải thêm bình luận...
+													</p>
+												)}
 											</div>
 										</ScrollArea>
-									</div>
-								)}
-							</div>
 
-							<div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/80 bg-card lg:border-l lg:border-t-0">
-								<div className="min-w-0 border-b border-border/80 px-4 py-3">
-									<p className="truncate text-sm font-semibold">
-										{displayName}
-									</p>
-									<p className="text-xs text-foreground/75">
-										{formatDistanceToNow(new Date(post.created_at), {
-											addSuffix: true,
-										})}
-									</p>
-								</div>
-
-								<ScrollArea className="min-h-0 min-w-0 flex-1">
-									<div className="px-4 py-3">
-										{isLoadingComments ? (
-											<p className="text-sm text-foreground/75">
-												Loading comments...
-											</p>
-										) : threadedComments.length > 0 ? (
-											<div>{renderThread(threadedComments)}</div>
-										) : (
-											<p className="text-sm text-foreground/75">
-												Không có bình luận
-											</p>
-										)}
-
-										<div ref={loadMoreRef} className="h-6" />
-										{isFetchingNextPage && (
-											<p className="text-xs text-foreground/75">
-												Đang tải thêm bình luận...
-											</p>
-										)}
-									</div>
-								</ScrollArea>
-
-								<div className="shrink-0 border-t border-border/80 bg-card p-3">
-									{replyToCommentId && (
-										<div className="mb-2 flex items-center justify-between rounded-md bg-accent px-2 py-1 text-xs">
-											<span>Trả lời bình luận</span>
-											<button
-												type="button"
-												onClick={() => setReplyToCommentId(null)}
-												className="text-primary"
-											>
-												Cancel
-											</button>
+										<div className="shrink-0 border-t border-border/80 bg-card/95 p-3 backdrop-blur">
+											{replyToCommentId && (
+												<div className="mb-2 flex items-center justify-between rounded-md bg-accent px-2 py-1 text-xs">
+													<span>Trả lời bình luận</span>
+													<button
+														type="button"
+														onClick={() => setReplyToCommentId(null)}
+														className="text-primary"
+													>
+														Cancel
+													</button>
+												</div>
+											)}
+											<form onSubmit={handleSubmitComment} className="flex gap-2">
+												<Input
+													value={newComment}
+													onChange={(e) => setNewComment(e.target.value)}
+													placeholder="Write a comment..."
+													className="border-border/80 bg-background"
+												/>
+												<Button
+													type="submit"
+													disabled={!newComment.trim() || isSubmittingComment}
+													className="font-semibold"
+												>
+													Send
+												</Button>
+											</form>
 										</div>
-									)}
-									<form onSubmit={handleSubmitComment} className="flex gap-2">
-										<Input
-											value={newComment}
-											onChange={(e) => setNewComment(e.target.value)}
-											placeholder="Write a comment..."
-											className="border-border/80 bg-background"
-										/>
-										<Button
-											type="submit"
-											disabled={!newComment.trim() || isSubmittingComment}
-											className="font-semibold"
-										>
-											Send
-										</Button>
-									</form>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-				</div>
-			)}
+					</div>,
+					document.body,
+				)}
 
 			<Dialog open={isEditing} onOpenChange={setIsEditing}>
 				<DialogContent>
