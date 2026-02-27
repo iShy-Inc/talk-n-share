@@ -36,14 +36,16 @@ export function SettingsLayout({
 							key={item.value}
 							onClick={() => onMenuChange(item.value)}
 							className={cn(
-								"block w-full px-5 py-4 text-left text-sm transition-colors",
+								"group block w-full px-5 py-4 text-left text-sm transition-all duration-200 ease-out",
 								activeItem === item.value
-									? "bg-muted font-medium text-foreground"
-									: "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+									? "bg-accent/50 font-medium text-foreground"
+									: "text-muted-foreground hover:bg-accent/60 hover:text-foreground hover:translate-x-1",
 							)}
 							id={`settings-menu-${item.value}`}
 						>
-							{item.label}
+							<span className="inline-block transition-all duration-200 ease-out group-hover:tracking-[0.01em]">
+								{item.label}
+							</span>
 						</button>
 					))}
 				</div>

@@ -57,15 +57,24 @@ export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 								key={item.href}
 								href={item.href}
 								className={cn(
-									"flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-colors",
+									"group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200 ease-out",
 									isActive
-										? "bg-muted font-semibold text-foreground"
-										: "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+										? "bg-accent/50 font-semibold text-foreground shadow-sm"
+										: "text-muted-foreground hover:bg-accent/60 hover:text-foreground hover:translate-x-1",
 								)}
 							>
-								<item.icon className="size-5" />
+								<item.icon
+									className={cn(
+										"size-5 transition-all duration-200 ease-out",
+										isActive
+											? "text-primary"
+											: "group-hover:-translate-y-0.5 group-hover:text-primary",
+									)}
+								/>
 								<span className="flex items-center gap-2">
+									<span className="inline-block transition-all duration-200 ease-out group-hover:tracking-[0.01em]">
 									{item.label}
+									</span>
 									{item.href === "/messages" && unreadCount > 0 && (
 										<span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
 											{unreadCount > 99 ? "99+" : unreadCount}

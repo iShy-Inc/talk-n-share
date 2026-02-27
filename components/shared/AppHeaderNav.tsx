@@ -53,10 +53,15 @@ export function AppHeaderNav() {
 					className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
 					// className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
 				>
-					<AppLogo
-					// className="animate-float-soft"
-					// imageClassName="h-8 w-auto"
-					/>
+					<AppLogo showText={false} imageClassName="h-9 w-auto" />
+					<div className="space-y-0.5">
+						<h1 className="text-sm font-semibold text-sidebar-foreground">
+							Talk N Share
+						</h1>
+						<p className="text-xs text-muted-foreground">
+							Khám phá, chia sẻ và kết nối
+						</p>
+					</div>
 				</Link>
 
 				<form onSubmit={handleSearch} className="ml-auto w-full max-w-sm">

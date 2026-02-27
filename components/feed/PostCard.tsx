@@ -648,7 +648,7 @@ export function PostCard({ post }: PostCardProps) {
 								role="dialog"
 								aria-modal="true"
 								onClick={(event) => event.stopPropagation()}
-								className="relative flex h-[100dvh] w-[100vw] flex-col overflow-hidden bg-card text-card-foreground sm:h-[96dvh] sm:w-[96vw] sm:rounded-xl sm:border sm:border-border/80 lg:h-[92dvh] lg:w-[80vw] xl:w-[1200px]"
+								className="relative flex h-[100dvh] w-[100vw] flex-col overflow-hidden bg-background text-foreground sm:h-[96dvh] sm:w-[96vw] sm:rounded-xl sm:border sm:border-border/80 lg:h-[92dvh] lg:w-[80vw] xl:w-[1200px]"
 							>
 								<Button
 									type="button"
@@ -726,8 +726,8 @@ export function PostCard({ post }: PostCardProps) {
 										)}
 									</div>
 
-									<div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/80 bg-card lg:border-l lg:border-t-0">
-										<div className="min-w-0 border-b border-border/80 px-4 py-3">
+									<div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/80 bg-background lg:border-l lg:border-t-0">
+										<div className="min-w-0 border-b border-border/80 bg-background px-4 py-3">
 											<p className="truncate text-sm font-semibold">
 												{displayName}
 											</p>
@@ -761,7 +761,7 @@ export function PostCard({ post }: PostCardProps) {
 											</div>
 										</ScrollArea>
 
-										<div className="shrink-0 border-t border-border/80 bg-card/95 p-3 backdrop-blur">
+										<div className="shrink-0 border-t border-border/80 bg-background p-3">
 											{replyToCommentId && (
 												<div className="mb-2 flex items-center justify-between rounded-md bg-accent px-2 py-1 text-xs">
 													<span>Trả lời bình luận</span>

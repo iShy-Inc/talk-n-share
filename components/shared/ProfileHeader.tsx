@@ -202,16 +202,18 @@ export function ProfileHeader({
 								key={tab.value}
 								onClick={() => onTabChange?.(tab.value)}
 								className={cn(
-									"relative px-3 py-3 text-sm font-medium transition-colors",
+									"group relative px-3 py-3 text-sm font-medium transition-all duration-200 ease-out",
 									activeTab === tab.value
-										? "text-foreground"
-										: "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+										? "bg-accent/35 text-foreground"
+										: "text-muted-foreground hover:bg-accent/55 hover:text-foreground hover:-translate-y-0.5",
 								)}
 								id={`profile-tab-${tab.value}`}
 							>
-								{tab.label}
+								<span className="inline-block transition-all duration-200 ease-out group-hover:tracking-[0.01em] group-hover:translate-y-[-1px]">
+									{tab.label}
+								</span>
 								{activeTab === tab.value && (
-									<span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-primary" />
+									<span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-primary transition-all duration-200" />
 								)}
 							</button>
 						))}
