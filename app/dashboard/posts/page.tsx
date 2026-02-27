@@ -34,8 +34,8 @@ import {
 	IconHeart,
 	IconMessage,
 } from "@tabler/icons-react";
-import { format } from "date-fns";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 
 export default function PostsPage() {
 	const { postsQuery, updatePost, deletePost, approvePost } =
@@ -94,16 +94,16 @@ export default function PostsPage() {
 	};
 
 	return (
-		<div className="space-y-6">
-			<div>
+		<div className="space-y-7">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
 				<h1 className="text-2xl font-bold tracking-tight">Posts</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Manage all posts on the platform
+					Review published and pending posts in one cleaner moderation queue.
 				</p>
 			</div>
 
 			{/* Toolbar */}
-			<Card className="border-0 shadow-lg">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardContent className="p-4">
 					<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 						<div className="relative flex-1">
@@ -116,13 +116,14 @@ export default function PostsPage() {
 								id="search-posts"
 							/>
 						</div>
-						<div className="flex gap-2">
+						<div className="flex gap-2 rounded-xl border border-border/60 bg-muted/20 p-1">
 							{(["all", "approved", "pending"] as const).map((f) => (
 								<Button
 									key={f}
 									variant={filter === f ? "default" : "outline"}
 									size="sm"
 									onClick={() => setFilter(f)}
+									className="rounded-lg"
 									id={`filter-${f}`}
 								>
 									{f.charAt(0).toUpperCase() + f.slice(1)}
@@ -134,7 +135,7 @@ export default function PostsPage() {
 			</Card>
 
 			{/* Posts Table */}
-			<Card className="border-0 shadow-lg overflow-hidden">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm overflow-hidden">
 				<CardHeader>
 					<CardTitle>All Posts ({filteredPosts.length})</CardTitle>
 					<CardDescription>Review and moderate platform posts</CardDescription>
@@ -183,10 +184,7 @@ export default function PostsPage() {
 								</thead>
 								<tbody className="divide-y divide-border/30">
 									{filteredPosts.map((post) => (
-										<tr
-											key={post.id}
-											className="group transition-colors hover:bg-muted/20"
-										>
+										<tr key={post.id} className="group transition-colors hover:bg-muted/30">
 											<td className="max-w-xs px-6 py-4">
 												<p className="line-clamp-2 text-sm">{post.content}</p>
 												{post.image_url && (
@@ -239,7 +237,7 @@ export default function PostsPage() {
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{format(new Date(post.created_at), "MMM d, yyyy")}
+												{formatDateDDMMYYYY(post.created_at)}
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center justify-end gap-1">

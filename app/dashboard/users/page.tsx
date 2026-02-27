@@ -16,6 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
 	AlertDialog,
 	AlertDialogAction,
 	AlertDialogCancel,
@@ -36,7 +43,9 @@ import {
 	IconShieldLock,
 	IconLoader2,
 } from "@tabler/icons-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { formatDateDDMMYYYY } from "@/utils/helpers/date";
+import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 
 export default function UsersPage() {
 	const { usersQuery, updateUser, deleteUser } = useDashboardUsers();
@@ -47,6 +56,7 @@ export default function UsersPage() {
 		display_name: "",
 		gender: "",
 		location: "",
+		role: "user" as Profile["role"],
 		is_public: true,
 	});
 
@@ -63,6 +73,7 @@ export default function UsersPage() {
 			display_name: user.display_name ?? "",
 			gender: user.gender ?? "",
 			location: user.location ?? "",
+			role: user.role ?? "user",
 			is_public: user.is_public ?? true,
 		});
 	};
@@ -75,6 +86,7 @@ export default function UsersPage() {
 				display_name: editForm.display_name || undefined,
 				gender: (editForm.gender || undefined) as Profile["gender"],
 				location: editForm.location || undefined,
+				role: editForm.role,
 				is_public: editForm.is_public,
 			},
 			{
@@ -120,16 +132,16 @@ export default function UsersPage() {
 	}
 
 	return (
-		<div className="space-y-6">
-			<div>
+		<div className="space-y-7">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
 				<h1 className="text-2xl font-bold tracking-tight">Users</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Manage user accounts and profiles
+					Manage roles, visibility, and user profile data in one place.
 				</p>
 			</div>
 
 			{/* Toolbar */}
-			<Card className="border-0 shadow-lg">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardContent className="p-4">
 					<div className="relative">
 						<IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -145,7 +157,7 @@ export default function UsersPage() {
 			</Card>
 
 			{/* Users Table */}
-			<Card className="border-0 shadow-lg overflow-hidden">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm overflow-hidden">
 				<CardHeader>
 					<CardTitle>All Users ({filteredUsers.length})</CardTitle>
 					<CardDescription>View and manage user profiles</CardDescription>
@@ -182,6 +194,9 @@ export default function UsersPage() {
 											Region
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+											Role
+										</th>
+										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 											Visibility
 										</th>
 										<th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -194,10 +209,7 @@ export default function UsersPage() {
 								</thead>
 								<tbody className="divide-y divide-border/30">
 									{filteredUsers.map((user) => (
-										<tr
-											key={user.id}
-											className="group transition-colors hover:bg-muted/20"
-										>
+										<tr key={user.id} className="group transition-colors hover:bg-muted/30">
 											<td className="px-6 py-4">
 												<div className="flex items-center gap-3">
 													{user.avatar_url ? (
@@ -214,9 +226,12 @@ export default function UsersPage() {
 														</div>
 													)}
 													<div>
-														<p className="text-sm font-semibold">
-															{user.display_name ?? "User"}
-														</p>
+														<div className="flex items-center gap-2">
+															<p className="text-sm font-semibold">
+																{user.display_name ?? "User"}
+															</p>
+															<RoleVerifiedBadge role={user.role} />
+														</div>
 														<p className="text-xs text-muted-foreground">
 															{user.id.slice(0, 8)}...
 														</p>
@@ -228,6 +243,9 @@ export default function UsersPage() {
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
 												{user.location ?? "—"}
+											</td>
+											<td className="px-6 py-4 text-sm">
+												<span className="capitalize">{user.role}</span>
 											</td>
 											<td className="px-6 py-4">
 												<Badge
@@ -243,7 +261,7 @@ export default function UsersPage() {
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{user.birth_date ?? "—"}
+												{user.birth_date ? formatDateDDMMYYYY(user.birth_date) : "—"}
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center justify-end gap-1">
@@ -346,6 +364,27 @@ export default function UsersPage() {
 									}
 								/>
 							</div>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-role">Role</Label>
+							<Select
+								value={editForm.role}
+								onValueChange={(value) =>
+									setEditForm({
+										...editForm,
+										role: value as Profile["role"],
+									})
+								}
+							>
+								<SelectTrigger id="edit-role">
+									<SelectValue placeholder="Select role" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="user">user</SelectItem>
+									<SelectItem value="moder">moder</SelectItem>
+									<SelectItem value="admin">admin</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 						<div className="flex items-center gap-2">
 							<Input

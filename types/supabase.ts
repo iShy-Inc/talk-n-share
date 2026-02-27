@@ -352,12 +352,14 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          birth_visibility: string | null
           created_at: string
           display_name: string | null
           gender: Database["public"]["Enums"]["gender"] | null
           id: string
           is_public: boolean | null
           location: string | null
+          relationship: string | null
           role: Database["public"]["Enums"]["role"]
           updated_at: string
           zodiac: string
@@ -366,12 +368,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          birth_visibility?: string | null
           created_at?: string
           display_name?: string | null
           gender?: Database["public"]["Enums"]["gender"] | null
           id: string
           is_public?: boolean | null
           location?: string | null
+          relationship?: string | null
           role: Database["public"]["Enums"]["role"]
           updated_at?: string
           zodiac?: string
@@ -380,12 +384,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          birth_visibility?: string | null
           created_at?: string
           display_name?: string | null
           gender?: Database["public"]["Enums"]["gender"] | null
           id?: string
           is_public?: boolean | null
           location?: string | null
+          relationship?: string | null
           role?: Database["public"]["Enums"]["role"]
           updated_at?: string
           zodiac?: string

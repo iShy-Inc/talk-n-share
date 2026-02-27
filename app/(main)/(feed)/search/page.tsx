@@ -14,7 +14,7 @@ import { PostWithAuthor } from "@/types/supabase";
 import { cn } from "@/lib/utils";
 import useProfile from "@/hooks/useProfile";
 import { startOrRequestConversation } from "@/lib/contact-messaging";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const supabase = createClient();
 
@@ -43,7 +43,7 @@ export default function SearchPage() {
 			const { data } = await supabase
 				.from("posts")
 				.select(
-					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public)",
+					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role)",
 				)
 				.ilike("content", `%${query}%`)
 				.eq("status", "approved")
@@ -194,6 +194,7 @@ export default function SearchPage() {
 											key={person.id}
 											id={person.id}
 											username={person.display_name || "User"}
+											role={person.role}
 											title={person.location} // using location as title/role placeholder
 											avatarUrl={person.avatar_url}
 											onSendMessage={handleSendMessage}

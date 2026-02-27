@@ -56,8 +56,9 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { getAnonymousDisplayName } from "@/lib/anonymous-name";
+import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 
 interface PostCardProps {
 	post: PostWithAuthor;
@@ -118,6 +119,7 @@ export function PostCard({ post }: PostCardProps) {
 	const [isLiked, setIsLiked] = useState(false);
 	const [isTogglingLike, setIsTogglingLike] = useState(false);
 	const [isReposting, setIsReposting] = useState(false);
+	const [isReposted, setIsReposted] = useState(false);
 	const [likeCount, setLikeCount] = useState(post.likes_count ?? 0);
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
@@ -147,6 +149,26 @@ export function PostCard({ post }: PostCardProps) {
 	useEffect(() => {
 		setIsLiked(likedByMe);
 	}, [likedByMe]);
+
+	const { data: repostedByMe = false } = useQuery({
+		queryKey: ["post-reposted-by-me", post.id, user?.id],
+		queryFn: async () => {
+			if (!user) return false;
+			const { data, error } = await supabase
+				.from("post_reposts")
+				.select("post_id")
+				.eq("post_id", post.id)
+				.eq("reposter_id", user.id)
+				.maybeSingle();
+			if (error) throw error;
+			return !!data;
+		},
+		enabled: !!user,
+	});
+
+	useEffect(() => {
+		setIsReposted(repostedByMe);
+	}, [repostedByMe]);
 
 	const {
 		data: commentsPages,
@@ -428,18 +450,25 @@ export function PostCard({ post }: PostCardProps) {
 		if (!handleAuthAction(e) || !user || isReposting) return;
 		try {
 			setIsReposting(true);
-			const { error } = await supabase.from("post_reposts").insert({
-				post_id: post.id,
-				reposter_id: user.id,
-			});
-			if (error) {
-				if (error.code === "23505") {
-					toast("You already reposted this post.");
-					return;
-				}
-				throw error;
+			if (isReposted) {
+				const { error } = await supabase
+					.from("post_reposts")
+					.delete()
+					.eq("post_id", post.id)
+					.eq("reposter_id", user.id);
+				if (error) throw error;
+				setIsReposted(false);
+				toast.success("Repost removed.");
+			} else {
+				const { error } = await supabase.from("post_reposts").insert({
+					post_id: post.id,
+					reposter_id: user.id,
+				});
+				if (error) throw error;
+				setIsReposted(true);
+				toast.success("Reposted successfully");
 			}
-			toast.success("Reposted successfully");
+			queryClient.invalidateQueries({ queryKey: ["post-reposted-by-me", post.id, user.id] });
 		} catch {
 			toast.error("Failed to repost");
 		} finally {
@@ -482,7 +511,12 @@ export function PostCard({ post }: PostCardProps) {
 						)}
 					</div>
 					<div>
-						<h3 className="text-sm font-semibold">{displayName}</h3>
+						<div className="flex items-center gap-2">
+							<h3 className="text-sm font-semibold">{displayName}</h3>
+							{!shouldMaskAuthor && (
+								<RoleVerifiedBadge role={post.profiles?.role ?? null} />
+							)}
+						</div>
 						<p className="text-xs text-muted-foreground">
 							{formatDistanceToNow(new Date(post.created_at), {
 								addSuffix: true,
@@ -796,8 +830,12 @@ export function PostCard({ post }: PostCardProps) {
 				</div>
 				<div className="flex gap-4">
 					<button
-						className="text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-						title="Repost"
+						className={`transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+							isReposted
+								? "text-emerald-600"
+								: "text-muted-foreground hover:text-foreground"
+						}`}
+						title={isReposted ? "Unrepost" : "Repost"}
 						onClick={handleRepost}
 						disabled={isReposting}
 					>

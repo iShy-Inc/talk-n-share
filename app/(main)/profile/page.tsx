@@ -16,6 +16,7 @@ import {
 	SettingsMenuItem,
 } from "@/components/shared/SettingsLayout";
 import { GeneralSettingsForm } from "@/components/shared/GeneralSettingsForm";
+import { PrivacySettingsForm } from "@/components/shared/PrivacySettingsForm";
 import { AccountSettings } from "@/components/shared/AccountSettings";
 import { ThemeSettings } from "@/components/shared/ThemeSettings";
 import { PostCard } from "@/components/feed/PostCard";
@@ -24,10 +25,16 @@ import {
 	getAvatarCategoryForUrl,
 } from "@/lib/avatar-options";
 import { getZodiacSign } from "@/lib/zodiac";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { PostWithAuthor } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
 import { startOrRequestConversation } from "@/lib/contact-messaging";
+import {
+	formatDateDDMM,
+	formatDateDDMMYYYY,
+	formatDateMMYYYY,
+	formatDateYYYY,
+} from "@/utils/helpers/date";
 
 const supabase = createClient();
 
@@ -44,16 +51,35 @@ const visitorTabs: ProfileTab[] = [
 
 const settingsMenuItems: SettingsMenuItem[] = [
 	{ label: "General", value: "general" },
+	{ label: "Privacy", value: "privacy" },
 	{ label: "Appearance", value: "appearance" },
 	{ label: "Account", value: "account" },
 	{ label: "Logout", value: "logout" },
 ];
 
-const formatBirthDate = (value?: string | null) => {
+const formatBirthDateByPrivacy = (
+	value?: string | null,
+	visibility?: string | null,
+) => {
 	if (!value) return "N/A";
-	const date = new Date(value);
-	if (Number.isNaN(date.getTime())) return "N/A";
-	return date.toLocaleDateString();
+
+	if (visibility === "year_only") {
+		return formatDateYYYY(value);
+	}
+	if (visibility === "month_year") {
+		return formatDateMMYYYY(value);
+	}
+	if (visibility === "day_month") {
+		return formatDateDDMM(value);
+	}
+	return formatDateDDMMYYYY(value);
+};
+
+const formatRelationship = (value?: string | null) => {
+	if (!value) return undefined;
+	if (value === "in_relationship") return "In a relationship";
+	if (value === "private") return "Prefer not to say";
+	return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
 export default function ProfilePage() {
@@ -112,7 +138,7 @@ export default function ProfilePage() {
 			const { data } = await supabase
 				.from("posts")
 				.select(
-					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public)",
+					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role)",
 				)
 				.eq("author_id", profileId)
 				.order("created_at", { ascending: false });
@@ -131,7 +157,7 @@ export default function ProfilePage() {
 			const { data } = await supabase
 				.from("likes")
 				.select(
-					"*, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public))",
+					"*, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role))",
 				)
 				.eq("user_id", user.id)
 				.order("created_at", { ascending: false });
@@ -146,8 +172,10 @@ export default function ProfilePage() {
 		? []
 		: [
 				{ label: "Posts", value: myPosts.length },
-				{ label: "Followers", value: 0 },
-				{ label: "Following", value: 0 },
+				{
+					label: "Likes",
+					value: myPosts.reduce((sum, post) => sum + (post.likes_count ?? 0), 0),
+				},
 			];
 
 	const handleSaveGeneral = async (values: {
@@ -155,12 +183,37 @@ export default function ProfilePage() {
 		bio: string;
 		avatarUrl: string;
 		location: string;
+	}) => {
+		if (!user) return;
+
+		const { error } = await supabase
+			.from("profiles")
+			.update({
+				display_name: values.display_name,
+				bio: values.bio || null,
+				avatar_url: values.avatarUrl || null,
+				location: values.location || null,
+			})
+			.eq("id", user.id);
+
+		if (error) {
+			toast.error("Failed to save settings");
+		} else {
+			toast.success("Settings saved successfully");
+			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
+		}
+	};
+
+	const handleSavePrivacy = async (values: {
 		birth_date: string;
+		birth_visibility: string;
+		relationship: string;
 		is_public: boolean;
 	}) => {
 		if (!user) return;
 
-		const isSwitchingToPublic = (myProfile?.is_public ?? true) === false && values.is_public;
+		const isSwitchingToPublic =
+			(myProfile?.is_public ?? true) === false && values.is_public;
 		if (isSwitchingToPublic) {
 			const confirmed = window.confirm(
 				"Switching to public will make your profile information visible to others. Continue?",
@@ -174,11 +227,9 @@ export default function ProfilePage() {
 		const { error } = await supabase
 			.from("profiles")
 			.update({
-				display_name: values.display_name,
-				bio: values.bio || null,
-				avatar_url: values.avatarUrl || null,
-				location: values.location || null,
 				birth_date: values.birth_date || null,
+				birth_visibility: values.birth_visibility || "full",
+				relationship: values.relationship || "private",
 				zodiac: values.birth_date ? getZodiacSign(values.birth_date) : null,
 				is_public: values.is_public,
 			})
@@ -236,6 +287,7 @@ export default function ProfilePage() {
 			<ProfileHeader
 				name={profile?.display_name ?? "User"}
 				username={shouldHidePrivateInfo ? undefined : profile?.display_name ?? undefined}
+				role={shouldHidePrivateInfo ? null : profile?.role}
 				title={
 					shouldHidePrivateInfo
 						? undefined
@@ -248,37 +300,35 @@ export default function ProfilePage() {
 									: "Talk N Share Member"
 				}
 				avatarUrl={shouldHidePrivateInfo ? undefined : profile?.avatar_url ?? undefined}
+				joinDate={profile?.created_at}
+				bio={shouldHidePrivateInfo ? undefined : profile?.bio ?? undefined}
+				birthday={
+					shouldHidePrivateInfo || !profile?.birth_date
+						? undefined
+						: formatBirthDateByPrivacy(profile.birth_date, profile.birth_visibility)
+				}
+				zodiac={
+					shouldHidePrivateInfo || !profile?.zodiac
+						? undefined
+						: profile.zodiac
+				}
+				relationship={
+					shouldHidePrivateInfo
+						? undefined
+						: formatRelationship(profile?.relationship)
+				}
+				actionSlot={
+					!isOwnProfile ? (
+						<Button onClick={handleSendMessage} size="sm" className="rounded-full">
+							Send Message
+						</Button>
+					) : undefined
+				}
 				stats={stats}
 				tabs={isOwnProfile ? profileTabs : visitorTabs}
 				activeTab={effectiveActiveTab}
 				onTabChange={setActiveTab}
 			/>
-
-			{!isOwnProfile && (
-				<div className="mt-4">
-					<Button onClick={handleSendMessage} className="rounded-xl">
-						Send Message
-					</Button>
-				</div>
-			)}
-
-			{!shouldHidePrivateInfo && (profile?.birth_date || profile?.zodiac) && (
-				<div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-					<h3 className="text-sm font-semibold text-foreground">
-						Birthday & Zodiac
-					</h3>
-					<div className="mt-2 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-						<p>
-							<span className="font-medium text-foreground">Birthday:</span>{" "}
-							{formatBirthDate(profile?.birth_date)}
-						</p>
-						<p>
-							<span className="font-medium text-foreground">Zodiac:</span>{" "}
-							{profile?.zodiac || "N/A"}
-						</p>
-					</div>
-				</div>
-			)}
 
 			{effectiveActiveTab === "my-posts" && (
 				<div className="space-y-4">
@@ -345,19 +395,28 @@ export default function ProfilePage() {
 					{settingsTab === "general" && (
 						<GeneralSettingsForm
 							key={`${profile?.id ?? "profile"}-${profile?.updated_at ?? "init"}`}
-							initialValues={{
-								display_name: profile?.display_name ?? "",
-								bio: profile?.bio ?? "",
-								location: profile?.location ?? "",
-								birth_date: profile?.birth_date ?? "",
-								zodiac: profile?.zodiac ?? "",
-								is_public: profile?.is_public,
-							}}
+								initialValues={{
+									display_name: profile?.display_name ?? "",
+									bio: profile?.bio ?? "",
+									location: profile?.location ?? "",
+								}}
 							selectedAvatar={effectiveAvatar}
 							selectedAvatarCategory={effectiveAvatarCategory}
 							onAvatarSelect={setSelectedAvatar}
 							onAvatarCategoryChange={setSelectedAvatarCategory}
 							onSave={handleSaveGeneral}
+						/>
+					)}
+					{settingsTab === "privacy" && (
+						<PrivacySettingsForm
+							key={`${profile?.id ?? "profile"}-${profile?.updated_at ?? "init"}-privacy`}
+								initialValues={{
+									birth_date: profile?.birth_date ?? "",
+									birth_visibility: profile?.birth_visibility ?? "full",
+									relationship: profile?.relationship ?? "private",
+									is_public: profile?.is_public,
+								}}
+							onSave={handleSavePrivacy}
 						/>
 					)}
 					{settingsTab === "account" && (

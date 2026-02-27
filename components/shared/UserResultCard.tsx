@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { IconMessageCircle } from "@tabler/icons-react";
+import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
+import type { Profile } from "@/types/supabase";
 
 interface UserResultCardProps {
 	id: string;
 	username: string;
+	role?: Profile["role"] | null;
 	title?: string;
 	avatarUrl?: string;
 	bio?: string;
@@ -16,6 +19,7 @@ interface UserResultCardProps {
 export function UserResultCard({
 	id,
 	username,
+	role,
 	title,
 	avatarUrl,
 	bio,
@@ -38,9 +42,12 @@ export function UserResultCard({
 				<div className="flex items-center justify-between gap-2">
 					<div>
 						<Link href={`/profile?userId=${id}`}>
-							<h3 className="font-semibold text-foreground hover:underline">
-								{username}
-							</h3>
+							<div className="flex items-center gap-2">
+								<h3 className="font-semibold text-foreground hover:underline">
+									{username}
+								</h3>
+								<RoleVerifiedBadge role={role} />
+							</div>
 						</Link>
 						{title && <p className="text-sm text-muted-foreground">{title}</p>}
 					</div>

@@ -48,7 +48,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 import { createClient } from "@/utils/supabase/client";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 // ... (GoogleIcon component remains)
 
@@ -88,9 +88,8 @@ export default function SignupPage() {
 		}
 
 		if (data?.user) {
-			toast.success("Account created! Please verify your email.");
-			sessionStorage.setItem("pendingVerificationEmail", email);
-			router.push("/verify?email=" + encodeURIComponent(email));
+			toast.success("Account created! Check your email to verify your account.");
+			router.push("/signup-thank-you?email=" + encodeURIComponent(email));
 		}
 		setIsLoading(false);
 	};

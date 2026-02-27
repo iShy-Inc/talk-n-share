@@ -13,7 +13,7 @@ import {
 	IconPhone,
 	IconSend,
 } from "@tabler/icons-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import Link from "next/link";
 import {
 	Card,

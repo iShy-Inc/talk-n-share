@@ -1,9 +1,19 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { IconMapPin, IconCalendarMonth, IconRefresh } from "@tabler/icons-react";
+import {
+	IconMapPin,
+	IconCalendarMonth,
+	IconRefresh,
+	IconSparkles,
+	IconHeart,
+} from "@tabler/icons-react";
 import { useProfileCover } from "@/hooks/useProfileCover";
+import { formatDateDDMMYYYY } from "@/utils/helpers/date";
+import type { Profile } from "@/types/supabase";
+import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 
 export interface ProfileStat {
 	label: string;
@@ -18,8 +28,15 @@ export interface ProfileTab {
 interface ProfileHeaderProps {
 	name: string;
 	username?: string;
+	role?: Profile["role"] | null;
 	title?: string;
 	avatarUrl?: string;
+	joinDate?: string;
+	bio?: string;
+	birthday?: string;
+	zodiac?: string;
+	relationship?: string;
+	actionSlot?: ReactNode;
 	stats?: ProfileStat[];
 	tabs?: ProfileTab[];
 	activeTab?: string;
@@ -29,8 +46,15 @@ interface ProfileHeaderProps {
 export function ProfileHeader({
 	name,
 	username,
+	role,
 	title,
 	avatarUrl,
+	joinDate,
+	bio,
+	birthday,
+	zodiac,
+	relationship,
+	actionSlot,
 	stats = [],
 	tabs = [],
 	activeTab,
@@ -38,6 +62,8 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
 	const { coverUrl, activeCoverUrl, markCoverAsFailed, refreshCover } =
 		useProfileCover();
+
+	const formattedJoinDate = formatDateDDMMYYYY(joinDate);
 
 	return (
 		<div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -67,7 +93,7 @@ export function ProfileHeader({
 			</div>
 
 			<div className="relative z-10 px-5 pb-4 md:px-7">
-				<div className="relative z-20 -mt-14 flex items-end justify-between gap-4">
+				<div className="relative z-20 -mt-14 flex items-end gap-4">
 					{avatarUrl ? (
 						<img
 							src={avatarUrl}
@@ -79,31 +105,71 @@ export function ProfileHeader({
 							{name[0]?.toUpperCase()}
 						</div>
 					)}
-					<div className="mb-2 hidden text-xs text-muted-foreground sm:flex sm:items-center sm:gap-2">
-						<IconCalendarMonth className="size-4" />
-						<span>Joined Talk N Share</span>
-					</div>
 				</div>
 
-				<div className="mt-3">
-					<h2 className="text-xl font-bold tracking-tight">{name}</h2>
-					{username && (
-						<p className="text-sm text-muted-foreground">@{username}</p>
+				<div className="flex justify-between items-center mt-3">
+					<div className="mt-0">
+						<div className="flex items-center gap-2">
+							<h2 className="text-xl font-bold tracking-tight">{name}</h2>
+							<RoleVerifiedBadge role={role} />
+						</div>
+						{username && (
+							<p className="text-sm text-muted-foreground">@{username}</p>
+						)}
+					</div>
+					{joinDate && (
+						<div className="mt-2 flex flex-col items-end gap-2 text-xs text-muted-foreground">
+							{actionSlot}
+							<span className="inline-flex items-center gap-1.5">
+								<IconCalendarMonth className="size-4" />
+								Join from {formattedJoinDate}
+							</span>
+						</div>
 					)}
 				</div>
 
-				{title && (
-					<p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
-						<IconMapPin className="size-4" />
-						<span>{title}</span>
+				{bio && (
+					<p className="mt-3 whitespace-pre-line text-sm text-foreground">
+						{bio}
 					</p>
+				)}
+
+					{(title || birthday || zodiac || relationship) && (
+						<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+						{title && (
+							<span className="inline-flex items-center gap-1.5">
+								<IconMapPin className="size-4" />
+								{title}
+							</span>
+						)}
+						{birthday && (
+							<span className="inline-flex items-center gap-1.5">
+								<IconCalendarMonth className="size-4" />
+								Birthday: {birthday}
+							</span>
+						)}
+						{zodiac && (
+							<span className="inline-flex items-center gap-1.5">
+								<IconSparkles className="size-4" />
+								{zodiac}
+							</span>
+						)}
+						{relationship && (
+							<span className="inline-flex items-center gap-1.5">
+								<IconHeart className="size-4" />
+								{relationship}
+							</span>
+						)}
+					</div>
 				)}
 
 				{stats.length > 0 && (
 					<div className="mt-4 flex flex-wrap items-center gap-5">
 						{stats.map((stat) => (
 							<div key={stat.label} className="text-sm">
-								<span className="font-semibold text-foreground">{stat.value}</span>
+								<span className="font-semibold text-foreground">
+									{stat.value}
+								</span>
 								<span className="ml-1 text-muted-foreground">{stat.label}</span>
 							</div>
 						))}

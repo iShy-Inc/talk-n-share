@@ -14,6 +14,7 @@ export { GeneralSettingsForm } from "./GeneralSettingsForm";
 export { AccountSettings } from "./AccountSettings";
 export { ThemeSettings } from "./ThemeSettings";
 export { MobileDock } from "./MobileDock";
+export { AppHeaderNav } from "./AppHeaderNav";
 export { AppLeftSidebar } from "./AppLeftSidebar";
 export { AppRightSidebar } from "./AppRightSidebar";
 export { MainLayout } from "./MainLayout";

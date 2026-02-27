@@ -6,7 +6,12 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 import useProfile, { isProfileComplete } from "@/hooks/useProfile";
-import { MainLayout, AppLeftSidebar, AppRightSidebar } from "@/components/shared";
+import {
+	MainLayout,
+	AppHeaderNav,
+	AppLeftSidebar,
+	AppRightSidebar,
+} from "@/components/shared";
 import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
 
 const supabase = createClient();
@@ -30,22 +35,57 @@ export default function MainRoutesLayout({
 	}, [user, isLoadingProfile, profile, pathname, router]);
 
 	const { data: suggestedFriends = [] } = useQuery({
-		queryKey: ["suggested-friends", user?.id],
+		queryKey: [
+			"suggested-friends",
+			user?.id,
+			profile?.location,
+			profile?.gender,
+			profile?.zodiac,
+			profile?.relationship,
+		],
 		queryFn: async () => {
+			if (!user) return [];
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("id, display_name, avatar_url, location")
+				.select("id, display_name, avatar_url, location, gender, zodiac, relationship")
+				.eq("is_public", true)
 				.neq("id", user?.id ?? "")
-				.limit(4);
+				.limit(40);
 			if (error) throw error;
-			return (data ?? []).map((u: any) => ({
+
+			const current = {
+				location: profile?.location ?? null,
+				gender: profile?.gender ?? null,
+				zodiac: profile?.zodiac ?? null,
+				relationship: profile?.relationship ?? null,
+			};
+
+			const withCommon = (data ?? [])
+				.map((u: any) => {
+					let commonCount = 0;
+					if (current.location && u.location === current.location) commonCount += 1;
+					if (current.gender && u.gender === current.gender) commonCount += 1;
+					if (current.zodiac && u.zodiac === current.zodiac) commonCount += 1;
+					if (
+						current.relationship &&
+						u.relationship === current.relationship
+					) {
+						commonCount += 1;
+					}
+					return { ...u, commonCount };
+				})
+				.filter((u: any) => u.commonCount > 0)
+				.sort((a: any, b: any) => b.commonCount - a.commonCount)
+				.slice(0, 4);
+
+			return withCommon.map((u: any) => ({
 				id: u.id,
 				name: u.display_name ?? "User",
 				title: u.location ?? "Talk N Share Member",
 				avatar: u.avatar_url,
 			})) as SuggestedFriend[];
 		},
-		enabled: !!user,
+		enabled: !!user && !!profile,
 	});
 
 	if (user && !isLoadingProfile && !isProfileComplete(profile)) {
@@ -53,16 +93,20 @@ export default function MainRoutesLayout({
 	}
 
 	return (
-		<MainLayout
-			hideSidebars={isMessagesPage}
-			leftSidebar={isMessagesPage ? null : <AppLeftSidebar profile={profile} />}
-			rightSidebar={
-				isMessagesPage ? null : (
-					<AppRightSidebar suggestedFriends={suggestedFriends} />
-				)
-			}
-		>
-			{children}
-		</MainLayout>
+		<>
+			<AppHeaderNav />
+			<MainLayout
+				hideSidebars={isMessagesPage}
+				leftSidebar={isMessagesPage ? null : <AppLeftSidebar profile={profile} />}
+				rightSidebar={
+					isMessagesPage ? null : (
+						<AppRightSidebar suggestedFriends={suggestedFriends} />
+					)
+				}
+				className="pt-4"
+			>
+				{children}
+			</MainLayout>
+		</>
 	);
 }

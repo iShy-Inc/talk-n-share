@@ -34,8 +34,8 @@ import {
 	IconMessageCircle,
 	IconUser,
 } from "@tabler/icons-react";
-import { format } from "date-fns";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 
 type ReportStatus = NonNullable<ReportWithReporter["status"]>;
 type ReportTargetType = ReportWithReporter["target_type"];
@@ -86,16 +86,16 @@ export default function ReportsPage() {
 	};
 
 	return (
-		<div className="space-y-6">
-			<div>
+		<div className="space-y-7">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
 				<h1 className="text-2xl font-bold tracking-tight">Reports</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Review and resolve user-submitted reports
+					Prioritize pending reports and resolve abuse faster.
 				</p>
 			</div>
 
 			{/* Toolbar */}
-			<Card className="border-0 shadow-lg">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardContent className="p-4">
 					<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 						<div className="relative flex-1">
@@ -108,7 +108,7 @@ export default function ReportsPage() {
 								id="search-reports"
 							/>
 						</div>
-						<div className="flex flex-wrap gap-2">
+						<div className="flex flex-wrap gap-2 rounded-xl border border-border/60 bg-muted/20 p-1">
 							{(
 								["all", "pending", "reviewed", "resolved", "dismissed"] as const
 							).map((f) => (
@@ -117,6 +117,7 @@ export default function ReportsPage() {
 									variant={filter === f ? "default" : "outline"}
 									size="sm"
 									onClick={() => setFilter(f)}
+									className="rounded-lg"
 									id={`filter-reports-${f}`}
 								>
 									{f.charAt(0).toUpperCase() + f.slice(1)}
@@ -128,7 +129,7 @@ export default function ReportsPage() {
 			</Card>
 
 			{/* Reports Table */}
-			<Card className="border-0 shadow-lg overflow-hidden">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm overflow-hidden">
 				<CardHeader>
 					<CardTitle>All Reports ({filteredReports.length})</CardTitle>
 					<CardDescription>
@@ -182,10 +183,7 @@ export default function ReportsPage() {
 										const safeStatus: ReportStatus = report.status ?? "pending";
 										const TargetIcon = targetTypeIcons[report.target_type];
 										return (
-											<tr
-												key={report.id}
-												className="group transition-colors hover:bg-muted/20"
-											>
+											<tr key={report.id} className="group transition-colors hover:bg-muted/30">
 												<td className="px-6 py-4">
 													<div>
 														<p className="text-sm font-medium">
@@ -243,7 +241,7 @@ export default function ReportsPage() {
 													</Badge>
 												</td>
 												<td className="px-6 py-4 text-sm text-muted-foreground">
-													{format(new Date(report.created_at), "MMM d, yyyy")}
+													{formatDateDDMMYYYY(report.created_at)}
 												</td>
 												<td className="px-6 py-4">
 													<div className="flex items-center justify-end gap-1">

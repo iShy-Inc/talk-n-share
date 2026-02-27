@@ -48,7 +48,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 import { createClient } from "@/utils/supabase/client";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 // ... (GoogleIcon component remains)
 

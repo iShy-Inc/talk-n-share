@@ -25,10 +25,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AvatarCategoryPicker } from "@/components/shared/AvatarCategoryPicker";
 import {
 	AvatarCategoryKey,
+	AVATAR_CATEGORIES,
 	getAvatarCategoryForUrl,
 } from "@/lib/avatar-options";
 import { getZodiacSign } from "@/lib/zodiac";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const supabase = createClient();
 
@@ -131,14 +132,18 @@ export default function OnboardingPage() {
 
 	const [step, setStep] = useState(1);
 	const [selectedName, setSelectedName] = useState("");
-	const [selectedAvatar, setSelectedAvatar] = useState("");
+	const [selectedAvatar, setSelectedAvatar] = useState(
+		AVATAR_CATEGORIES[0]?.avatars[0]?.src ?? "",
+	);
 	const [selectedAvatarCategory, setSelectedAvatarCategory] =
 		useState<AvatarCategoryKey>("people");
 	const [birthDate, setBirthDate] = useState("");
+	const [birthVisibility, setBirthVisibility] = useState("full");
 	const [gender, setGender] = useState<"male" | "female" | "others" | "">("");
 	const [location, setLocation] = useState("");
 	const [bio, setBio] = useState("");
-	const [isPublic, setIsPublic] = useState<boolean | null>(null);
+	const [relationship, setRelationship] = useState("private");
+	const [isPublic, setIsPublic] = useState<boolean | null>(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [nameVersion, setNameVersion] = useState(0);
 	const zodiac = useMemo(() => getZodiacSign(birthDate), [birthDate]);
@@ -182,19 +187,20 @@ export default function OnboardingPage() {
 			setSelectedAvatarCategory(getAvatarCategoryForUrl(profile.avatar_url));
 		}
 		if (profile.birth_date) setBirthDate(profile.birth_date);
+		if (profile.birth_visibility) setBirthVisibility(profile.birth_visibility);
 		if (profile.gender) setGender(profile.gender);
 		if (profile.location) setLocation(profile.location);
 		if (profile.bio) setBio(profile.bio);
+		if (profile.relationship) setRelationship(profile.relationship);
 		if (profile.is_public !== null && profile.is_public !== undefined) {
 			setIsPublic(profile.is_public);
 		}
 	}, [profile]);
 
-	const canGoNextStep1 = !!selectedName && !!selectedAvatar;
-	const canGoNextStep2 = !!birthDate && !!gender;
-	const canGoNextStep3 = !!location && !!bio.trim();
-	const canSubmit =
-		canGoNextStep1 && canGoNextStep2 && canGoNextStep3 && isPublic !== null;
+	const canGoNextStep1 = !!selectedName;
+	const canGoNextStep2 = !!gender;
+	const canGoNextStep3 = !!location;
+	const canSubmit = canGoNextStep1 && canGoNextStep2 && canGoNextStep3;
 
 	const handleSaveProfile = async () => {
 		if (!user || !canSubmit) return;
@@ -204,13 +210,16 @@ export default function OnboardingPage() {
 				.from("profiles")
 				.update({
 					display_name: selectedName,
-					avatar_url: selectedAvatar,
-					birth_date: birthDate,
+					avatar_url:
+						selectedAvatar || AVATAR_CATEGORIES[0]?.avatars[0]?.src || null,
+					birth_date: birthDate || null,
+					birth_visibility: birthVisibility || "full",
 					gender,
 					location,
-					bio: bio.trim(),
-					zodiac,
-					is_public: isPublic,
+					bio: bio.trim() || null,
+					relationship: relationship || "private",
+					zodiac: birthDate ? zodiac : null,
+					is_public: isPublic ?? true,
 				})
 				.eq("id", user.id);
 			if (error) throw error;
@@ -228,12 +237,12 @@ export default function OnboardingPage() {
 	return (
 		<div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-10">
 			<Card className="w-full border-border/60 bg-card/90 shadow-xl">
-				<CardHeader>
-					<CardTitle>Complete Your Anonymous Profile</CardTitle>
-					<p className="text-sm text-muted-foreground">
-						Step {step} of 4. All steps are required before entering the app.
-					</p>
-				</CardHeader>
+					<CardHeader>
+						<CardTitle>Complete Your Anonymous Profile</CardTitle>
+						<p className="text-sm text-muted-foreground">
+							Step {step} of 4. Required: name, gender, location, visibility.
+						</p>
+					</CardHeader>
 				<CardContent className="space-y-6">
 					{step === 1 && (
 						<div className="space-y-4">
@@ -284,6 +293,27 @@ export default function OnboardingPage() {
 								/>
 							</div>
 							<div>
+								<Label>Birthday privacy</Label>
+								<Select
+									value={birthVisibility}
+									onValueChange={setBirthVisibility}
+								>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Select birthday visibility" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="full">
+											Show full birthday (day/month/year)
+										</SelectItem>
+										<SelectItem value="month_year">
+											Hide day (month/year only)
+										</SelectItem>
+										<SelectItem value="day_month">Show day/month only</SelectItem>
+										<SelectItem value="year_only">Show only year</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							<div>
 								<Label>Gender</Label>
 								<Select
 									value={gender}
@@ -323,17 +353,34 @@ export default function OnboardingPage() {
 								<Label htmlFor="onboarding-bio">Bio</Label>
 								<Textarea
 									id="onboarding-bio"
-									placeholder="Tell people a little bit about yourself..."
+									placeholder="Tell people a little bit about yourself (optional)..."
 									value={bio}
 									onChange={(e) => setBio(e.target.value)}
 									className="min-h-[110px] resize-none"
 								/>
 							</div>
+							<div>
+								<Label>Relationship</Label>
+								<Select value={relationship} onValueChange={setRelationship}>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Select relationship status" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="single">Single</SelectItem>
+										<SelectItem value="in_relationship">
+											In a relationship
+										</SelectItem>
+										<SelectItem value="married">Married</SelectItem>
+										<SelectItem value="complicated">Complicated</SelectItem>
+										<SelectItem value="private">Prefer not to say</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
 							<div className="rounded-xl border border-border bg-muted/20 p-3">
 								<p className="text-xs text-muted-foreground">
 									Zodiac is auto-detected from birth date
 								</p>
-								<p className="text-sm font-semibold">{zodiac || "—"}</p>
+								<p className="text-sm font-semibold">{birthDate ? zodiac : "—"}</p>
 							</div>
 						</div>
 					)}
@@ -368,7 +415,9 @@ export default function OnboardingPage() {
 								</p>
 								<p>Location: {location}</p>
 								<p>Bio: {bio || "—"}</p>
-								<p>Zodiac: {zodiac}</p>
+								<p>Relationship: {relationship === "private" ? "Prefer not to say" : relationship}</p>
+								<p>Birthday privacy: {birthVisibility}</p>
+								<p>Zodiac: {birthDate ? zodiac : "—"}</p>
 								<p>Gender: {gender}</p>
 							</div>
 						</div>

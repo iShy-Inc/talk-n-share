@@ -15,11 +15,7 @@ export const isProfileComplete = (profile: UserProfile | null) => {
 	if (!profile) return false;
 	return !!(
 		profile.display_name &&
-		profile.avatar_url &&
-		profile.birth_date &&
 		profile.location &&
-		profile.bio &&
-		profile.zodiac &&
 		profile.gender &&
 		profile.is_public !== null &&
 		profile.is_public !== undefined

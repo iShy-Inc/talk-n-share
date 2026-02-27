@@ -64,7 +64,7 @@ export function ChatList({
 			{onNewMessage && (
 				<button
 					onClick={onNewMessage}
-					className="mt-auto flex items-center justify-center gap-2 border-t border-border px-4 py-4 mb-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+					className="mt-auto flex items-center justify-center gap-2 border-t border-border px-4 py-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 					id="new-message-sidebar-btn"
 				>
 					<IconPencil className="size-4" />

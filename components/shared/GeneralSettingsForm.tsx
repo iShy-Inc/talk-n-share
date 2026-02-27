@@ -31,9 +31,6 @@ interface GeneralSettingsFormProps {
 		display_name?: string;
 		bio?: string;
 		location?: string;
-		birth_date?: string;
-		zodiac?: string;
-		is_public?: boolean | null;
 	};
 	selectedAvatar?: string;
 	selectedAvatarCategory?: AvatarCategoryKey;
@@ -42,8 +39,6 @@ interface GeneralSettingsFormProps {
 		bio: string;
 		avatarUrl: string;
 		location: string;
-		birth_date: string;
-		is_public: boolean;
 	}) => void;
 	onAvatarSelect?: (avatarUrl: string) => void;
 	onAvatarCategoryChange?: (category: AvatarCategoryKey) => void;
@@ -82,8 +77,6 @@ export function GeneralSettingsForm({
 	}, [allNames, nameVersion]);
 	const [bio, setBio] = useState(initialValues?.bio ?? "");
 	const [location, setLocation] = useState(initialValues?.location ?? "");
-	const [birthDate, setBirthDate] = useState(initialValues?.birth_date ?? "");
-	const [isPublic, setIsPublic] = useState(initialValues?.is_public ?? true);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -92,8 +85,6 @@ export function GeneralSettingsForm({
 			bio,
 			avatarUrl: selectedAvatar,
 			location,
-			birth_date: birthDate,
-			is_public: isPublic,
 		});
 	};
 	
@@ -165,35 +156,6 @@ export function GeneralSettingsForm({
 					))}
 				</SelectContent>
 			</Select>
-			<div className="space-y-2">
-				<Label htmlFor="settings-birth-date">Birth date</Label>
-				<Input
-					id="settings-birth-date"
-					type="date"
-					value={birthDate}
-					max={new Date().toISOString().split("T")[0]}
-					onChange={(e) => setBirthDate(e.target.value)}
-				/>
-				<p className="text-xs text-muted-foreground">
-					Zodiac is automatically calculated from birth date.
-				</p>
-			</div>
-			<div className="space-y-2">
-				<Label htmlFor="settings-profile-visibility">Profile visibility</Label>
-				<Select
-					value={isPublic ? "public" : "private"}
-					onValueChange={(value) => setIsPublic(value === "public")}
-				>
-					<SelectTrigger id="settings-profile-visibility" className="w-full">
-						<SelectValue placeholder="Select profile visibility" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="public">Public profile</SelectItem>
-						<SelectItem value="private">Private profile</SelectItem>
-					</SelectContent>
-				</Select>
-			</div>
-
 			<Button type="submit" className="w-40" id="settings-save-btn">
 				Save Changes
 			</Button>

@@ -11,6 +11,7 @@ import { CommentList, CommentData } from "@/components/feed/CommentList";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 
 const supabase = createClient();
 
@@ -36,7 +37,7 @@ export default function FeedPage() {
 				authorName: c.profiles?.display_name ?? c.author_name ?? "Anonymous",
 				authorAvatar: c.profiles?.avatar_url ?? c.author_avatar,
 				content: c.content,
-				timeAgo: new Date(c.created_at).toLocaleDateString(),
+				timeAgo: formatDateDDMMYYYY(c.created_at),
 			})) as CommentData[];
 		},
 		enabled: !!expandedPostId,

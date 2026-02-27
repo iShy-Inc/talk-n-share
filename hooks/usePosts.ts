@@ -21,7 +21,7 @@ export const usePosts = () => {
 			const { data, error } = await supabase
 				.from("posts")
 				.select(
-					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public)",
+					"*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role)",
 				)
 				.eq("status", "approved")
 				.order("created_at", { ascending: false })
@@ -44,7 +44,11 @@ export const usePosts = () => {
 		mutationFn: async (
 			newPost: Pick<Post, "content" | "image_url" | "author_id">,
 		) => {
-			const { data, error } = await supabase.from("posts").insert([newPost]);
+			const { data, error } = await supabase
+				.from("posts")
+				.insert([newPost])
+				.select("id, status")
+				.single();
 			if (error) throw error;
 			return data;
 		},

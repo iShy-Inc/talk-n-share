@@ -15,7 +15,7 @@ import { useChat } from "@/hooks/useChat";
 import { ChatSession } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
 import { IconMessage } from "@tabler/icons-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const supabase = createClient();
 const MIN_WAIT_SECONDS = 60;

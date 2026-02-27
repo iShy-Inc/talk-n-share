@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useProfileCoverStore } from "@/store/useProfileCoverStore";
 
@@ -43,28 +43,21 @@ export const useProfileCover = () => {
 	const refreshNonce = useProfileCoverStore(
 		(state) => state.coverNonceBySession[sessionKey] ?? 0,
 	);
-	const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
 
 	const sessionSignature = `${sessionKey}-${refreshNonce}`;
-	const coverUrl = useMemo(
-		() =>
-			`https://source.unsplash.com/featured/1200x320?landscape,nature,sky,city&sig=${sessionSignature}`,
-		[sessionSignature],
-	);
 	const fallbackCoverUrl = useMemo(() => {
 		const seed = getSeedNumber(sessionSignature);
 		return FALLBACK_COVER_IMAGES[seed % FALLBACK_COVER_IMAGES.length];
 	}, [sessionSignature]);
-	const activeCoverUrl =
-		failedCoverUrl === coverUrl ? fallbackCoverUrl : coverUrl;
+	const coverUrl = fallbackCoverUrl;
+	const activeCoverUrl = coverUrl;
 
 	const refreshCover = () => {
-		setFailedCoverUrl(null);
 		bumpCoverNonce(sessionKey);
 	};
 
 	const markCoverAsFailed = () => {
-		setFailedCoverUrl(coverUrl);
+		// No-op: cover now always uses fallback pool URLs.
 	};
 
 	return {

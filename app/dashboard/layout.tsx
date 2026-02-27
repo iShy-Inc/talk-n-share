@@ -15,6 +15,7 @@ import {
 	IconChevronLeft,
 	IconShieldLock,
 	IconLoader2,
+	IconShield,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -55,12 +56,18 @@ export default function DashboardLayout({
 	const pathname = usePathname();
 	const router = useRouter();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const { hasAccess, isModer, loading } = useAdminRole();
+	const { hasAccess, isModer, loading, role } = useAdminRole();
 
 	const filteredSidebarLinks = sidebarLinks.filter((link) => {
 		if (isModer && link.href === "/dashboard/users") return false;
 		return true;
 	});
+	const currentSection =
+		filteredSidebarLinks.find(
+			(link) =>
+				pathname === link.href ||
+				(link.href !== "/dashboard" && pathname.startsWith(link.href)),
+		)?.label ?? "Dashboard";
 
 	// Loading state
 	if (loading) {
@@ -105,7 +112,7 @@ export default function DashboardLayout({
 	}
 
 	return (
-		<div className="flex min-h-screen bg-background">
+		<div className="flex min-h-screen bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.08),transparent_38%),radial-gradient(circle_at_85%_0%,hsl(var(--ring)/0.08),transparent_35%),hsl(var(--background))]">
 			{/* Mobile overlay */}
 			{sidebarOpen && (
 				<div
@@ -117,21 +124,23 @@ export default function DashboardLayout({
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					"fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-in-out lg:static lg:translate-x-0",
+					"fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border/70 bg-sidebar/95 backdrop-blur-md transition-transform duration-300 ease-in-out lg:static lg:translate-x-0",
 					sidebarOpen ? "translate-x-0" : "-translate-x-full",
 				)}
 			>
 				{/* Sidebar Header */}
-				<div className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
+				<div className="flex h-16 items-center justify-between border-b border-sidebar-border/70 px-6">
 					<Link href="/dashboard" className="flex items-center gap-3">
 						<div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-md">
 							<IconLayoutDashboard className="size-5" />
 						</div>
-						<div>
+						<div className="space-y-0.5">
 							<h1 className="text-sm font-semibold text-sidebar-foreground">
 								Talk N Share
 							</h1>
-							<p className="text-xs text-muted-foreground">Admin Dashboard</p>
+							<p className="text-xs text-muted-foreground">
+								{isModer ? "Moderator Workspace" : "Admin Workspace"}
+							</p>
 						</div>
 					</Link>
 					<Button
@@ -156,8 +165,8 @@ export default function DashboardLayout({
 								className={cn(
 									"group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
 									isActive
-										? "bg-sidebar-primary/10 text-sidebar-primary shadow-sm"
-										: "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+										? "bg-sidebar-primary/12 text-sidebar-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.25)]"
+										: "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
 								)}
 							>
 								<link.icon
@@ -178,10 +187,10 @@ export default function DashboardLayout({
 				</nav>
 
 				{/* Sidebar Footer */}
-				<div className="border-t border-sidebar-border p-4">
+				<div className="border-t border-sidebar-border/70 p-4">
 					<Link
 						href="/"
-						className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+						className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
 					>
 						<IconChevronLeft className="size-4" />
 						Back to App
@@ -192,16 +201,19 @@ export default function DashboardLayout({
 			{/* Main area */}
 			<div className="flex flex-1 flex-col">
 				{/* Top bar */}
-				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-6 backdrop-blur-md">
+				<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/70 bg-background/70 px-6 backdrop-blur-md">
 					<Button
 						onClick={() => setSidebarOpen(true)}
 						className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground lg:hidden"
 					>
 						<IconMenu2 className="size-5" />
 					</Button>
-					<div className="flex-1" />
-					<div className="flex items-center gap-2">
-						<div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/60 to-primary" />
+					<div className="flex-1">
+						<p className="text-sm font-semibold">{currentSection}</p>
+					</div>
+					<div className="flex items-center gap-2 rounded-full border border-border/70 bg-card/70 px-3 py-1.5 text-xs text-muted-foreground">
+						<IconShield className="size-3.5" />
+						<span className="capitalize">{role ?? "moderator"}</span>
 					</div>
 				</header>
 

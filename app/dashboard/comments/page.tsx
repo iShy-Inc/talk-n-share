@@ -31,8 +31,8 @@ import {
 	IconMessageCircle,
 	IconExternalLink,
 } from "@tabler/icons-react";
-import { format } from "date-fns";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 
 export default function CommentsPage() {
 	const { commentsQuery, updateComment, deleteComment } =
@@ -76,16 +76,16 @@ export default function CommentsPage() {
 	};
 
 	return (
-		<div className="space-y-6">
-			<div>
+		<div className="space-y-7">
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
 				<h1 className="text-2xl font-bold tracking-tight">Comments</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Moderate and manage user comments
+					Keep discussions healthy with quick editing and removal tools.
 				</p>
 			</div>
 
 			{/* Toolbar */}
-			<Card className="border-0 shadow-lg">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardContent className="p-4">
 					<div className="relative">
 						<IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -101,7 +101,7 @@ export default function CommentsPage() {
 			</Card>
 
 			{/* Comments Table */}
-			<Card className="border-0 shadow-lg overflow-hidden">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm overflow-hidden">
 				<CardHeader>
 					<CardTitle>All Comments ({filteredComments.length})</CardTitle>
 					<CardDescription>Review and moderate user comments</CardDescription>
@@ -147,10 +147,7 @@ export default function CommentsPage() {
 								</thead>
 								<tbody className="divide-y divide-border/30">
 									{filteredComments.map((comment) => (
-										<tr
-											key={comment.id}
-											className="group transition-colors hover:bg-muted/20"
-										>
+										<tr key={comment.id} className="group transition-colors hover:bg-muted/30">
 											<td className="px-6 py-4">
 												<div className="flex items-center gap-2">
 													{comment.author_avatar ? (
@@ -181,7 +178,7 @@ export default function CommentsPage() {
 												</div>
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{format(new Date(comment.created_at), "MMM d, yyyy")}
+												{formatDateDDMMYYYY(comment.created_at)}
 											</td>
 											<td className="px-6 py-4">
 												<div className="flex items-center justify-end gap-1">

@@ -19,7 +19,7 @@ import { IconArrowLeft } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOrRequestConversation } from "@/lib/contact-messaging";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
 
 const supabase = createClient();
@@ -143,6 +143,7 @@ export default function MessagesPage() {
 			const { data, error } = await supabase
 				.from("profiles")
 				.select("id, display_name, avatar_url, is_public")
+				.eq("is_public", true)
 				.neq("id", user?.id ?? "")
 				.order("display_name");
 			if (error) throw error;
@@ -278,7 +279,7 @@ export default function MessagesPage() {
 					</Link>
 				</Button>
 			</div>
-			<div className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg rounded-xl">
+			<Card className="mx-auto h-[calc(100dvh-11.5rem)] min-h-[560px] w-full overflow-hidden border shadow-lg">
 				<div className="flex h-full">
 					<div
 						className={`h-full border-r border-border/80 bg-card lg:block lg:w-80 ${
@@ -384,7 +385,7 @@ export default function MessagesPage() {
 						)}
 					</div>
 				</div>
-			</div>
+			</Card>
 		</>
 	);
 }

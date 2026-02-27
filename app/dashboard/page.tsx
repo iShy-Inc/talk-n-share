@@ -74,12 +74,12 @@ export default function DashboardPage() {
 	];
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-7">
 			{/* Page Title */}
-			<div>
-				<h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+			<div className="rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm backdrop-blur-sm">
+				<h1 className="text-2xl font-bold tracking-tight">Operations Center</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Welcome back! Here&apos;s an overview of your platform.
+					A clean overview of platform health, moderation load, and key actions.
 				</p>
 			</div>
 
@@ -88,16 +88,16 @@ export default function DashboardPage() {
 				{statCards.map((card) => (
 					<Card
 						key={card.label}
-						className="relative overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
+						className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
 					>
-						<div className={`absolute inset-0 ${card.bgGlow} opacity-50`} />
+						<div className={`absolute inset-0 ${card.bgGlow} opacity-35`} />
 						<CardContent className="relative p-6">
 							<div className="flex items-center justify-between">
 								<div>
 									<p className="text-sm font-medium text-muted-foreground">
 										{card.label}
 									</p>
-									<p className="mt-2 text-3xl font-bold tracking-tight">
+									<p className="mt-2 text-3xl font-bold tracking-tight text-foreground">
 										{isLoading ? (
 											<span className="inline-block h-9 w-16 animate-pulse rounded-lg bg-muted" />
 										) : (
@@ -106,7 +106,7 @@ export default function DashboardPage() {
 									</p>
 								</div>
 								<div
-									className={`flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.gradient} text-white shadow-lg`}
+									className={`flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.gradient} text-white shadow-sm`}
 								>
 									<card.icon className="size-6" />
 								</div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
 				{alertCards.map((card) => (
 					<Card
 						key={card.label}
-						className="border-0 shadow-lg transition-all duration-300 hover:shadow-xl"
+						className="rounded-2xl border border-border/70 bg-card/90 shadow-sm transition-all duration-300 hover:shadow-md"
 					>
 						<CardHeader>
 							<div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function DashboardPage() {
 			</div>
 
 			{/* Quick info */}
-			<Card className="border-0 shadow-lg">
+			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm">
 				<CardHeader>
 					<CardTitle>Quick Actions</CardTitle>
 					<CardDescription>
