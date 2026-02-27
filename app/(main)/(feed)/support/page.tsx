@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SUPPORT_CONTACTS } from "@/lib/self-harm-support";
 
-export default function SupportPage() {
+function SupportPageContent() {
 	const searchParams = useSearchParams();
 	const query = searchParams.get("q") ?? "";
 
@@ -162,5 +162,13 @@ export default function SupportPage() {
 				))}
 			</div>
 		</div>
+	);
+}
+
+export default function SupportPage() {
+	return (
+		<Suspense fallback={null}>
+			<SupportPageContent />
+		</Suspense>
 	);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -41,7 +41,7 @@ import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
 
 const supabase = createClient();
 
-export default function MessagesPage() {
+function MessagesPageContent() {
 	const user = useAuthStore((state) => state.user);
 	const { profile } = useProfile();
 	const searchParams = useSearchParams();
@@ -681,5 +681,13 @@ export default function MessagesPage() {
 				</DialogContent>
 			</Dialog>
 		</>
+	);
+}
+
+export default function MessagesPage() {
+	return (
+		<Suspense fallback={null}>
+			<MessagesPageContent />
+		</Suspense>
 	);
 }

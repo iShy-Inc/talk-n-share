@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import useProfile, {
@@ -98,7 +98,7 @@ const formatRelationship = (value?: string | null) => {
 	return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
-export default function ProfilePage() {
+function ProfilePageContent() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -691,5 +691,13 @@ export default function ProfilePage() {
 				</DialogContent>
 			</Dialog>
 		</>
+	);
+}
+
+export default function ProfilePage() {
+	return (
+		<Suspense fallback={null}>
+			<ProfilePageContent />
+		</Suspense>
 	);
 }

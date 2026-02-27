@@ -289,6 +289,7 @@ export function ActiveMatchChat({
 							<Label htmlFor="match-report-reason">Lý do</Label>
 							<select
 								id="match-report-reason"
+								title="match-report-reason"
 								className="h-9 w-full rounded-4xl border border-input bg-input/30 px-3 text-sm outline-none focus-visible:border-ring"
 								value={reportReason}
 								onChange={(e) => setReportReason(e.target.value)}

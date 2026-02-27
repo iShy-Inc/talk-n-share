@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
@@ -24,7 +24,7 @@ const supabase = createClient();
 
 type Tab = "all" | "posts" | "people";
 
-export default function SearchPage() {
+function SearchPageContent() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -353,5 +353,13 @@ export default function SearchPage() {
 				)}
 			</div>
 		</>
+	);
+}
+
+export default function SearchPage() {
+	return (
+		<Suspense fallback={null}>
+			<SearchPageContent />
+		</Suspense>
 	);
 }

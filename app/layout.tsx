@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,7 +46,9 @@ export default function RootLayout({
 				>
 					<ThemeStyleProvider>
 						<Providers>
-							<RouteProgressBar />
+							<Suspense fallback={null}>
+								<RouteProgressBar />
+							</Suspense>
 							{children}
 							<ScrollToTopButton />
 							<MobileDock />
