@@ -59,6 +59,7 @@ interface ActiveMatchChatProps {
 export function ActiveMatchChat({
 	messages,
 	currentUserId,
+	partnerUserId,
 	partnerLiked,
 	userLiked,
 	isRevealed,
