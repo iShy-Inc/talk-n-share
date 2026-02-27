@@ -1,12 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import {
-	IconCirclePlus,
-	IconMoodSmile,
-	IconSend,
-	IconSticker2,
-} from "@tabler/icons-react";
+import { useRef, useState } from "react";
+import { IconMoodSmile, IconSend } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,6 +19,7 @@ export function ChatInput({
 	disabled = false,
 }: ChatInputProps) {
 	const [message, setMessage] = useState("");
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleSend = () => {
 		if (!message.trim() || disabled) return;
@@ -38,17 +34,36 @@ export function ChatInput({
 		}
 	};
 
+	const handleOpenEmojiKeyboard = () => {
+		if (disabled) return;
+
+		const input = inputRef.current;
+		if (!input) return;
+
+		input.focus({ preventScroll: true });
+		const cursorPosition = input.value.length;
+		input.setSelectionRange(cursorPosition, cursorPosition);
+
+		const pickerInput = input as HTMLInputElement & {
+			showPicker?: () => void;
+		};
+		if (typeof pickerInput.showPicker === "function") {
+			try {
+				pickerInput.showPicker();
+				return;
+			} catch {
+				// Some browsers expose the API but do not support it for text inputs.
+			}
+		}
+
+		const nav = window.navigator as Navigator & {
+			virtualKeyboard?: { show?: () => void };
+		};
+		nav.virtualKeyboard?.show?.();
+	};
+
 	return (
 		<div className="flex items-center gap-2 border-t border-border/70 bg-card px-3 py-2.5">
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon"
-				className="shrink-0 rounded-full text-primary"
-				disabled={disabled}
-			>
-				<IconCirclePlus className="size-5" />
-			</Button>
 			{avatarUrl && (
 				<img
 					src={avatarUrl}
@@ -57,6 +72,7 @@ export function ChatInput({
 				/>
 			)}
 			<Input
+				ref={inputRef}
 				value={message}
 				onChange={(e) => setMessage(e.target.value)}
 				onKeyDown={handleKeyDown}
@@ -64,6 +80,7 @@ export function ChatInput({
 				disabled={disabled}
 				className="h-10 rounded-full border border-border/70 bg-background"
 				id="chat-message-input"
+				enterKeyHint="send"
 			/>
 			<Button
 				type="button"
@@ -71,17 +88,10 @@ export function ChatInput({
 				size="icon"
 				className="shrink-0 rounded-full text-primary"
 				disabled={disabled}
+				onClick={handleOpenEmojiKeyboard}
+				aria-label="Mở bàn phím emoji"
 			>
 				<IconMoodSmile className="size-5" />
-			</Button>
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon"
-				className="shrink-0 rounded-full text-primary"
-				disabled={disabled}
-			>
-				<IconSticker2 className="size-5" />
 			</Button>
 			<Button
 				onClick={handleSend}

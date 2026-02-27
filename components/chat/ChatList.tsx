@@ -2,12 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { IconEdit, IconSearch } from "@tabler/icons-react";
+import {
+	IconChevronLeft,
+	IconChevronRight,
+	IconEdit,
+	IconSearch,
+} from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export interface ChatContact {
 	id: string;
+	userId: string;
 	name: string;
 	avatar?: string;
 	lastMessage?: string;
@@ -22,6 +28,8 @@ interface ChatListProps {
 	activeContactId?: string;
 	onSelectContact: (contactId: string) => void;
 	onNewMessage?: () => void;
+	compact?: boolean;
+	onToggleCompact?: () => void;
 }
 
 export function ChatList({
@@ -29,6 +37,8 @@ export function ChatList({
 	activeContactId,
 	onSelectContact,
 	onNewMessage,
+	compact = false,
+	onToggleCompact,
 }: ChatListProps) {
 	const [search, setSearch] = useState("");
 
@@ -54,45 +64,68 @@ export function ChatList({
 
 	return (
 		<div className="flex h-full flex-col bg-card">
-			<div className="border-b border-border/70 px-4 pb-3 pt-4">
-				<div className="mb-3 flex items-center justify-between gap-2">
-					<h2 className="text-2xl font-bold tracking-tight">Đoạn chat</h2>
-					{onNewMessage && (
-						<Button
-							type="button"
-							size="icon"
-							variant="secondary"
-							onClick={onNewMessage}
-							className="rounded-full"
-							id="new-message-sidebar-btn"
-							title="Tin nhắn mới"
-						>
-							<IconEdit className="size-4" />
-						</Button>
-					)}
+			<div className={cn("border-b border-border/70 px-4 pt-4", compact ? "pb-4" : "pb-3")}>
+				<div className={cn("flex items-center gap-2", compact ? "justify-center" : "mb-3 justify-between")}>
+					{!compact && <h2 className="text-2xl font-bold tracking-tight">Đoạn chat</h2>}
+					<div className="flex items-center gap-2">
+						{onNewMessage && (
+							<Button
+								type="button"
+								size="icon"
+								variant="secondary"
+								onClick={onNewMessage}
+								className="rounded-full"
+								id="new-message-sidebar-btn"
+								title="Tin nhắn mới"
+							>
+								<IconEdit className="size-4" />
+							</Button>
+						)}
+						{onToggleCompact && (
+							<Button
+								type="button"
+								size="icon"
+								variant="secondary"
+								onClick={onToggleCompact}
+								className="rounded-full"
+								id="toggle-chat-list-compact"
+								title={compact ? "Mở rộng danh sách chat" : "Thu gọn danh sách chat"}
+							>
+								{compact ? (
+									<IconChevronRight className="size-4" />
+								) : (
+									<IconChevronLeft className="size-4" />
+								)}
+							</Button>
+						)}
+					</div>
 				</div>
-				<div className="relative">
-					<IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						placeholder="Tìm kiếm trên Messenger"
-						className="h-10 rounded-full border border-border/70 bg-background pl-9"
-						id="chat-list-search"
-					/>
-				</div>
+				{!compact && (
+					<div className="relative">
+						<IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							placeholder="Tìm kiếm trên Messenger"
+							className="h-10 rounded-full border border-border/70 bg-background pl-9"
+							id="chat-list-search"
+						/>
+					</div>
+				)}
 			</div>
 
-			<div className="flex-1 overflow-y-auto px-2 py-2">
+			<div className={cn("flex-1 overflow-y-auto py-2", compact ? "px-1.5" : "px-2")}>
 				{filteredContacts.map((contact) => (
 					<button
 						key={contact.id}
 						onClick={() => onSelectContact(contact.id)}
 						className={cn(
-							"flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/70",
+							"flex w-full items-center rounded-xl transition-colors hover:bg-muted/70",
+							compact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5 text-left",
 							activeContactId === contact.id && "bg-primary/10",
 						)}
 						id={`chat-contact-${contact.id}`}
+						title={compact ? contact.name : undefined}
 					>
 						{contact.avatar ? (
 							<img
@@ -105,15 +138,19 @@ export function ChatList({
 								{contact.name[0]?.toUpperCase()}
 							</div>
 						)}
-						<div className="min-w-0 flex-1">
-							<p className="truncate text-sm font-semibold">{contact.name}</p>
-							<p className="mt-0.5 truncate text-xs text-muted-foreground">
-								{contact.lastMessage || "Bắt đầu cuộc trò chuyện"}
-							</p>
-						</div>
-						<span className="shrink-0 text-[11px] text-muted-foreground">
-							{formatShortTime(contact.latestMessageAt)}
-						</span>
+						{!compact && (
+							<>
+								<div className="min-w-0 flex-1">
+									<p className="truncate text-sm font-semibold">{contact.name}</p>
+									<p className="mt-0.5 truncate text-xs text-muted-foreground">
+										{contact.lastMessage || "Bắt đầu cuộc trò chuyện"}
+									</p>
+								</div>
+								<span className="shrink-0 text-[11px] text-muted-foreground">
+									{formatShortTime(contact.latestMessageAt)}
+								</span>
+							</>
+						)}
 					</button>
 				))}
 				{filteredContacts.length === 0 && (

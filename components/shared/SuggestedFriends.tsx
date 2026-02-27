@@ -28,7 +28,7 @@ export function SuggestedFriends({ friends, onAdd }: SuggestedFriendsProps) {
 						<div key={friend.id} className="flex items-center gap-3 py-2">
 							<Link
 								href={`/profile?userId=${friend.id}`}
-								className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1 transition-colors hover:bg-muted/40"
+								className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1 text-muted-foreground hover:bg-accent/60 hover:text-foreground hover:translate-x-1 transition-all duration-200"
 							>
 								{friend.avatar ? (
 									<img

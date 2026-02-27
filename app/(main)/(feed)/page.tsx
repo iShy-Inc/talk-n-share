@@ -12,6 +12,7 @@ import { PostCard } from "@/components/feed/PostCard";
 import { CommentList, CommentData } from "@/components/feed/CommentList";
 import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
 import { SuggestedFriendsFacebookCard } from "@/components/shared/SuggestedFriendsFacebookCard";
+import { SidebarFooter } from "@/components/shared/SidebarFooter";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -249,6 +250,10 @@ export default function FeedPage() {
 					</Button>
 				</div>
 			)}
+
+			<div className="lg:hidden">
+				<SidebarFooter />
+			</div>
 		</>
 	);
 }

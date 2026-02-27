@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
 	IconMail,
+	IconArrowLeft,
 	IconBrandGithub,
-	IconBrandTwitter,
+	IconBrandFacebook,
 	IconMapPin,
 	IconPhone,
 	IconSend,
@@ -29,15 +30,23 @@ export default function ContactPage() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
-		// Simulate API call
+		// Viet logic gui email sau :))
 		await new Promise((resolve) => setTimeout(resolve, 1500));
 		setIsLoading(false);
 		toast.success("Gửi tin nhắn thành công! Chúng tôi sẽ phản hồi bạn sớm.");
-		// Reset form logic here
 	};
 
 	return (
 		<div className="min-h-screen bg-background pb-12">
+			<div className="container mx-auto px-4 pt-6">
+				<Button asChild variant="outline" size="sm" className="rounded-xl">
+					<Link href="/">
+						<IconArrowLeft className="mr-2 size-4" />
+						Về trang chủ
+					</Link>
+				</Button>
+			</div>
+
 			{/* Header */}
 			<div className="relative overflow-hidden border-b bg-card py-16 text-center shadow-sm md:py-24">
 				<div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-transparent" />
@@ -73,18 +82,14 @@ export default function ContactPage() {
 										<Input
 											id="email"
 											type="email"
-											placeholder="group3@ssg104.com"
+											placeholder="viethung120705@gmail.com"
 											required
 										/>
 									</div>
 								</div>
 								<div className="space-y-2">
 									<Label htmlFor="subject">Chủ đề</Label>
-									<Input
-										id="subject"
-										placeholder="Góp ý / Câu hỏi"
-										required
-									/>
+									<Input id="subject" placeholder="Góp ý / Câu hỏi" required />
 								</div>
 								<div className="space-y-2">
 									<Label htmlFor="message">Tin nhắn</Label>
@@ -123,7 +128,7 @@ export default function ContactPage() {
 									</div>
 									<h3 className="mb-1 font-semibold">Email liên hệ</h3>
 									<p className="text-sm text-muted-foreground">
-										group3@ssg104.com
+										viethung120705@gmail.com
 									</p>
 								</CardContent>
 							</Card>
@@ -155,8 +160,8 @@ export default function ContactPage() {
 										Talk-N-Share có thực sự ẩn danh không?
 									</h4>
 									<p className="mt-1 text-sm text-muted-foreground">
-										Có! Mặc định hồ sơ của bạn sẽ được ẩn. Bạn chỉ hiện danh tính
-										khi bạn muốn, thường là sau khi ghép đôi thành công.
+										Có! Mặc định hồ sơ của bạn sẽ được ẩn. Bạn chỉ hiện danh
+										tính khi bạn muốn, thường là sau khi ghép đôi thành công.
 									</p>
 								</div>
 								<div className="rounded-lg border p-4">
@@ -169,7 +174,9 @@ export default function ContactPage() {
 									</p>
 								</div>
 								<div className="rounded-lg border p-4">
-									<h4 className="font-semibold text-sm">Sử dụng có miễn phí không?</h4>
+									<h4 className="font-semibold text-sm">
+										Sử dụng có miễn phí không?
+									</h4>
 									<p className="mt-1 text-sm text-muted-foreground">
 										Hoàn toàn miễn phí. Các tính năng cốt lõi như đăng bài, ghép
 										đôi và trò chuyện đều miễn phí.
@@ -181,19 +188,23 @@ export default function ContactPage() {
 						{/* Social Links */}
 						<div className="flex justify-center gap-6 pt-4">
 							<a
-								href="#"
+								href="https://www.facebook.com/profile.php?id=61586924084913"
+								target="_blank"
+								rel="noopener noreferrer"
 								className="text-muted-foreground transition-colors hover:text-primary"
 							>
-								<IconBrandTwitter className="size-6" />
+								<IconBrandFacebook className="size-6" />
 							</a>
 							<a
-								href="#"
+								href="https://github.com/anhdaijka"
+								target="_blank"
+								rel="noopener noreferrer"
 								className="text-muted-foreground transition-colors hover:text-primary"
 							>
 								<IconBrandGithub className="size-6" />
 							</a>
 							<a
-								href="#"
+								href="tel:0369476625"
 								className="text-muted-foreground transition-colors hover:text-primary"
 							>
 								<IconPhone className="size-6" />

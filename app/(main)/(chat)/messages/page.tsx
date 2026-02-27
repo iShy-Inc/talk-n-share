@@ -16,15 +16,26 @@ import { ContactPicker, PickerContact } from "@/components/chat/ContactPicker";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
 	IconArrowLeft,
 	IconDots,
-	IconInfoCircle,
-	IconPhoneCall,
-	IconVideo,
+	IconFlag3,
+	IconUserCircle,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOrRequestConversation } from "@/lib/contact-messaging";
+import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
 import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
 
@@ -40,6 +51,17 @@ export default function MessagesPage() {
 		initialSessionId,
 	);
 	const [showContactPicker, setShowContactPicker] = useState(false);
+	const [chatListWidth, setChatListWidth] = useState(300);
+	const [isResizingChatList, setIsResizingChatList] = useState(false);
+	const [isChatListCollapsed, setIsChatListCollapsed] = useState(false);
+	const [isMobileInfoOpen, setIsMobileInfoOpen] = useState(false);
+	const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+	const [reportReason, setReportReason] = useState("harassment");
+	const [reportEvidenceUrl, setReportEvidenceUrl] = useState<string | null>(
+		null,
+	);
+	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	// Fetch chat sessions for the current user
@@ -113,6 +135,7 @@ export default function MessagesPage() {
 					const latestReceived = latestReceivedBySession.get(session.id);
 					return {
 						id: session.id,
+						userId: otherId,
 						name: otherProfile?.display_name ?? "Unknown",
 						avatar: otherProfile?.avatar_url ?? undefined,
 						lastMessage: latest?.content ?? "",
@@ -201,6 +224,31 @@ export default function MessagesPage() {
 		};
 	}, [user, contacts, queryClient]);
 
+	useEffect(() => {
+		if (!isResizingChatList) return;
+
+		const handleMouseMove = (event: MouseEvent) => {
+			const nextWidth = Math.min(Math.max(event.clientX, 280), 520);
+			setChatListWidth(nextWidth);
+		};
+
+		const handleMouseUp = () => {
+			setIsResizingChatList(false);
+		};
+
+		window.addEventListener("mousemove", handleMouseMove);
+		window.addEventListener("mouseup", handleMouseUp);
+		document.body.style.cursor = "col-resize";
+		document.body.style.userSelect = "none";
+
+		return () => {
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("mouseup", handleMouseUp);
+			document.body.style.cursor = "";
+			document.body.style.userSelect = "";
+		};
+	}, [isResizingChatList]);
+
 	const handleSelectContact = (contactId: string) => {
 		setActiveSessionId(contactId);
 		setShowContactPicker(false);
@@ -273,8 +321,131 @@ export default function MessagesPage() {
 		(contact) => contact.id === activeSessionId,
 	);
 	const activeContactName = activeContact?.name ?? "Cuộc trò chuyện";
+	const activeContactUserId = activeContact?.userId ?? null;
 	const showConversation = !!activeSessionId && !showContactPicker;
 	const showList = !showConversation && !showContactPicker;
+
+	useEffect(() => {
+		if (!showConversation) {
+			setIsMobileInfoOpen(false);
+		}
+	}, [showConversation]);
+
+	const handleReportEvidenceSelected = async (
+		event: React.ChangeEvent<HTMLInputElement>,
+	) => {
+		const file = event.target.files?.[0];
+		if (!file || !user) return;
+		if (!file.type.startsWith("image/")) {
+			toast.error("Vui lòng chọn file ảnh.");
+			return;
+		}
+
+		try {
+			setIsUploadingEvidence(true);
+			const { publicUrl } = await uploadFileToBucket({
+				bucket: STORAGE_BUCKETS.REPORT_EVIDENCE,
+				file,
+				ownerId: user.id,
+			});
+			setReportEvidenceUrl(publicUrl);
+			toast.success("Đã tải ảnh bằng chứng.");
+		} catch {
+			toast.error("Không thể tải ảnh bằng chứng.");
+		} finally {
+			setIsUploadingEvidence(false);
+			event.target.value = "";
+		}
+	};
+
+	const handleSubmitContactReport = async (event: React.FormEvent) => {
+		event.preventDefault();
+		if (!user || !activeContactUserId) return;
+		if (!reportEvidenceUrl) {
+			toast.error("Bắt buộc phải có ảnh bằng chứng.");
+			return;
+		}
+
+		try {
+			setIsSubmittingReport(true);
+			const { error } = await supabase.from("reports").insert({
+				reporter_id: user.id,
+				reported_user_id: activeContactUserId,
+				target_id: activeSessionId,
+				target_type: "user",
+				reason: reportReason,
+				status: "pending",
+				evidence_image_url: reportEvidenceUrl,
+			});
+			if (error) throw error;
+
+			toast.success("Đã gửi báo cáo người dùng.");
+			setIsReportDialogOpen(false);
+			setReportReason("harassment");
+			setReportEvidenceUrl(null);
+		} catch {
+			toast.error("Không thể gửi báo cáo.");
+		} finally {
+			setIsSubmittingReport(false);
+		}
+	};
+
+	const conversationInfoContent = (
+		<>
+			<div className="flex flex-col items-center border-b border-border/70 pb-4">
+				{activeContact?.avatar ? (
+					<img
+						src={activeContact.avatar}
+						alt=""
+						className="size-20 rounded-full object-cover"
+					/>
+				) : (
+					<div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
+						{activeContactName[0]?.toUpperCase()}
+					</div>
+				)}
+				<p className="mt-3 text-base font-semibold">{activeContactName}</p>
+				<p className="text-xs text-foreground/70">{messages.length} tin nhắn</p>
+			</div>
+			<div className="pt-4 text-sm text-foreground/70">
+				<p className="rounded-xl bg-accent p-3">
+					Hãy cẩn thận khi trò chuyện với người lạ.
+				</p>
+				<div className="mt-4 grid gap-2">
+					<Button
+						asChild
+						variant="outline"
+						className="justify-start rounded-xl"
+						disabled={!activeContactUserId}
+					>
+						<Link
+							href={
+								activeContactUserId
+									? `/profile?userId=${activeContactUserId}`
+									: "#"
+							}
+						>
+							<IconUserCircle className="mr-2 size-4" />
+							Xem trang cá nhân
+						</Link>
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						className="justify-start rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+						onClick={() => {
+							setIsMobileInfoOpen(false);
+							setIsReportDialogOpen(true);
+						}}
+						disabled={!activeContactUserId}
+					>
+						<IconFlag3 className="mr-2 size-4" />
+						Báo cáo người dùng
+					</Button>
+				</div>
+			</div>
+		</>
+	);
 
 	return (
 		<>
@@ -289,17 +460,35 @@ export default function MessagesPage() {
 			<div className="mx-auto rounded-xl h-[calc(100dvh-8.8rem)] min-h-[620px] w-full overflow-hidden border-border border-1 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
 				<div className="flex h-full">
 					<div
-						className={`h-full border-r border-border/60 bg-card lg:block lg:w-[360px] ${
+						className={`h-full border-r border-border/60 bg-card lg:block lg:shrink-0 lg:w-[var(--chat-list-width)] ${
 							showList ? "block w-full" : "hidden"
 						}`}
+						style={
+							{
+								"--chat-list-width": `${isChatListCollapsed ? 92 : chatListWidth}px`,
+							} as Record<string, string>
+						}
 					>
 						<ChatList
 							contacts={contacts}
 							activeContactId={activeSessionId ?? undefined}
 							onSelectContact={handleSelectContact}
 							onNewMessage={handleNewMessage}
+							compact={isChatListCollapsed}
+							onToggleCompact={() => setIsChatListCollapsed((prev) => !prev)}
 						/>
 					</div>
+					{!isChatListCollapsed && (
+						<div
+							className="group relative hidden h-full w-1 cursor-col-resize bg-border/30 transition-colors hover:bg-primary/25 lg:block"
+							onMouseDown={() => setIsResizingChatList(true)}
+							role="separator"
+							aria-orientation="vertical"
+							aria-label="Resize chat list"
+						>
+							<span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-border/60 transition-colors group-hover:bg-primary/70" />
+						</div>
+					)}
 
 					<div
 						className={`h-full bg-background lg:flex lg:flex-1 lg:flex-col ${
@@ -354,42 +543,18 @@ export default function MessagesPage() {
 											<p className="text-sm font-semibold">
 												{activeContactName}
 											</p>
-											<p className="text-xs text-foreground/70">
-												Đang hoạt động
-											</p>
 										</div>
 									</div>
-
-									<div className="flex items-center gap-1">
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											className="rounded-full"
-										>
-											<IconPhoneCall className="size-4 text-[#0084ff]" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											className="rounded-full"
-										>
-											<IconVideo className="size-4 text-[#0084ff]" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											className="rounded-full"
-										>
-											<IconInfoCircle className="size-4 text-[#0084ff]" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											className="rounded-full"
-										>
-											<IconDots className="size-4 text-[#0084ff]" />
-										</Button>
-									</div>
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-sm"
+										className="rounded-full xl:hidden"
+										onClick={() => setIsMobileInfoOpen(true)}
+										aria-label="Mở thông tin cuộc trò chuyện"
+									>
+										<IconDots className="size-4 text-[#0084ff]" />
+									</Button>
 								</div>
 
 								<div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 p-4 sm:p-6">
@@ -432,36 +597,89 @@ export default function MessagesPage() {
 						)}
 					</div>
 
-					{showConversation && (
-						<div className="hidden w-[300px] border-l border-border/70 bg-card p-4 xl:block">
-							<div className="flex flex-col items-center border-b border-border/70 pb-4">
-								{activeContact?.avatar ? (
-									<img
-										src={activeContact.avatar}
-										alt=""
-										className="size-20 rounded-full object-cover"
-									/>
-								) : (
-									<div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
-										{activeContactName[0]?.toUpperCase()}
-									</div>
-								)}
-								<p className="mt-3 text-base font-semibold">
-									{activeContactName}
-								</p>
-								<p className="text-xs text-foreground/70">
-									{messages.length} tin nhắn
-								</p>
+						{showConversation && (
+							<div className="hidden w-[300px] border-l border-border/70 bg-card p-4 xl:block">
+								{conversationInfoContent}
 							</div>
-							<div className="pt-4 text-sm text-foreground/70">
-								<p className="rounded-xl bg-accent p-3">
-									Khu vực thông tin cuộc trò chuyện theo phong cách Messenger.
+						)}
+					</div>
+				</div>
+				<Dialog open={isMobileInfoOpen} onOpenChange={setIsMobileInfoOpen}>
+					<DialogContent
+						showCloseButton={false}
+						className="top-auto left-0 bottom-0 max-w-none translate-x-0 translate-y-0 gap-0 rounded-b-none rounded-t-[1.75rem] p-4 sm:max-w-none xl:hidden"
+					>
+						<DialogHeader className="sr-only">
+							<DialogTitle>Thông tin cuộc trò chuyện</DialogTitle>
+						</DialogHeader>
+						{conversationInfoContent}
+					</DialogContent>
+				</Dialog>
+				<Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+				<DialogContent>
+					<form onSubmit={handleSubmitContactReport}>
+						<DialogHeader>
+							<DialogTitle>Báo cáo người dùng</DialogTitle>
+							<DialogDescription>
+								Cung cấp lý do và ảnh bằng chứng để đội ngũ kiểm duyệt xem xét.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="space-y-4 py-4">
+							<div>
+								<Label htmlFor="chat-report-reason">Lý do</Label>
+								<select
+									id="chat-report-reason"
+									title="Lý do báo cáo"
+									value={reportReason}
+									onChange={(e) => setReportReason(e.target.value)}
+									className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none"
+								>
+									<option value="harassment">Quấy rối</option>
+									<option value="impersonation">Mạo danh</option>
+									<option value="hate">Thù ghét</option>
+									<option value="spam">Spam</option>
+									<option value="other">Khác</option>
+								</select>
+							</div>
+							<div>
+								<Label htmlFor="chat-report-evidence">Ảnh bằng chứng</Label>
+								<Input
+									id="chat-report-evidence"
+									type="file"
+									accept="image/*"
+									className="mt-2"
+									onChange={handleReportEvidenceSelected}
+								/>
+								<p className="mt-2 text-xs text-muted-foreground">
+									Bắt buộc phải tải ảnh bằng chứng để gửi báo cáo.
 								</p>
+								{reportEvidenceUrl && (
+									<p className="mt-1 text-xs text-primary">
+										Đã đính kèm ảnh bằng chứng.
+									</p>
+								)}
 							</div>
 						</div>
-					)}
-				</div>
-			</div>
+						<DialogFooter>
+							<DialogClose asChild>
+								<Button variant="outline" type="button">
+									Hủy
+								</Button>
+							</DialogClose>
+							<Button
+								type="submit"
+								disabled={
+									isUploadingEvidence ||
+									isSubmittingReport ||
+									!reportEvidenceUrl
+								}
+							>
+								Gửi báo cáo
+							</Button>
+						</DialogFooter>
+					</form>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }
