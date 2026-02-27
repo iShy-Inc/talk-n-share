@@ -29,7 +29,7 @@ export function ChatBubble({
 					"max-w-[80%] rounded-3xl px-4 py-2.5 text-sm shadow-sm md:max-w-[70%]",
 					variant === "sent"
 						? "rounded-br-md bg-[#0084ff] text-white"
-						: "rounded-bl-md bg-muted text-foreground",
+						: "rounded-bl-md border border-border/80 bg-card text-foreground",
 				)}
 			>
 				{senderName && variant === "received" && (
@@ -39,12 +39,16 @@ export function ChatBubble({
 				<span
 					className={cn(
 						"mt-1.5 block text-[11px]",
-						variant === "sent" ? "text-white/75" : "text-muted-foreground",
+						variant === "sent" ? "text-white/90" : "text-foreground/70",
 					)}
 				>
 					{timestamp}
 				</span>
-				{note && <p className="mt-1.5 text-[11px] text-amber-700">{note}</p>}
+				{note && (
+					<p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-300">
+						{note}
+					</p>
+				)}
 			</div>
 		</div>
 	);

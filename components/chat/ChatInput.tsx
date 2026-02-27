@@ -62,7 +62,7 @@ export function ChatInput({
 				onKeyDown={handleKeyDown}
 				placeholder={placeholder}
 				disabled={disabled}
-				className="h-10 rounded-full border-0 bg-muted"
+				className="h-10 rounded-full border border-border/70 bg-background"
 				id="chat-message-input"
 			/>
 			<Button

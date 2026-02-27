@@ -19,6 +19,7 @@ import {
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { AppLogo } from "@/components/shared/AppLogo";
 
 const sidebarLinks = [
 	{
@@ -131,13 +132,9 @@ export default function DashboardLayout({
 				{/* Sidebar Header */}
 				<div className="flex h-16 items-center justify-between border-b border-sidebar-border/70 px-6">
 					<Link href="/dashboard" className="flex items-center gap-3">
-						<div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-md">
-							<IconLayoutDashboard className="size-5" />
-						</div>
+						<AppLogo showText={false} imageClassName="h-9 w-auto" />
 						<div className="space-y-0.5">
-							<h1 className="text-sm font-semibold text-sidebar-foreground">
-								Talk N Share
-							</h1>
+							<h1 className="text-sm font-semibold text-sidebar-foreground">Talk N Share</h1>
 							<p className="text-xs text-muted-foreground">
 								{isModer ? "Không gian kiểm duyệt" : "Không gian quản trị"}
 							</p>

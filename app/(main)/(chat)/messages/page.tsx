@@ -302,7 +302,7 @@ export default function MessagesPage() {
 					</div>
 
 					<div
-						className={`h-full bg-[#f0f2f5] lg:flex lg:flex-1 lg:flex-col ${
+						className={`h-full bg-background lg:flex lg:flex-1 lg:flex-col ${
 							showList ? "hidden lg:flex" : "flex w-full flex-col"
 						}`}
 					>
@@ -392,7 +392,7 @@ export default function MessagesPage() {
 									</div>
 								</div>
 
-								<div className="flex-1 space-y-3 overflow-y-auto p-4 sm:p-6">
+								<div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 p-4 sm:p-6">
 									{messages.length === 0 ? (
 										<div className="flex h-full items-center justify-center">
 											<p className="text-center text-sm text-foreground/70">

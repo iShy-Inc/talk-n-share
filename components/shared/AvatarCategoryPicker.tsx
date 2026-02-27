@@ -30,13 +30,13 @@ export function AvatarCategoryPicker({
 
 	return (
 		<div className="space-y-3">
-			<Label>Avatar Category</Label>
+			<Label htmlFor="avatar-category">Chọn ảnh đại diện</Label>
 			<Select
 				value={selectedCategory}
 				onValueChange={(value) => onCategoryChange(value as AvatarCategoryKey)}
 			>
-				<SelectTrigger className="w-full">
-					<SelectValue placeholder="Select avatar category" />
+				<SelectTrigger className="w-full" id="avatar-category">
+					<SelectValue placeholder="Chọn danh mục ảnh đại diện" />
 				</SelectTrigger>
 				<SelectContent>
 					{AVATAR_CATEGORIES.map((category) => (
@@ -47,13 +47,13 @@ export function AvatarCategoryPicker({
 				</SelectContent>
 			</Select>
 
-			<div className="grid grid-cols-3 gap-3 md:grid-cols-6">
+			<div className="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-2 sm:grid-cols-[repeat(auto-fill,minmax(82px,1fr))] sm:gap-3">
 				{currentCategory.avatars.map((avatar) => (
 					<button
 						key={avatar.id}
 						type="button"
 						onClick={() => onAvatarSelect(avatar.src)}
-						className={`size-20 overflow-hidden rounded-xl border-2 transition ${
+						className={`aspect-square w-full overflow-hidden rounded-xl border-2 transition ${
 							selectedAvatar === avatar.src
 								? "border-primary"
 								: "border-transparent hover:border-border"
@@ -63,9 +63,9 @@ export function AvatarCategoryPicker({
 						<Image
 							src={avatar.src}
 							alt={avatar.label}
-							width={80}
-							height={80}
-							className="w-full h-full bg-muted/50 object-cover"
+							width={160}
+							height={160}
+							className="h-full w-full bg-muted/50 object-cover"
 						/>
 					</button>
 				))}

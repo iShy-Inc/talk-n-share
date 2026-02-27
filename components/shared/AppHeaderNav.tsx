@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
 	IconBell,
-	IconBolt,
 	IconLayoutDashboard,
 	IconLogout,
 	IconMoon,
@@ -19,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import useProfile from "@/hooks/useProfile";
+import { AppLogo } from "@/components/shared/AppLogo";
 
 const supabase = createClient();
 
@@ -42,19 +42,21 @@ export function AppHeaderNav() {
 	};
 
 	const isDark = (resolvedTheme ?? theme) === "dark";
-	const canAccessDashboard = profile?.role === "admin" || profile?.role === "moder";
+	const canAccessDashboard =
+		profile?.role === "admin" || profile?.role === "moder";
 
 	return (
 		<header className="animate-slide-down-soft sticky top-0 z-40 hidden border-b border-border/60 bg-background/85 backdrop-blur-md lg:block">
 			<div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-4">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
+					className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
+					// className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
 				>
-					<span className="animate-float-soft inline-flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
-						<IconBolt className="size-4.5" />
-					</span>
-					<span className="text-sm font-semibold tracking-tight">Talk N Share</span>
+					<AppLogo
+					// className="animate-float-soft"
+					// imageClassName="h-8 w-auto"
+					/>
 				</Link>
 
 				<form onSubmit={handleSearch} className="ml-auto w-full max-w-sm">

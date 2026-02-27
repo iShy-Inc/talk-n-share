@@ -90,7 +90,12 @@ export default function SupportPage() {
 				{contacts.map((contact) => (
 					<div
 						key={contact.id}
-						className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+						className={
+							contact.id === "school-counseling" ||
+							contact.id === "community-support"
+								? "rounded-2xl border border-[#f37021]/70 bg-[#f37021]/12 p-4 shadow-sm"
+								: "rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+						}
 					>
 						<div className="mb-2 flex items-center justify-between gap-2">
 							<p className="font-semibold">{contact.name}</p>

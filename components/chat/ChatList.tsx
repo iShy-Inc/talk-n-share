@@ -77,7 +77,7 @@ export function ChatList({
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						placeholder="Tìm kiếm trên Messenger"
-						className="h-10 rounded-full border-0 bg-muted pl-9"
+						className="h-10 rounded-full border border-border/70 bg-background pl-9"
 						id="chat-list-search"
 					/>
 				</div>

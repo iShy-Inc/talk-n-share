@@ -137,25 +137,31 @@ export function GeneralSettingsForm({
 					))}
 				</div>
 			</div>
-			<Textarea
-				value={bio}
-				onChange={(e) => setBio(e.target.value)}
-				placeholder="Tiểu sử"
-				className="min-h-[120px] resize-none"
-				id="settings-bio"
-			/>
-			<Select value={location} onValueChange={setLocation}>
-				<SelectTrigger className="w-full">
-					<SelectValue placeholder="Chọn địa điểm" />
-				</SelectTrigger>
-				<SelectContent>
-					{LOCATION_OPTIONS.map((loc) => (
-						<SelectItem key={loc} value={loc}>
-							{loc}
-						</SelectItem>
-					))}
-				</SelectContent>
-			</Select>
+			<div className="space-y-2">
+				<Label htmlFor="settings-bio">Tiểu sử</Label>
+				<Textarea
+					value={bio}
+					onChange={(e) => setBio(e.target.value)}
+					placeholder="Tiểu sử"
+					className="min-h-[120px] resize-none"
+					id="settings-bio"
+				/>
+			</div>
+			<div className="space-y-2">
+				<Label htmlFor="settings-location">Địa điểm</Label>
+				<Select value={location} onValueChange={setLocation}>
+					<SelectTrigger id="settings-location" className="w-full">
+						<SelectValue placeholder="Chọn địa điểm" />
+					</SelectTrigger>
+					<SelectContent>
+						{LOCATION_OPTIONS.map((loc) => (
+							<SelectItem key={loc} value={loc}>
+								{loc}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
 			<Button type="submit" className="w-40" id="settings-save-btn">
 				Lưu thay đổi
 			</Button>

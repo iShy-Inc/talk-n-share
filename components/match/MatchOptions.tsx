@@ -172,7 +172,9 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 								: "text-foreground/65"
 						}`}
 					>
-						{location ? `Khu vực: ${location}` : "Khu vực: chưa chọn"}
+						{location
+							? `Khu vực: ${location.charAt(0).toUpperCase() + location.slice(1)}`
+							: "Khu vực: chưa chọn"}
 					</div>
 					<div
 						className={`rounded-md border px-2 py-1.5 text-center ${
@@ -181,7 +183,9 @@ export function MatchOptions({ onStartMatch }: MatchOptionsProps) {
 								: "text-foreground/65"
 						}`}
 					>
-						{zodiac ? `Cung hoàng đạo: ${zodiac}` : "Cung hoàng đạo: chưa chọn"}
+						{zodiac
+							? `Cung hoàng đạo: ${zodiac.charAt(0).toUpperCase() + zodiac.slice(1)}`
+							: "Cung hoàng đạo: chưa chọn"}
 					</div>
 				</div>
 

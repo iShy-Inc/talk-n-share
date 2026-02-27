@@ -9,7 +9,7 @@ interface ChatEmptyStateProps {
 
 export function ChatEmptyState({ onNewMessage }: ChatEmptyStateProps) {
 	return (
-		<div className="flex h-full flex-1 items-center justify-center bg-muted/20">
+		<div className="flex h-full flex-1 items-center justify-center bg-background">
 			<div className="max-w-sm text-center">
 				<div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-[#0084ff]/15">
 					<IconMessageCircle2 className="size-8 text-[#0084ff]" />
