@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -151,14 +151,12 @@ export function StoryIdeasSection() {
 	const [open, setOpen] = useState(false);
 	const [activeTypeId, setActiveTypeId] = useState<(typeof STORY_TYPES)[number]["id"]>("motivation");
 	const [activeLabel, setActiveLabel] = useState("Tích cực");
-	const [activeIdea, setActiveIdea] = useState(
+	const [activeIdea, setActiveIdea] = useState<string>(
 		STORY_IDEAS_BY_TYPE.motivation[0],
 	);
-	const [activeBackground, setActiveBackground] = useState(
+	const [activeBackground, setActiveBackground] = useState<string>(
 		UNSPLASH_FALLBACK_IMAGES[0],
 	);
-
-	const stories = useMemo(() => STORY_TYPES, []);
 
 	const getRandomIdeaByType = (
 		typeId: (typeof STORY_TYPES)[number]["id"],
@@ -192,7 +190,7 @@ export function StoryIdeasSection() {
 					<p className="text-xs text-muted-foreground">Chạm để xem</p>
 				</div>
 				<div className="flex gap-3 overflow-x-auto pb-1">
-					{stories.map((story) => (
+					{STORY_TYPES.map((story) => (
 						<button
 							key={story.id}
 							type="button"
