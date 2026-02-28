@@ -49,8 +49,8 @@ export default function FeedPage() {
 			return (data ?? []).map((c: any) => ({
 				id: c.id,
 				authorId: c.author_id,
-				authorIsPublic: c.profiles?.is_public ?? true,
-				authorName: c.profiles?.display_name ?? c.author_name ?? "Anonymous",
+				authorIsPublic: c.profiles?.is_public ?? null,
+				authorName: c.profiles?.display_name ?? c.author_name ?? "Người dùng",
 				authorAvatar: c.profiles?.avatar_url ?? c.author_avatar,
 				content: c.content,
 				timeAgo: formatDateDDMMYYYY(c.created_at),

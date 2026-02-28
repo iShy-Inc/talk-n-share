@@ -95,14 +95,17 @@ function ProfilePageContent() {
 	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 	const { profile: myProfile } = useProfile();
 
-	const { data: visitedProfile = null } = useQuery({
+	const {
+		data: visitedProfile = null,
+		isLoading: isLoadingVisitedProfile,
+	} = useQuery({
 		queryKey: ["profile-by-id", requestedProfileId],
 		queryFn: async () => {
 			if (!requestedProfileId) return null;
 			const { data, error } = await supabase
-				.from("profiles")
-				.select("*")
-				.eq("id", requestedProfileId)
+				.rpc("get_profile_for_viewer", {
+					target_profile_id: requestedProfileId,
+				})
 				.maybeSingle();
 			if (error) throw error;
 			return data as UserProfile | null;
@@ -110,9 +113,35 @@ function ProfilePageContent() {
 		enabled: !!requestedProfileId && !isOwnProfile,
 	});
 
+	const { data: visitedProfilePostSnapshot = null } = useQuery({
+		queryKey: ["profile-post-snapshot", requestedProfileId],
+		queryFn: async () => {
+			if (!requestedProfileId) return null;
+			const { data, error } = await supabase
+				.from("posts")
+				.select("author_name, author_avatar")
+				.eq("author_id", requestedProfileId)
+				.order("created_at", { ascending: false })
+				.limit(1)
+				.maybeSingle();
+			if (error) throw error;
+			return (data ?? null) as {
+				author_name?: string | null;
+				author_avatar?: string | null;
+			} | null;
+		},
+		enabled: !!requestedProfileId && !isOwnProfile,
+	});
+
 	const profile = isOwnProfile ? myProfile : visitedProfile;
+	const fallbackProfileName = visitedProfilePostSnapshot?.author_name ?? undefined;
+	const fallbackProfileAvatar =
+		visitedProfilePostSnapshot?.author_avatar ?? undefined;
 	const shouldHidePrivateInfo =
-		!isOwnProfile && (profile?.is_public ?? true) === false;
+		!isOwnProfile &&
+		!isLoadingVisitedProfile &&
+		(visitedProfile === null || (profile?.is_public ?? true) === false);
+	const isPrivateStatePending = !isOwnProfile && isLoadingVisitedProfile;
 
 	const effectiveActiveTab = !isOwnProfile ? "my-posts" : activeTab;
 
@@ -156,11 +185,18 @@ function ProfilePageContent() {
 				)
 				.eq("author_id", profileId)
 				.order("created_at", { ascending: false });
-			return (data ?? []) as PostWithAuthor[];
+			return (data ?? []).map((post: any) => ({
+				...post,
+				author_name:
+					post.profiles?.display_name ?? post.author_name ?? "Người dùng",
+				author_avatar:
+					post.profiles?.avatar_url ?? post.author_avatar ?? null,
+			})) as PostWithAuthor[];
 		},
 		enabled:
 			!!profileId &&
 			effectiveActiveTab === "my-posts" &&
+			!isPrivateStatePending &&
 			!shouldHidePrivateInfo,
 	});
 
@@ -177,7 +213,17 @@ function ProfilePageContent() {
 				.order("created_at", { ascending: false });
 			if (error) throw error;
 			return (data ?? [])
-				.map((item: any) => item.posts)
+				.map((item: any) => {
+					const post = item.posts;
+					if (!post) return null;
+					return {
+						...post,
+						author_name:
+							post.profiles?.display_name ?? post.author_name ?? "Người dùng",
+						author_avatar:
+							post.profiles?.avatar_url ?? post.author_avatar ?? null,
+					};
+				})
 				.filter(Boolean) as PostWithAuthor[];
 		},
 		enabled: !!user && isOwnProfile && effectiveActiveTab === "liked-posts",
@@ -196,7 +242,17 @@ function ProfilePageContent() {
 				.order("created_at", { ascending: false });
 			if (error) throw error;
 			return (data ?? [])
-				.map((item: any) => item.posts)
+				.map((item: any) => {
+					const post = item.posts;
+					if (!post) return null;
+					return {
+						...post,
+						author_name:
+							post.profiles?.display_name ?? post.author_name ?? "Người dùng",
+						author_avatar:
+							post.profiles?.avatar_url ?? post.author_avatar ?? null,
+					};
+				})
 				.filter(Boolean) as PostWithAuthor[];
 		},
 		enabled: !!user && isOwnProfile && effectiveActiveTab === "reposted-posts",
@@ -292,10 +348,6 @@ function ProfilePageContent() {
 				targetDisplayName: profile?.display_name,
 				targetIsPublic: profile?.is_public,
 			});
-			if (result.kind === "request_sent") {
-				toast.success("Đã gửi yêu cầu nhắn tin tới tài khoản riêng tư này.");
-				return;
-			}
 			router.push(`/messages?sessionId=${result.sessionId}`);
 		} catch {
 			toast.error("Không thể bắt đầu cuộc trò chuyện.");
@@ -372,11 +424,11 @@ function ProfilePageContent() {
 	return (
 		<>
 			<ProfileHeader
-				name={profile?.display_name ?? "Người dùng"}
+				name={profile?.display_name ?? fallbackProfileName ?? "Người dùng"}
 				username={
 					shouldHidePrivateInfo
 						? undefined
-						: (profile?.display_name ?? undefined)
+						: (profile?.display_name ?? fallbackProfileName ?? undefined)
 				}
 				role={profile?.role}
 				isPublic={profile?.is_public}
@@ -392,7 +444,7 @@ function ProfilePageContent() {
 									: "Thành viên Talk N Share"
 				}
 				avatarUrl={
-					profile?.avatar_url ?? undefined
+					profile?.avatar_url ?? fallbackProfileAvatar
 				}
 				joinDate={shouldHidePrivateInfo ? undefined : profile?.created_at}
 				bio={shouldHidePrivateInfo ? undefined : (profile?.bio ?? undefined)}
@@ -445,10 +497,16 @@ function ProfilePageContent() {
 
 			{effectiveActiveTab === "my-posts" && (
 				<div className="space-y-4">
-					{shouldHidePrivateInfo ? (
+					{isPrivateStatePending ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
-								Đây là hồ sơ riêng tư
+								Đang tải hồ sơ...
+							</p>
+						</div>
+					) : shouldHidePrivateInfo ? (
+						<div className="rounded-2xl border border-border bg-card py-16 text-center">
+							<p className="text-base font-medium text-muted-foreground">
+								Đây là tài khoản riêng tư
 							</p>
 						</div>
 					) : myPosts.length === 0 ? (

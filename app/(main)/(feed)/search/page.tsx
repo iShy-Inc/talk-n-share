@@ -56,8 +56,8 @@ function SearchPageContent() {
 				.limit(20);
 			return (data ?? []).map((p: any) => ({
 				...p,
-				author_name: p.profiles?.display_name ?? p.author_name,
-				author_avatar: p.profiles?.avatar_url ?? p.author_avatar,
+				author_name: p.profiles?.display_name ?? p.author_name ?? "Người dùng",
+				author_avatar: p.profiles?.avatar_url ?? p.author_avatar ?? null,
 			})) as PostWithAuthor[];
 		},
 		enabled: !!query && (activeTab === "all" || activeTab === "posts"),
@@ -162,10 +162,6 @@ function SearchPageContent() {
 				targetDisplayName: targetUser.display_name,
 				targetIsPublic: targetUser.is_public,
 			});
-			if (result.kind === "request_sent") {
-				toast.success("Đã gửi yêu cầu nhắn tin tới tài khoản riêng tư này.");
-				return;
-			}
 			router.push(`/messages?sessionId=${result.sessionId}`);
 		} catch {
 			toast.error("Không thể bắt đầu cuộc trò chuyện.");

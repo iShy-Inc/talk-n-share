@@ -132,7 +132,35 @@ export function PostCard({ post }: PostCardProps) {
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
 	const isAuthor = user?.id === post.author_id;
-	const displayName = post.profiles?.display_name ?? "Anonymous";
+
+	const { data: maskedAuthorProfile = null } = useQuery({
+		queryKey: ["masked-post-author-profile", post.author_id],
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.rpc("get_profile_for_viewer", {
+					target_profile_id: post.author_id,
+				})
+				.maybeSingle();
+			if (error) throw error;
+			return data;
+		},
+		enabled: !post.profiles?.display_name,
+	});
+
+	const displayName =
+		post.profiles?.display_name ??
+		maskedAuthorProfile?.display_name ??
+		post.author_name ??
+		"Người dùng";
+	const authorAvatarUrl =
+		post.profiles?.avatar_url ??
+		maskedAuthorProfile?.avatar_url ??
+		post.author_avatar;
+	const authorIsPublic =
+		post.profiles?.is_public ??
+		maskedAuthorProfile?.is_public ??
+		(post.author_name || post.author_avatar ? false : null);
+	const authorRole = post.profiles?.role ?? maskedAuthorProfile?.role ?? null;
 
 	const { data: likedByMe = false } = useQuery({
 		queryKey: ["post-liked-by-me", post.id, user?.id],
@@ -150,9 +178,27 @@ export function PostCard({ post }: PostCardProps) {
 		enabled: !!user,
 	});
 
+	const { data: exactCommentCount } = useQuery({
+		queryKey: ["post-comment-count", post.id],
+		queryFn: async () => {
+			const { count, error } = await supabase
+				.from("comments")
+				.select("id", { count: "exact", head: true })
+				.eq("post_id", post.id);
+			if (error) throw error;
+			return count ?? 0;
+		},
+	});
+
 	useEffect(() => {
 		setIsLiked(likedByMe);
 	}, [likedByMe]);
+
+	useEffect(() => {
+		if (typeof exactCommentCount === "number") {
+			setCommentCount(exactCommentCount);
+		}
+	}, [exactCommentCount]);
 
 	const { data: repostedByMe = false } = useQuery({
 		queryKey: ["post-reposted-by-me", post.id, user?.id],
@@ -215,8 +261,8 @@ export function PostCard({ post }: PostCardProps) {
 				id: c.id,
 				authorId: c.author_id,
 				parentId: c.parent_id,
-				authorName: c.profiles?.display_name ?? "Anonymous",
-				authorIsPublic: c.profiles?.is_public ?? true,
+				authorName: c.profiles?.display_name ?? "Người dùng",
+				authorIsPublic: c.profiles?.is_public ?? null,
 				authorAvatar: c.profiles?.avatar_url ?? undefined,
 				content: c.content ?? "",
 				timeAgo: formatDistanceToNow(new Date(c.created_at), {
@@ -469,6 +515,9 @@ export function PostCard({ post }: PostCardProps) {
 			setReplyToCommentId(null);
 			await refetchComments();
 			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+			queryClient.invalidateQueries({
+				queryKey: ["post-comment-count", post.id],
+			});
 		} catch {
 			toast.error("Failed to submit comment");
 		} finally {
@@ -561,9 +610,9 @@ export function PostCard({ post }: PostCardProps) {
 						className="flex items-center gap-3"
 					>
 						<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-secondary">
-							{post?.profiles?.avatar_url ? (
+							{authorAvatarUrl ? (
 								<Image
-									src={post?.profiles?.avatar_url}
+									src={authorAvatarUrl}
 									alt={displayName}
 									width={40}
 									height={40}
@@ -578,10 +627,8 @@ export function PostCard({ post }: PostCardProps) {
 								<h3 className="text-sm font-semibold hover:underline">
 									{displayName}
 								</h3>
-								<ProfileVisibilityIcon
-									isPublic={post.profiles?.is_public ?? true}
-								/>
-								<RoleVerifiedBadge role={post.profiles?.role ?? null} />
+								<ProfileVisibilityIcon isPublic={authorIsPublic} />
+								<RoleVerifiedBadge role={authorRole} />
 							</div>
 							<p className="text-xs text-foreground/70">
 								{formatDistanceToNow(new Date(post.created_at), {

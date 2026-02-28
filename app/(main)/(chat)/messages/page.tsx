@@ -117,14 +117,22 @@ function MessagesPageContent() {
 
 			if (otherUserIds.length === 0) return [];
 
-			const { data: profiles, error: profilesError } = await supabase
-				.from("profiles")
-				.select("id, display_name, avatar_url, is_public")
-				.in("id", otherUserIds);
-			if (profilesError) throw profilesError;
+			const profiles = await Promise.all(
+				otherUserIds.map(async (id) => {
+					const { data, error } = await supabase
+						.rpc("get_profile_for_viewer", {
+							target_profile_id: id,
+						})
+						.maybeSingle();
+					if (error) throw error;
+					return data;
+				}),
+			);
 
 			const profileMap = new Map(
-				(profiles ?? []).map((profile) => [profile.id, profile]),
+				(profiles ?? [])
+					.filter((profile): profile is NonNullable<typeof profile> => !!profile)
+					.map((profile) => [profile.id, profile]),
 			);
 
 			return (sessions ?? [])
@@ -137,12 +145,12 @@ function MessagesPageContent() {
 					return {
 						id: session.id,
 						userId: otherId,
-						name: otherProfile?.display_name ?? "Unknown",
+						name: otherProfile?.display_name ?? "Người dùng",
 						avatar: otherProfile?.avatar_url ?? undefined,
 						lastMessage: latest?.content ?? "",
 						latestMessageAt: latest?.created_at ?? session.created_at,
 						latestReceivedAt: latestReceived?.created_at ?? null,
-						isPublic: otherProfile?.is_public ?? true,
+						isPublic: otherProfile?.is_public ?? null,
 					} as ChatContact;
 				})
 				.sort((a, b) => {
@@ -270,11 +278,6 @@ function MessagesPageContent() {
 				targetDisplayName: target?.display_name,
 				targetIsPublic: target?.is_public,
 			});
-			if (result.kind === "request_sent") {
-				toast.success("Đã gửi yêu cầu nhắn tin tới tài khoản riêng tư này.");
-				setShowContactPicker(false);
-				return;
-			}
 			handleSelectContact(result.sessionId);
 		} catch {
 			toast.error("Không thể bắt đầu cuộc trò chuyện.");
@@ -305,14 +308,22 @@ function MessagesPageContent() {
 			if (sessionError || !session) return {};
 
 			const ids = [session.user1_id, session.user2_id];
-			const { data: profiles, error: profilesError } = await supabase
-				.from("profiles")
-				.select("id, is_public")
-				.in("id", ids);
-			if (profilesError) return {};
+			const profiles = await Promise.all(
+				ids.map(async (id) => {
+					const { data, error } = await supabase
+						.rpc("get_profile_for_viewer", {
+							target_profile_id: id,
+						})
+						.maybeSingle();
+					if (error) return null;
+					return data;
+				}),
+			);
 
 			return Object.fromEntries(
-				(profiles ?? []).map((entry) => [entry.id, entry.is_public ?? true]),
+				profiles
+					.filter((entry): entry is NonNullable<typeof entry> => !!entry)
+					.map((entry) => [entry.id, entry.is_public ?? false]),
 			) as Record<string, boolean>;
 		},
 		enabled: !!activeSessionId,

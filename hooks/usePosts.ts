@@ -29,8 +29,8 @@ export const usePosts = () => {
 			if (error) throw error;
 			return (data || []).map((p: any) => ({
 				...p,
-				author_name: p.profiles?.display_name ?? "Anonymous",
-				author_avatar: p.profiles?.avatar_url,
+				author_name: p.profiles?.display_name ?? p.author_name ?? "Người dùng",
+				author_avatar: p.profiles?.avatar_url ?? p.author_avatar ?? null,
 			})) as PostWithAuthor[];
 		},
 		getNextPageParam: (lastPage, allPages) => {

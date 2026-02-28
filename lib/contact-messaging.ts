@@ -9,9 +9,7 @@ type ContactMessagingParams = {
 	targetIsPublic?: boolean | null;
 };
 
-type ContactMessagingResult =
-	| { kind: "request_sent" }
-	| { kind: "session_ready"; sessionId: string };
+type ContactMessagingResult = { kind: "session_ready"; sessionId: string };
 
 const tryInsertNotification = async (
 	supabase: ReturnType<typeof createClient>,
@@ -69,8 +67,6 @@ export const startOrRequestConversation = async ({
 	viewerId,
 	viewerDisplayName,
 	targetUserId,
-	targetDisplayName,
-	targetIsPublic,
 }: ContactMessagingParams): Promise<ContactMessagingResult> => {
 	const supabase = createClient();
 
@@ -85,20 +81,6 @@ export const startOrRequestConversation = async ({
 	if (existingSessionError) throw existingSessionError;
 	if (existingSession?.id) {
 		return { kind: "session_ready", sessionId: existingSession.id };
-	}
-
-	if (targetIsPublic === false) {
-		const senderName = viewerDisplayName?.trim() || "Someone";
-		const receiverName = targetDisplayName?.trim() || "you";
-		const content = `${senderName} is trying to contact ${receiverName}. Please be careful of scams and unknown links.`;
-		await tryInsertNotification(supabase, {
-			recipient_id: targetUserId,
-			sender_id: viewerId,
-			link: "/messages",
-			content,
-			reference_id: viewerId,
-		});
-		return { kind: "request_sent" };
 	}
 
 	const { data: newSession, error: newSessionError } = await supabase

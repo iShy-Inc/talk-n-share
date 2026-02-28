@@ -9,9 +9,13 @@ interface ProfileVisibilityIconProps {
 }
 
 export function ProfileVisibilityIcon({
-	isPublic = true,
+	isPublic,
 	className,
 }: ProfileVisibilityIconProps) {
+	if (isPublic === null || isPublic === undefined) {
+		return null;
+	}
+
 	if (isPublic) {
 		return (
 			<span

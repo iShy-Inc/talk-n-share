@@ -501,6 +501,25 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: string
       }
+      get_profile_for_viewer: {
+        Args: { target_profile_id: string }
+        Returns: {
+          id: string
+          avatar_url: string | null
+          bio: string | null
+          birth_date: string | null
+          birth_visibility: string | null
+          created_at: string | null
+          display_name: string | null
+          gender: Database["public"]["Enums"]["gender"] | null
+          is_public: boolean | null
+          location: string | null
+          relationship: string | null
+          role: Database["public"]["Enums"]["role"]
+          updated_at: string | null
+          zodiac: string | null
+        }[]
+      }
       find_match_v2: {
         Args: {
           current_user_id: string
