@@ -51,21 +51,13 @@ export default function MatchPage() {
 			const { data, error: sessionError } = await supabase
 				.rpc("get_chat_session_for_viewer", {
 					target_session_id: matchedId,
-				})
-				.maybeSingle();
+				});
 			if (sessionError) {
-				if (sessionError.code === "PGRST116") {
-					if (attempt < MATCH_SESSION_RETRY_COUNT - 1) {
-						await new Promise((resolve) =>
-							window.setTimeout(resolve, MATCH_SESSION_RETRY_DELAY_MS),
-						);
-					}
-					continue;
-				}
 				throw sessionError;
 			}
-			if (data) {
-				session = data as MatchSessionView;
+			const nextSession = (data?.[0] ?? null) as MatchSessionView | null;
+			if (nextSession) {
+				session = nextSession;
 				break;
 			}
 			if (attempt < MATCH_SESSION_RETRY_COUNT - 1) {
