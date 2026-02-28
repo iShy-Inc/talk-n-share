@@ -42,7 +42,10 @@ export const usePosts = () => {
 	// Create post
 	const createPost = useMutation({
 		mutationFn: async (
-			newPost: Pick<Post, "content" | "image_url" | "author_id">,
+			newPost: Pick<
+				Post,
+				"content" | "image_url" | "author_id" | "gif_provider" | "gif_id"
+			>,
 		) => {
 			const { data, error } = await supabase
 				.from("posts")

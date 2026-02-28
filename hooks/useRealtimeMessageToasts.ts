@@ -15,6 +15,7 @@ type IncomingMessagePayload = {
 	match_id: string;
 	sender_id?: string;
 	content?: string | null;
+	gif_id?: string | null;
 	image_url?: string | null;
 };
 
@@ -111,6 +112,7 @@ export const useRealtimeMessageToasts = () => {
 						sessionMeta.sessionType === "match" && !sessionMeta.isRevealed;
 					const description =
 						next.content?.trim() ||
+						(next.gif_id ? "Đã gửi một GIF." : null) ||
 						(next.image_url ? "Đã gửi một hình ảnh." : "Bạn có tin nhắn mới.");
 
 					shownMessageIdsRef.current.add(next.id);

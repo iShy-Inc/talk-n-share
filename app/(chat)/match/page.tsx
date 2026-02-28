@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { IconHome, IconMessage } from "@tabler/icons-react";
 import { toast } from "sonner";
 import type { PostgrestError } from "@supabase/supabase-js";
+import type { GifSelection } from "@/lib/giphy";
 
 const supabase = createClient();
 const MIN_WAIT_SECONDS = 60;
@@ -491,9 +492,9 @@ export default function MatchPage() {
 	};
 
 	// Handle Sending Message
-	const handleMatchSendMessage = (content: string) => {
+	const handleMatchSendMessage = (content: string, gif?: GifSelection | null) => {
 		if (!user) return;
-		sendMessage(content, user.id);
+		sendMessage(content, user.id, "text", gif);
 	};
 
 	return (

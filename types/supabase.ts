@@ -44,6 +44,8 @@ export type Database = {
           author_id: string
           content: string | null
           created_at: string
+          gif_id: string | null
+          gif_provider: string | null
           id: string
           is_approved: boolean
           parent_id: string | null
@@ -53,6 +55,8 @@ export type Database = {
           author_id: string
           content?: string | null
           created_at?: string
+          gif_id?: string | null
+          gif_provider?: string | null
           id?: string
           is_approved?: boolean
           parent_id?: string | null
@@ -62,6 +66,8 @@ export type Database = {
           author_id?: string
           content?: string | null
           created_at?: string
+          gif_id?: string | null
+          gif_provider?: string | null
           id?: string
           is_approved?: boolean
           parent_id?: string | null
@@ -211,6 +217,8 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          gif_id: string | null
+          gif_provider: string | null
           id: string
           image_url: string | null
           match_id: string
@@ -221,6 +229,8 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
+          gif_id?: string | null
+          gif_provider?: string | null
           id?: string
           image_url?: string | null
           match_id: string
@@ -231,6 +241,8 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
+          gif_id?: string | null
+          gif_provider?: string | null
           id?: string
           image_url?: string | null
           match_id?: string
@@ -312,6 +324,8 @@ export type Database = {
           comments_count: number | null
           content: string | null
           created_at: string
+          gif_id: string | null
+          gif_provider: string | null
           id: string
           image_url: string | null
           likes_count: number | null
@@ -322,6 +336,8 @@ export type Database = {
           comments_count?: number | null
           content?: string | null
           created_at?: string
+          gif_id?: string | null
+          gif_provider?: string | null
           id?: string
           image_url?: string | null
           likes_count?: number | null
@@ -332,6 +348,8 @@ export type Database = {
           comments_count?: number | null
           content?: string | null
           created_at?: string
+          gif_id?: string | null
+          gif_provider?: string | null
           id?: string
           image_url?: string | null
           likes_count?: number | null

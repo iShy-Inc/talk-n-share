@@ -46,6 +46,7 @@ import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon
 import { cn } from "@/lib/utils";
 import { useIsUserOnline } from "@/hooks/usePresence";
 import { PresenceDot } from "@/components/shared/PresenceDot";
+import type { GifSelection } from "@/lib/giphy";
 
 const supabase = createClient();
 type PickerUser = Pick<Profile, "id" | "display_name" | "avatar_url" | "is_public">;
@@ -91,7 +92,7 @@ function MessagesPageContent() {
 			const { data: latestMessages, error: latestMessagesError } =
 				await supabase
 					.from("messages")
-					.select("match_id, content, created_at, sender_id")
+					.select("match_id, content, created_at, sender_id, gif_id")
 					.in("match_id", sessionIds)
 					.order("created_at", { ascending: false });
 			if (latestMessagesError) throw latestMessagesError;
@@ -127,7 +128,9 @@ function MessagesPageContent() {
 						avatar: session.avatar_url ?? undefined,
 						sessionType: session.session_type,
 						isRevealed: session.is_revealed,
-						lastMessage: latest?.content ?? "",
+						lastMessage:
+							latest?.content?.trim() ||
+							(latest?.gif_id ? "Đã gửi một GIF." : ""),
 						latestMessageAt: latest?.created_at ?? session.created_at,
 						latestReceivedAt: latestReceived?.created_at ?? null,
 						isPublic: session.is_public,
@@ -267,9 +270,9 @@ function MessagesPageContent() {
 		setShowContactPicker(false);
 	};
 
-	const handleSendMessage = (content: string) => {
+	const handleSendMessage = (content: string, gif?: GifSelection | null) => {
 		if (!activeSessionId || !user || isEndedSession) return;
-		sendMessage(content, user.id);
+		sendMessage(content, user.id, "text", gif);
 	};
 
 	const handleLikeCurrentMatch = async () => {
@@ -805,6 +808,8 @@ function MessagesPageContent() {
 											<ChatBubble
 												key={msg.id}
 												content={msg.content ?? ""}
+												gifId={msg.gif_id}
+												gifProvider={msg.gif_provider}
 												timestamp={format(new Date(msg.created_at), "HH:mm")}
 												variant={
 													msg.sender_id === user?.id ? "sent" : "received"

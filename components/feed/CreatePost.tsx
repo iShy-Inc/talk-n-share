@@ -7,6 +7,8 @@ import { usePosts } from "@/hooks/usePosts";
 import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
 import useProfile from "@/hooks/useProfile";
+import { GifPickerButton } from "@/components/shared/GifPickerButton";
+import { registerGiphySend, type GifSelection } from "@/lib/giphy";
 
 export function CreatePost() {
 	const { profile } = useProfile();
@@ -18,6 +20,7 @@ export function CreatePost() {
 		image_url: null,
 	});
 	const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+	const [selectedGif, setSelectedGif] = useState<GifSelection | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const imageInputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +45,8 @@ export function CreatePost() {
 		if (!profile) return;
 		const hasText = post.content.trim().length > 0;
 		const hasImage = !!selectedImageFile;
-		if (!hasText && !hasImage) return;
+		const hasGif = !!selectedGif;
+		if (!hasText && !hasImage && !hasGif) return;
 
 		try {
 			setIsSubmitting(true);
@@ -61,12 +65,18 @@ export function CreatePost() {
 				content: hasText ? post.content : null,
 				image_url: imageUrl,
 				author_id: profile.id,
+				gif_provider: selectedGif?.provider ?? null,
+				gif_id: selectedGif?.id ?? null,
 			});
 
 			setPost({ content: "", image_url: null });
 			setSelectedImageFile(null);
+			setSelectedGif(null);
 			if (imageInputRef.current) {
 				imageInputRef.current.value = "";
+			}
+			if (selectedGif?.provider === "giphy") {
+				void registerGiphySend(selectedGif.id);
 			}
 			if (createdPost?.status === "pending") {
 				toast.success(
@@ -99,6 +109,7 @@ export function CreatePost() {
 		}
 
 		setSelectedImageFile(file);
+		setSelectedGif(null);
 		toast.success("Đã chọn ảnh. Ảnh sẽ được tải lên khi bạn đăng bài.");
 	};
 
@@ -146,6 +157,25 @@ export function CreatePost() {
 								Ảnh đã đính kèm: {selectedImageFile.name}
 							</div>
 						)}
+						{selectedGif && (
+							<div className="mb-2 rounded-xl border border-border bg-muted/30 p-2">
+								<div className="mb-2 flex items-center justify-between">
+									<span className="text-xs text-muted-foreground">GIF đã chọn</span>
+									<button
+										type="button"
+										onClick={() => setSelectedGif(null)}
+										className="text-xs font-medium text-primary"
+									>
+										Xóa
+									</button>
+								</div>
+								<img
+									src={selectedGif.previewUrl}
+									alt={selectedGif.title}
+									className="h-52 w-full rounded-xl object-cover"
+								/>
+							</div>
+						)}
 						{previewUrl && (
 							<div className="mb-2 overflow-hidden rounded-xl border border-border">
 								<Image
@@ -170,11 +200,26 @@ export function CreatePost() {
 								<ImageIcon size={18} />
 								<span>Ảnh</span>
 							</button>
+							<GifPickerButton
+								onSelect={(gif) => {
+									setSelectedGif(gif);
+									setSelectedImageFile(null);
+									if (imageInputRef.current) {
+										imageInputRef.current.value = "";
+									}
+								}}
+								disabled={isSubmitting}
+								className="rounded-lg"
+							/>
 
 							<button
 								type="submit"
 								disabled={
-									(post.content.trim().length === 0 && !selectedImageFile) ||
+									(
+										post.content.trim().length === 0 &&
+										!selectedImageFile &&
+										!selectedGif
+									) ||
 									isSubmitting
 								}
 								className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"

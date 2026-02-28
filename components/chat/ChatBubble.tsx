@@ -1,5 +1,6 @@
 "use client";
 
+import { GiphyGif } from "@/components/shared/GiphyGif";
 import { cn } from "@/lib/utils";
 
 interface ChatBubbleProps {
@@ -8,6 +9,8 @@ interface ChatBubbleProps {
 	senderName?: string;
 	variant: "sent" | "received";
 	note?: string;
+	gifId?: string | null;
+	gifProvider?: string | null;
 }
 
 export function ChatBubble({
@@ -16,6 +19,8 @@ export function ChatBubble({
 	senderName,
 	variant,
 	note,
+	gifId,
+	gifProvider,
 }: ChatBubbleProps) {
 	return (
 		<div
@@ -35,7 +40,13 @@ export function ChatBubble({
 				{senderName && variant === "received" && (
 					<p className="mb-1 text-xs font-semibold">{senderName}</p>
 				)}
-				<p className="leading-relaxed">{content}</p>
+				{gifProvider === "giphy" && gifId && (
+					<GiphyGif
+						gifId={gifId}
+						className="mb-2 max-h-72 w-full rounded-2xl object-cover"
+					/>
+				)}
+				{content && <p className="leading-relaxed">{content}</p>}
 				<span
 					className={cn(
 						"mt-1.5 block text-[11px]",

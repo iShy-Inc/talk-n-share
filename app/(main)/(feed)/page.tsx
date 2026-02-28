@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateDDMMYYYY } from "@/utils/helpers/date";
+import { registerGiphySend } from "@/lib/giphy";
 
 const supabase = createClient();
 
@@ -52,14 +53,22 @@ export default function FeedPage() {
 				authorIsPublic: c.profiles?.is_public ?? null,
 				authorName: c.profiles?.display_name ?? c.author_name ?? "Người dùng",
 				authorAvatar: c.profiles?.avatar_url ?? c.author_avatar,
-				content: c.content,
+				content: c.content ?? "",
+				gifId: c.gif_id ?? undefined,
+				gifProvider: c.gif_provider ?? undefined,
 				timeAgo: formatDateDDMMYYYY(c.created_at),
 			})) as CommentData[];
 		},
 		enabled: !!visibleExpandedPostId,
 	});
 
-	const handleAddComment = async (content: string) => {
+	const handleAddComment = async ({
+		content,
+		gif,
+	}: {
+		content: string;
+		gif?: { provider: "giphy"; id: string } | null;
+	}) => {
 		if (!user) {
 			router.push("/login");
 			return;
@@ -67,9 +76,14 @@ export default function FeedPage() {
 		if (!expandedPostId) return;
 		await supabase.from("comments").insert({
 			post_id: expandedPostId,
-			content,
+			content: content || null,
 			author_id: user.id,
+			gif_provider: gif?.provider ?? null,
+			gif_id: gif?.id ?? null,
 		});
+		if (gif?.provider === "giphy") {
+			void registerGiphySend(gif.id);
+		}
 	};
 
 	const { data: suggestedFriends = [] } = useQuery({

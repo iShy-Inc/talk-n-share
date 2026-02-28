@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import { GiphyGif } from "@/components/shared/GiphyGif";
 import type { Profile } from "@/types/supabase";
 import { createClient } from "@/utils/supabase/client";
 
@@ -15,6 +16,8 @@ interface CommentItemProps {
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
+	gifId?: string;
+	gifProvider?: string;
 	timeAgo: string;
 	isAuthor?: boolean;
 	onReply?: () => void;
@@ -27,6 +30,8 @@ export function CommentItem({
 	authorAvatar,
 	authorRole,
 	content,
+	gifId,
+	gifProvider,
 	timeAgo,
 	isAuthor = false,
 	onReply,
@@ -128,9 +133,17 @@ export function CommentItem({
 					</span>
 				)}
 
-				<p className="mt-2 text-sm leading-relaxed text-foreground">
-					{content}
-				</p>
+				{gifProvider === "giphy" && gifId && (
+					<GiphyGif
+						gifId={gifId}
+						className="mt-2 max-h-64 rounded-xl object-cover"
+					/>
+				)}
+				{content && (
+					<p className="mt-2 text-sm leading-relaxed text-foreground">
+						{content}
+					</p>
+				)}
 
 				{onReply && (
 					<button

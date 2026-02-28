@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import type { Message } from "@/types/supabase";
+import { registerGiphySend, type GifSelection } from "@/lib/giphy";
 
 const supabase = createClient();
 
@@ -50,15 +51,25 @@ export const useChat = (matchId: string) => {
 		content: string,
 		sender_id: string,
 		type = "text",
+		gif?: GifSelection | null,
 	) => {
+		const normalizedContent = content.trim() || null;
+		if (!normalizedContent && !gif) return;
+
 		await supabase.from("messages").insert([
 			{
 				match_id: matchId,
-				content,
-				type,
+				content: normalizedContent,
+				type: gif ? "gif" : type,
 				sender_id,
+				gif_provider: gif?.provider ?? null,
+				gif_id: gif?.id ?? null,
 			},
 		]);
+
+		if (gif?.provider === "giphy") {
+			void registerGiphySend(gif.id);
+		}
 	};
 
 	// Update message

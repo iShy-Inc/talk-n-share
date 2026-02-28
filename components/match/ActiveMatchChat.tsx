@@ -40,6 +40,7 @@ import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
 import { useIsUserOnline } from "@/hooks/usePresence";
 import { PresenceDot } from "@/components/shared/PresenceDot";
+import type { GifSelection } from "@/lib/giphy";
 
 interface ActiveMatchChatProps {
 	messages: Message[];
@@ -53,7 +54,7 @@ interface ActiveMatchChatProps {
 		avatar_url?: string;
 		location?: string;
 	};
-	onSendMessage: (content: string) => void;
+	onSendMessage: (content: string, gif?: GifSelection | null) => void;
 	onLike: () => void;
 	onEndChat: () => void;
 }
@@ -273,6 +274,8 @@ export function ActiveMatchChat({
 					<ChatBubble
 						key={msg.id}
 						content={msg.content ?? ""}
+						gifId={msg.gif_id}
+						gifProvider={msg.gif_provider}
 						timestamp={format(new Date(msg.created_at), "h:mm a")}
 						variant={msg.sender_id === currentUserId ? "sent" : "received"}
 					/>

@@ -60,6 +60,9 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import { GifPickerButton } from "@/components/shared/GifPickerButton";
+import { GiphyGif } from "@/components/shared/GiphyGif";
+import { registerGiphySend, type GifSelection } from "@/lib/giphy";
 
 interface PostCardProps {
 	post: PostWithAuthor;
@@ -71,6 +74,8 @@ type CommentRow = {
 	parent_id: string | null;
 	content: string | null;
 	created_at: string;
+	gif_id: string | null;
+	gif_provider: string | null;
 	profiles?: {
 		display_name?: string | null;
 		avatar_url?: string | null;
@@ -86,6 +91,8 @@ type BaseCommentData = {
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
+	gifId?: string;
+	gifProvider?: string;
 	timeAgo: string;
 	isAuthor?: boolean;
 };
@@ -120,6 +127,9 @@ export function PostCard({ post }: PostCardProps) {
 	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
 	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 	const [newComment, setNewComment] = useState("");
+	const [selectedCommentGif, setSelectedCommentGif] = useState<GifSelection | null>(
+		null,
+	);
 	const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
 	const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 	const [isLiked, setIsLiked] = useState(false);
@@ -236,7 +246,7 @@ export function PostCard({ post }: PostCardProps) {
 			const { data, error } = await supabase
 				.from("comments")
 				.select(
-					"id, author_id, parent_id, content, created_at, profiles(display_name, avatar_url, is_public)",
+					"id, author_id, parent_id, content, created_at, gif_id, gif_provider, profiles(display_name, avatar_url, is_public)",
 				)
 				.eq("post_id", post.id)
 				.order("created_at", { ascending: true })
@@ -265,6 +275,8 @@ export function PostCard({ post }: PostCardProps) {
 				authorIsPublic: c.profiles?.is_public ?? null,
 				authorAvatar: c.profiles?.avatar_url ?? undefined,
 				content: c.content ?? "",
+				gifId: c.gif_id ?? undefined,
+				gifProvider: c.gif_provider ?? undefined,
 				timeAgo: formatDistanceToNow(new Date(c.created_at), {
 					addSuffix: true,
 				}),
@@ -491,15 +503,17 @@ export function PostCard({ post }: PostCardProps) {
 			router.push("/login");
 			return;
 		}
-		if (!newComment.trim() || isSubmittingComment) return;
+		if ((!newComment.trim() && !selectedCommentGif) || isSubmittingComment) return;
 
 		try {
 			setIsSubmittingComment(true);
 			const { error: commentError } = await supabase.from("comments").insert({
 				post_id: post.id,
-				content: newComment.trim(),
+				content: newComment.trim() || null,
 				author_id: user.id,
 				parent_id: replyToCommentId,
+				gif_provider: selectedCommentGif?.provider ?? null,
+				gif_id: selectedCommentGif?.id ?? null,
 			});
 			if (commentError) throw commentError;
 
@@ -512,7 +526,11 @@ export function PostCard({ post }: PostCardProps) {
 
 			setCommentCount(nextCount);
 			setNewComment("");
+			setSelectedCommentGif(null);
 			setReplyToCommentId(null);
+			if (selectedCommentGif?.provider === "giphy") {
+				void registerGiphySend(selectedCommentGif.id);
+			}
 			await refetchComments();
 			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
 			queryClient.invalidateQueries({
@@ -559,6 +577,7 @@ export function PostCard({ post }: PostCardProps) {
 	};
 
 	const postContent = post.content ?? "";
+	const hasPostGif = post.gif_provider === "giphy" && Boolean(post.gif_id);
 	const hasPostImage = Boolean(post.image_url);
 	const hasPostContent = postContent.trim().length > 0;
 	const shouldTruncateContent = postContent.length > POST_PREVIEW_CHAR_LIMIT;
@@ -585,6 +604,8 @@ export function PostCard({ post }: PostCardProps) {
 					authorIsPublic={comment.authorIsPublic}
 					authorAvatar={comment.authorAvatar}
 					content={comment.content}
+					gifId={comment.gifId}
+					gifProvider={comment.gifProvider}
 					timeAgo={comment.timeAgo}
 					onReply={() => setReplyToCommentId(comment.id)}
 				/>
@@ -679,7 +700,19 @@ export function PostCard({ post }: PostCardProps) {
 						{isContentExpanded ? "Show less" : "Show more"}
 					</button>
 				)}
-				{post.image_url && (
+				{hasPostGif ? (
+					<button
+						type="button"
+						onClick={() => setIsPostDetailOpen(true)}
+						className="mt-4 block w-full overflow-hidden rounded-2xl"
+					>
+						<span className="hidden sr-only">GIF</span>
+						<GiphyGif
+							gifId={post.gif_id!}
+							className="max-h-[34rem] w-full rounded-2xl object-cover"
+						/>
+					</button>
+				) : post.image_url ? (
 					<button
 						type="button"
 						onClick={() => setIsPostDetailOpen(true)}
@@ -693,7 +726,7 @@ export function PostCard({ post }: PostCardProps) {
 							className="object-cover transition-transform duration-200 hover:scale-[1.02]"
 						/>
 					</button>
-				)}
+				) : null}
 			</div>
 
 			{isPostDetailOpen &&
@@ -721,7 +754,14 @@ export function PostCard({ post }: PostCardProps) {
 								</Button>
 								<div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1.35fr)_minmax(260px,0.65fr)] lg:grid-cols-[minmax(0,70%)_minmax(0,30%)] lg:grid-rows-[minmax(0,1fr)]">
 									<div className="min-h-0 bg-black">
-										{hasPostImage ? (
+										{hasPostGif ? (
+											<div className="flex h-full w-full items-center justify-center bg-black p-4">
+												<GiphyGif
+													gifId={post.gif_id!}
+													className="max-h-full max-w-full rounded-xl object-contain"
+												/>
+											</div>
+										) : hasPostImage ? (
 											<div className="relative h-full w-full overflow-hidden bg-black">
 												<Image
 													src={post.image_url!}
@@ -835,15 +875,46 @@ export function PostCard({ post }: PostCardProps) {
 												</div>
 											)}
 											<form onSubmit={handleSubmitComment} className="flex gap-2">
-												<Input
-													value={newComment}
-													onChange={(e) => setNewComment(e.target.value)}
-													placeholder="Write a comment..."
-													className="border-border/80 bg-background"
+												<div className="flex-1 space-y-2">
+													{selectedCommentGif && (
+														<div className="flex items-start gap-2 rounded-xl border border-border/70 bg-muted/30 p-2">
+															<img
+																src={selectedCommentGif.previewUrl}
+																alt={selectedCommentGif.title}
+																className="h-16 w-16 rounded-lg object-cover"
+															/>
+															<div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+																<span className="text-xs text-muted-foreground">
+																	GIF đã chọn
+																</span>
+																<button
+																	type="button"
+																	onClick={() => setSelectedCommentGif(null)}
+																	className="text-xs font-medium text-primary"
+																>
+																	Xóa
+																</button>
+															</div>
+														</div>
+													)}
+													<Input
+														value={newComment}
+														onChange={(e) => setNewComment(e.target.value)}
+														placeholder="Write a comment..."
+														className="border-border/80 bg-background"
+													/>
+												</div>
+												<GifPickerButton
+													onSelect={setSelectedCommentGif}
+													disabled={isSubmittingComment}
+													className="self-start"
 												/>
 												<Button
 													type="submit"
-													disabled={!newComment.trim() || isSubmittingComment}
+													disabled={
+														(!newComment.trim() && !selectedCommentGif) ||
+														isSubmittingComment
+													}
 													className="font-semibold"
 												>
 													Send
