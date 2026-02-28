@@ -8,6 +8,7 @@ export interface CommentData {
 	id: string;
 	authorName: string;
 	authorId?: string;
+	authorIsPublic?: boolean | null;
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
@@ -69,6 +70,7 @@ export function CommentList({
 					key={comment.id}
 					authorName={comment.authorName}
 					authorId={comment.authorId}
+					authorIsPublic={comment.authorIsPublic}
 					authorAvatar={comment.authorAvatar}
 					authorRole={comment.authorRole}
 					content={comment.content}

@@ -43,12 +43,13 @@ export default function FeedPage() {
 			if (!visibleExpandedPostId) return [];
 			const { data } = await supabase
 				.from("comments")
-				.select("*, profiles(display_name, avatar_url)")
+				.select("*, profiles(display_name, avatar_url, is_public)")
 				.eq("post_id", visibleExpandedPostId)
 				.order("created_at", { ascending: true });
 			return (data ?? []).map((c: any) => ({
 				id: c.id,
 				authorId: c.author_id,
+				authorIsPublic: c.profiles?.is_public ?? true,
 				authorName: c.profiles?.display_name ?? c.author_name ?? "Anonymous",
 				authorAvatar: c.profiles?.avatar_url ?? c.author_avatar,
 				content: c.content,

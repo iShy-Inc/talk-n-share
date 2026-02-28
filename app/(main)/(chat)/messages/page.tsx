@@ -38,6 +38,7 @@ import { startOrRequestConversation } from "@/lib/contact-messaging";
 import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
 import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
+import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 
 const supabase = createClient();
 
@@ -404,7 +405,10 @@ function MessagesPageContent() {
 						{activeContactName[0]?.toUpperCase()}
 					</div>
 				)}
-				<p className="mt-3 text-base font-semibold">{activeContactName}</p>
+				<div className="mt-3 flex items-center gap-1.5">
+					<p className="text-base font-semibold">{activeContactName}</p>
+					<ProfileVisibilityIcon isPublic={activeContact?.isPublic} />
+				</div>
 				<p className="text-xs text-foreground/70">{messages.length} tin nhắn</p>
 			</div>
 			<div className="pt-4 text-sm text-foreground/70">
@@ -540,9 +544,14 @@ function MessagesPageContent() {
 											</div>
 										)}
 										<div>
-											<p className="text-sm font-semibold">
-												{activeContactName}
-											</p>
+											<div className="flex items-center gap-1.5">
+												<p className="text-sm font-semibold">
+													{activeContactName}
+												</p>
+												<ProfileVisibilityIcon
+													isPublic={activeContact?.isPublic}
+												/>
+											</div>
 										</div>
 									</div>
 									<Button

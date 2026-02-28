@@ -35,6 +35,7 @@ export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 				<SidebarProfileCard
 					displayName={profile?.display_name ?? "Guest"}
 					role={profile?.role}
+					isPublic={profile?.is_public}
 					title={
 						profile?.location
 							? profile?.location

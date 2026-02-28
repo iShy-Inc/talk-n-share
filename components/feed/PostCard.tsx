@@ -58,8 +58,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { getAnonymousDisplayName } from "@/lib/anonymous-name";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
+import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 
 interface PostCardProps {
 	post: PostWithAuthor;
@@ -82,6 +82,7 @@ type BaseCommentData = {
 	id: string;
 	authorId: string;
 	authorName: string;
+	authorIsPublic?: boolean | null;
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
@@ -131,11 +132,7 @@ export function PostCard({ post }: PostCardProps) {
 	const [commentCount, setCommentCount] = useState(post.comments_count ?? 0);
 	const { updatePost, deletePost } = usePosts();
 	const isAuthor = user?.id === post.author_id;
-	const shouldMaskAuthor =
-		!isAuthor && (post.profiles?.is_public ?? true) === false;
-	const displayName = shouldMaskAuthor
-		? getAnonymousDisplayName(post.author_id)
-		: (post.profiles?.display_name ?? "Anonymous");
+	const displayName = post.profiles?.display_name ?? "Anonymous";
 
 	const { data: likedByMe = false } = useQuery({
 		queryKey: ["post-liked-by-me", post.id, user?.id],
@@ -193,7 +190,7 @@ export function PostCard({ post }: PostCardProps) {
 			const { data, error } = await supabase
 				.from("comments")
 				.select(
-					"id, author_id, parent_id, content, created_at, profiles(display_name, avatar_url)",
+					"id, author_id, parent_id, content, created_at, profiles(display_name, avatar_url, is_public)",
 				)
 				.eq("post_id", post.id)
 				.order("created_at", { ascending: true })
@@ -219,6 +216,7 @@ export function PostCard({ post }: PostCardProps) {
 				authorId: c.author_id,
 				parentId: c.parent_id,
 				authorName: c.profiles?.display_name ?? "Anonymous",
+				authorIsPublic: c.profiles?.is_public ?? true,
 				authorAvatar: c.profiles?.avatar_url ?? undefined,
 				content: c.content ?? "",
 				timeAgo: formatDistanceToNow(new Date(c.created_at), {
@@ -534,6 +532,7 @@ export function PostCard({ post }: PostCardProps) {
 				<CommentItem
 					authorName={comment.authorName}
 					authorId={comment.authorId}
+					authorIsPublic={comment.authorIsPublic}
 					authorAvatar={comment.authorAvatar}
 					content={comment.content}
 					timeAgo={comment.timeAgo}
@@ -578,9 +577,10 @@ export function PostCard({ post }: PostCardProps) {
 								<h3 className="text-sm font-semibold hover:underline">
 									{displayName}
 								</h3>
-								{!shouldMaskAuthor && (
-									<RoleVerifiedBadge role={post.profiles?.role ?? null} />
-								)}
+								<ProfileVisibilityIcon
+									isPublic={post.profiles?.is_public ?? true}
+								/>
+								<RoleVerifiedBadge role={post.profiles?.role ?? null} />
 							</div>
 							<p className="text-xs text-foreground/70">
 								{formatDistanceToNow(new Date(post.created_at), {

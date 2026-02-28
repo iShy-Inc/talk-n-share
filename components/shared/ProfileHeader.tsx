@@ -14,6 +14,7 @@ import { useProfileCover } from "@/hooks/useProfileCover";
 import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 import type { Profile } from "@/types/supabase";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
+import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 
 export interface ProfileStat {
 	label: string;
@@ -29,6 +30,7 @@ interface ProfileHeaderProps {
 	name: string;
 	username?: string;
 	role?: Profile["role"] | null;
+	isPublic?: boolean | null;
 	title?: string;
 	avatarUrl?: string;
 	joinDate?: string;
@@ -49,6 +51,7 @@ export function ProfileHeader({
 	name,
 	username,
 	role,
+	isPublic,
 	title,
 	avatarUrl,
 	joinDate,
@@ -119,6 +122,7 @@ export function ProfileHeader({
 					<div className="mt-0">
 						<div className="flex items-center gap-2">
 							<h2 className="text-xl font-bold tracking-tight">{name}</h2>
+							<ProfileVisibilityIcon isPublic={isPublic} />
 							<RoleVerifiedBadge role={role} />
 						</div>
 						{username && <p className="text-sm text-foreground/75">@{username}</p>}

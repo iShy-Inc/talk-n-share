@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 
 interface CommentItemProps {
 	authorName: string;
 	authorId?: string;
+	authorIsPublic?: boolean | null;
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
@@ -16,6 +18,7 @@ interface CommentItemProps {
 export function CommentItem({
 	authorName,
 	authorId,
+	authorIsPublic,
 	authorAvatar,
 	authorRole,
 	content,
@@ -60,14 +63,20 @@ export function CommentItem({
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
 					{authorProfileHref ? (
-						<Link
-							href={authorProfileHref}
-							className="truncate text-sm font-semibold hover:underline"
-						>
-							{authorName}
-						</Link>
+						<>
+							<Link
+								href={authorProfileHref}
+								className="truncate text-sm font-semibold hover:underline"
+							>
+								{authorName}
+							</Link>
+							<ProfileVisibilityIcon isPublic={authorIsPublic} />
+						</>
 					) : (
-						<span className="text-sm font-semibold">{authorName}</span>
+						<>
+							<span className="text-sm font-semibold">{authorName}</span>
+							<ProfileVisibilityIcon isPublic={authorIsPublic} />
+						</>
 					)}
 					{isAuthor && (
 						<span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">

@@ -292,7 +292,8 @@ function SearchPageContent() {
 											key={person.id}
 											id={person.id}
 											username={person.display_name || "User"}
-											role={person.is_public ? person.role : null}
+											role={person.role}
+											isPublic={person.is_public}
 											title={person.is_public ? person.location : undefined}
 											avatarUrl={person.avatar_url}
 											onSendMessage={handleSendMessage}

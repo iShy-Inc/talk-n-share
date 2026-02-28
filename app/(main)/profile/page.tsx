@@ -447,7 +447,8 @@ function ProfilePageContent() {
 						? undefined
 						: (profile?.display_name ?? undefined)
 				}
-				role={shouldHidePrivateInfo ? null : profile?.role}
+				role={profile?.role}
+				isPublic={profile?.is_public}
 				title={
 					shouldHidePrivateInfo
 						? undefined

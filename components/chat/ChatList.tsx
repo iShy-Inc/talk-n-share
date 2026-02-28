@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 
 export interface ChatContact {
 	id: string;
@@ -141,7 +142,15 @@ export function ChatList({
 						{!compact && (
 							<>
 								<div className="min-w-0 flex-1">
-									<p className="truncate text-sm font-semibold">{contact.name}</p>
+									<div className="flex items-center gap-1.5">
+										<p className="truncate text-sm font-semibold">
+											{contact.name}
+										</p>
+										<ProfileVisibilityIcon
+											isPublic={contact.isPublic}
+											className="shrink-0"
+										/>
+									</div>
 									<p className="mt-0.5 truncate text-xs text-muted-foreground">
 										{contact.lastMessage || "Bắt đầu cuộc trò chuyện"}
 									</p>

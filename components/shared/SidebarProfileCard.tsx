@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { IconRefresh } from "@tabler/icons-react";
 import { useProfileCover } from "@/hooks/useProfileCover";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
+import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 import type { Profile } from "@/types/supabase";
 
 interface SidebarProfileCardProps {
@@ -13,6 +14,7 @@ interface SidebarProfileCardProps {
 	avatarUrl?: string;
 	coverGradient?: string;
 	role?: Profile["role"] | null;
+	isPublic?: boolean | null;
 }
 
 export function SidebarProfileCard({
@@ -21,6 +23,7 @@ export function SidebarProfileCard({
 	avatarUrl,
 	coverGradient = "from-muted to-muted/50",
 	role,
+	isPublic,
 }: SidebarProfileCardProps) {
 	const { coverUrl, activeCoverUrl, refreshCover, markCoverAsFailed } =
 		useProfileCover();
@@ -76,6 +79,7 @@ export function SidebarProfileCard({
 						>
 							{displayName}
 						</h3>
+						<ProfileVisibilityIcon isPublic={isPublic} />
 						<RoleVerifiedBadge role={role} />
 					</div>
 					{title && <p className="text-sm text-muted-foreground">{title}</p>}
