@@ -54,6 +54,14 @@ export default function MatchPage() {
 				})
 				.maybeSingle();
 			if (sessionError) {
+				if (sessionError.code === "PGRST116") {
+					if (attempt < MATCH_SESSION_RETRY_COUNT - 1) {
+						await new Promise((resolve) =>
+							window.setTimeout(resolve, MATCH_SESSION_RETRY_DELAY_MS),
+						);
+					}
+					continue;
+				}
 				throw sessionError;
 			}
 			if (data) {
