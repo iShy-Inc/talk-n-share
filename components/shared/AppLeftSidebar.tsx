@@ -33,6 +33,7 @@ export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 		<aside className={cn("hidden animate-fade-up lg:block", className)}>
 			<div className="sticky top-6 space-y-4">
 				<SidebarProfileCard
+					userId={profile?.id}
 					displayName={profile?.display_name ?? "Guest"}
 					role={profile?.role}
 					isPublic={profile?.is_public}

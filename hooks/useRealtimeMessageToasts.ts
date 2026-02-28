@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/useAuthStore";
+import type { Database } from "@/types/supabase";
 
 const supabase = createClient();
 
@@ -17,14 +18,29 @@ type IncomingMessagePayload = {
 	image_url?: string | null;
 };
 
-const fetchSenderName = async (senderId?: string) => {
-	if (!senderId) return null;
+type SessionToastMeta = {
+	displayName: string | null;
+	sessionType: string | null;
+	isRevealed: boolean;
+};
+
+const fetchSessionToastMeta = async (matchId: string) => {
 	const { data } = await supabase
-		.from("profiles")
-		.select("display_name")
-		.eq("id", senderId)
+		.rpc("get_chat_session_for_viewer", {
+			target_session_id: matchId,
+		})
 		.maybeSingle();
-	return data?.display_name?.trim() || null;
+
+	const session =
+		(data as
+			| Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number]
+			| null) ?? null;
+
+	return {
+		displayName: session?.display_name?.trim() ?? null,
+		sessionType: session?.session_type ?? null,
+		isRevealed: session?.is_revealed ?? false,
+	} satisfies SessionToastMeta;
 };
 
 export const useRealtimeMessageToasts = () => {
@@ -33,10 +49,12 @@ export const useRealtimeMessageToasts = () => {
 	const searchParams = useSearchParams();
 	const queryClient = useQueryClient();
 	const shownMessageIdsRef = useRef<Set<string>>(new Set());
+	const sessionMetaCacheRef = useRef<Map<string, SessionToastMeta>>(new Map());
 
 	useEffect(() => {
 		if (!userId) {
 			shownMessageIdsRef.current.clear();
+			sessionMetaCacheRef.current.clear();
 			return;
 		}
 
@@ -66,21 +84,37 @@ export const useRealtimeMessageToasts = () => {
 						return;
 					}
 
-					const senderName = await fetchSenderName(next.sender_id);
+					const cachedMeta = sessionMetaCacheRef.current.get(next.match_id);
+					const sessionMeta =
+						cachedMeta &&
+						(cachedMeta.sessionType !== "match" || cachedMeta.isRevealed)
+							? cachedMeta
+							: await fetchSessionToastMeta(next.match_id);
+					sessionMetaCacheRef.current.set(next.match_id, sessionMeta);
+
+					const shouldHideSenderName =
+						sessionMeta.sessionType === "match" && !sessionMeta.isRevealed;
 					const description =
 						next.content?.trim() ||
 						(next.image_url ? "Đã gửi một hình ảnh." : "Bạn có tin nhắn mới.");
 
 					shownMessageIdsRef.current.add(next.id);
-					toast(senderName ? `Tin nhắn mới từ ${senderName}` : "Tin nhắn mới", {
-						description,
-						action: {
-							label: "Mở",
-							onClick: () => {
-								window.location.href = `/messages?sessionId=${next.match_id}`;
+					toast(
+						shouldHideSenderName
+							? "Tin nhắn ẩn danh mới"
+							: sessionMeta.displayName
+								? `Tin nhắn mới từ ${sessionMeta.displayName}`
+								: "Tin nhắn mới",
+						{
+							description,
+							action: {
+								label: "Mở",
+								onClick: () => {
+									window.location.href = `/messages?sessionId=${next.match_id}`;
+								},
 							},
 						},
-					});
+					);
 				},
 			)
 			.subscribe();

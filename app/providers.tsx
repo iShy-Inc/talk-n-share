@@ -6,10 +6,12 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotificationBootstrap } from "@/hooks/useNotifications";
 import { useRealtimeMessageToasts } from "@/hooks/useRealtimeMessageToasts";
+import { usePresenceHeartbeat } from "@/hooks/usePresence";
 
 function AuthBootstrap() {
 	useAuth();
 	useNotificationBootstrap();
+	usePresenceHeartbeat();
 	return null;
 }
 

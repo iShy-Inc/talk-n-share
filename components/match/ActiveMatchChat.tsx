@@ -38,6 +38,8 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
+import { useIsUserOnline } from "@/hooks/usePresence";
+import { PresenceDot } from "@/components/shared/PresenceDot";
 
 interface ActiveMatchChatProps {
 	messages: Message[];
@@ -77,6 +79,7 @@ export function ActiveMatchChat({
 	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
 	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 	const supabase = createClient();
+	const isPartnerOnline = useIsUserOnline(partnerUserId);
 
 	const handleReportEvidenceSelected = async (
 		event: ChangeEvent<HTMLInputElement>,
@@ -145,17 +148,22 @@ export function ActiveMatchChat({
 			{/* Match Header */}
 			<div className="flex items-center justify-between border-b border-border bg-card px-4 py-3 shadow-sm">
 				<div className="flex items-center gap-3">
-					{isRevealed && partnerProfile?.avatar_url ? (
-						<img
-							src={partnerProfile.avatar_url}
-							alt={partnerProfile.display_name}
-							className="size-10 rounded-full object-cover"
-						/>
-					) : (
-						<div className="flex size-10 items-center justify-center rounded-full bg-secondary text-xl">
-							🕵️
-						</div>
-					)}
+					<div className="relative">
+						{isRevealed && partnerProfile?.avatar_url ? (
+							<img
+								src={partnerProfile.avatar_url}
+								alt={partnerProfile.display_name}
+								className="size-10 rounded-full object-cover"
+							/>
+						) : (
+							<div className="flex size-10 items-center justify-center rounded-full bg-secondary text-xl">
+								🕵️
+							</div>
+						)}
+						{partnerUserId && (
+							<PresenceDot isOnline={isPartnerOnline} className="size-3" />
+						)}
+					</div>
 					<div>
 						<h3 className="font-semibold">
 							{isRevealed ? partnerProfile?.display_name : "Anonymous Partner"}

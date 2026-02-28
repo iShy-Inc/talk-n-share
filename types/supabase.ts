@@ -358,6 +358,7 @@ export type Database = {
           gender: Database["public"]["Enums"]["gender"] | null
           id: string
           is_public: boolean | null
+          last_seen_at: string | null
           location: string | null
           relationship: string | null
           role: Database["public"]["Enums"]["role"]
@@ -374,6 +375,7 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender"] | null
           id: string
           is_public?: boolean | null
+          last_seen_at?: string | null
           location?: string | null
           relationship?: string | null
           role: Database["public"]["Enums"]["role"]
@@ -390,6 +392,7 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender"] | null
           id?: string
           is_public?: boolean | null
+          last_seen_at?: string | null
           location?: string | null
           relationship?: string | null
           role?: Database["public"]["Enums"]["role"]
@@ -501,6 +504,78 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: string
       }
+      end_match_for_viewer: {
+        Args: { target_session_id: string }
+        Returns: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_public: boolean | null
+          is_revealed: boolean
+          other_user_id: string
+          session_type: string | null
+          status: string | null
+          user1_id: string
+          user1_liked: boolean
+          user2_id: string
+          user2_liked: boolean
+        }[]
+      }
+      heartbeat_presence: {
+        Args: never
+        Returns: string
+      }
+      get_chat_sessions_for_viewer: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_public: boolean | null
+          is_revealed: boolean
+          other_user_id: string
+          session_type: string | null
+          status: string | null
+        }[]
+      }
+      get_chat_session_for_viewer: {
+        Args: { target_session_id: string }
+        Returns: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_public: boolean | null
+          is_revealed: boolean
+          other_user_id: string
+          session_type: string | null
+          status: string | null
+          user1_id: string
+          user1_liked: boolean
+          user2_id: string
+          user2_liked: boolean
+        }[]
+      }
+      like_match_for_viewer: {
+        Args: { target_session_id: string }
+        Returns: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_public: boolean | null
+          is_revealed: boolean
+          other_user_id: string
+          session_type: string | null
+          status: string | null
+          user1_id: string
+          user1_liked: boolean
+          user2_id: string
+          user2_liked: boolean
+        }[]
+      }
       get_profile_for_viewer: {
         Args: { target_profile_id: string }
         Returns: {
@@ -519,6 +594,10 @@ export type Database = {
           updated_at: string | null
           zodiac: string | null
         }[]
+      }
+      hide_chat_session_for_viewer: {
+        Args: { target_session_id: string }
+        Returns: boolean
       }
       find_match_v2: {
         Args: {

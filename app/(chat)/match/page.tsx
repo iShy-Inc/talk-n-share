@@ -12,7 +12,7 @@ import {
 	MatchCriteria,
 } from "@/components/match";
 import { useChat } from "@/hooks/useChat";
-import { ChatSession } from "@/types/supabase";
+import type { Database } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
 import { IconHome, IconMessage } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -22,6 +22,8 @@ const MIN_WAIT_SECONDS = 60;
 const POLL_INTERVAL_MS = 5000;
 
 type MatchStatus = "options" | "loading" | "active";
+type MatchSessionView =
+	Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number];
 
 export default function MatchPage() {
 	const user = useAuthStore((state) => state.user);
@@ -29,7 +31,7 @@ export default function MatchPage() {
 	const { profile, loading: isLoadingProfile } = useProfile();
 	const [status, setStatus] = useState<MatchStatus>("options");
 	const [sessionId, setSessionId] = useState<string | null>(null);
-	const [sessionData, setSessionData] = useState<ChatSession | null>(null);
+	const [sessionData, setSessionData] = useState<MatchSessionView | null>(null);
 	const [partnerProfile, setPartnerProfile] = useState<any>(null);
 	const [pendingCriteria, setPendingCriteria] = useState<MatchCriteria | null>(
 		null,
@@ -42,17 +44,17 @@ export default function MatchPage() {
 		if (!user) return false;
 
 		const { data: session, error: sessionError } = await supabase
-			.from("matches")
-			.select("*")
-			.eq("id", matchedId)
+			.rpc("get_chat_session_for_viewer", {
+				target_session_id: matchedId,
+			})
 			.maybeSingle();
 		if (sessionError || !session) {
 			throw sessionError ?? new Error("Matched session not found");
 		}
-		if (session.type !== "match") {
+		if (session.session_type !== "match") {
 			console.warn("Ignoring non-match session returned by find_match_v2", {
 				matchedId,
-				type: session.type,
+				type: session.session_type,
 			});
 			return false;
 		}
@@ -60,17 +62,19 @@ export default function MatchPage() {
 			return false;
 		}
 
-		const partnerId =
-			session.user1_id === user.id ? session.user2_id : session.user1_id;
-		const { data: partner, error: partnerError } = await supabase
-			.from("profiles")
-			.select("*")
-			.eq("id", partnerId)
-			.maybeSingle();
-		if (partnerError) throw partnerError;
+		let partner = null;
+		if (session.is_revealed) {
+			const { data: partnerData, error: partnerError } = await supabase
+				.rpc("get_profile_for_viewer", {
+					target_profile_id: session.other_user_id,
+				})
+				.maybeSingle();
+			if (partnerError) throw partnerError;
+			partner = partnerData ?? null;
+		}
 
 		setSessionId(session.id);
-		setSessionData(session as ChatSession);
+		setSessionData(session as MatchSessionView);
 		setPartnerProfile(partner ?? null);
 		setPendingCriteria(null);
 		setElapsedSeconds(0);
@@ -92,15 +96,14 @@ export default function MatchPage() {
 		let isCancelled = false;
 
 		const restoreActiveMatch = async () => {
-			const { data: existingSession, error } = await supabase
-				.from("matches")
-				.select("id")
-				.or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-				.eq("type", "match")
-				.eq("status", "active")
-				.order("created_at", { ascending: false })
-				.limit(1)
-				.maybeSingle();
+			const { data: sessions, error } = await supabase.rpc(
+				"get_chat_sessions_for_viewer",
+			);
+			const existingSession =
+				sessions?.find(
+					(session) =>
+						session.session_type === "match" && session.status === "active",
+				) ?? null;
 
 			if (error || !existingSession?.id || isCancelled) return;
 
@@ -200,10 +203,15 @@ export default function MatchPage() {
 	const handleEndChat = async () => {
 		if (!sessionId) return;
 
-		await supabase
-			.from("matches")
-			.update({ status: "ended" })
-			.eq("id", sessionId);
+		const { error } = await supabase
+			.rpc("end_match_for_viewer", {
+				target_session_id: sessionId,
+			})
+			.maybeSingle();
+		if (error) {
+			toast.error("Không thể kết thúc cuộc trò chuyện.");
+			return;
+		}
 
 		setSessionId(null);
 		setSessionData(null);
@@ -217,30 +225,44 @@ export default function MatchPage() {
 		if (!sessionId || !sessionData || !user) return;
 
 		const isUser1 = user.id === sessionData.user1_id;
-		const updates: any = {};
-
-		if (isUser1) updates.user1_liked = true;
-		else updates.user2_liked = true;
 
 		// Check if reveal effectively happens (optimistic)
 		const otherLiked = isUser1
 			? sessionData.user2_liked
 			: sessionData.user1_liked;
 		if (otherLiked) {
-			updates.is_revealed = true;
 			toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
 		} else {
 			toast.success("Bạn đã bày tỏ thích với đối phương!");
 		}
 
-		const { data, error } = await supabase
-			.from("matches")
-			.update(updates)
-			.eq("id", sessionId)
-			.select()
-			.single();
+		const { error } = await supabase
+			.rpc("like_match_for_viewer", {
+				target_session_id: sessionId,
+			})
+			.maybeSingle();
+		if (error) {
+			toast.error("Không thể cập nhật trạng thái ghép đôi.");
+			return;
+		}
 
-		if (data) setSessionData(data as ChatSession);
+		const { data } = await supabase
+			.rpc("get_chat_session_for_viewer", {
+				target_session_id: sessionId,
+			})
+			.maybeSingle();
+
+		if (data) {
+			setSessionData(data as MatchSessionView);
+			if (data.is_revealed && !partnerProfile) {
+				const { data: partner } = await supabase
+					.rpc("get_profile_for_viewer", {
+						target_profile_id: data.other_user_id,
+					})
+					.maybeSingle();
+				setPartnerProfile(partner ?? null);
+			}
+		}
 	};
 
 	// Listen for session updates (partner likes, reveal)
@@ -258,8 +280,20 @@ export default function MatchPage() {
 					filter: `id=eq.${sessionId}`,
 				},
 				(payload) => {
-					setSessionData(payload.new as ChatSession);
-					if (payload.new.is_revealed && !sessionData?.is_revealed) {
+					const nextSession = payload.new as {
+						status?: string | null;
+						is_revealed?: boolean;
+					};
+					if (nextSession.status === "ended") {
+						setSessionId(null);
+						setSessionData(null);
+						setPartnerProfile(null);
+						setStatus("options");
+						toast("Cuộc trò chuyện ghép đôi đã kết thúc.");
+						return;
+					}
+					void loadMatchSession(sessionId);
+					if (nextSession.is_revealed && !sessionData?.is_revealed) {
 						toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
 					}
 				},
@@ -285,12 +319,12 @@ export default function MatchPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background p-4 md:p-8">
 			<div className="relative mx-auto h-[600px] w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-				<div className="pointer-events-none absolute left-0 right-0 top-4 z-10 flex items-center justify-between px-4">
+				<div className="pointer-events-none fixed left-0 right-0 top-4 z-10 flex items-center justify-between px-4">
 					<Button
-						variant="ghost"
+						variant="outline"
 						size="sm"
 						onClick={() => router.push("/")}
-						className="pointer-events-auto text-muted-foreground hover:text-foreground"
+						className="pointer-events-auto text-muted-foreground hover:text-foreground z-50"
 					>
 						<IconHome className="mr-2 size-4" />
 						Trang chủ
@@ -298,10 +332,10 @@ export default function MatchPage() {
 
 					{status !== "active" && (
 						<Button
-							variant="ghost"
+							variant="outline"
 							size="sm"
 							onClick={goToHistory}
-							className="pointer-events-auto text-muted-foreground hover:text-foreground"
+							className="pointer-events-auto text-muted-foreground hover:text-foreground z-50"
 						>
 							<IconMessage className="mr-2 size-4" />
 							Lịch sử

@@ -11,6 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import { PresenceDot } from "@/components/shared/PresenceDot";
+import { usePresenceMap } from "@/hooks/usePresence";
 
 export interface ChatContact {
 	id: string;
@@ -18,6 +20,7 @@ export interface ChatContact {
 	name: string;
 	avatar?: string;
 	sessionType?: string | null;
+	isRevealed?: boolean;
 	lastMessage?: string;
 	latestMessageAt?: string | null;
 	latestReceivedAt?: string | null;
@@ -43,6 +46,7 @@ export function ChatList({
 	onToggleCompact,
 }: ChatListProps) {
 	const [search, setSearch] = useState("");
+	const presenceMap = usePresenceMap(contacts.map((contact) => contact.userId));
 
 	const filteredContacts = useMemo(() => {
 		const q = search.trim().toLowerCase();
@@ -145,17 +149,23 @@ export function ChatList({
 						id={`chat-contact-${contact.id}`}
 						title={compact ? contact.name : undefined}
 					>
-						{contact.avatar ? (
-							<img
-								src={contact.avatar}
-								alt=""
-								className="size-12 shrink-0 rounded-full object-cover"
+						<div className="relative shrink-0">
+							{contact.avatar ? (
+								<img
+									src={contact.avatar}
+									alt=""
+									className="size-12 rounded-full object-cover"
+								/>
+							) : (
+								<div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+									{contact.name[0]?.toUpperCase()}
+								</div>
+							)}
+							<PresenceDot
+								isOnline={presenceMap[contact.userId] ?? false}
+								className="size-3.5"
 							/>
-						) : (
-							<div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-								{contact.name[0]?.toUpperCase()}
-							</div>
-						)}
+						</div>
 						{!compact && (
 							<>
 								<div className="min-w-0 flex-1">

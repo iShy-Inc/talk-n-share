@@ -434,6 +434,7 @@ function ProfilePageContent() {
 	return (
 		<>
 			<ProfileHeader
+				userId={profileId ?? undefined}
 				name={profile?.display_name ?? fallbackProfileName ?? "Người dùng"}
 				username={
 					shouldHidePrivateInfo

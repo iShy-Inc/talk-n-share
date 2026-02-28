@@ -6,6 +6,8 @@ import { IconMessageCircle } from "@tabler/icons-react";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 import type { Profile } from "@/types/supabase";
+import { useIsUserOnline } from "@/hooks/usePresence";
+import { PresenceDot } from "@/components/shared/PresenceDot";
 
 interface UserResultCardProps {
 	id: string;
@@ -28,19 +30,24 @@ export function UserResultCard({
 	bio,
 	onSendMessage,
 }: UserResultCardProps) {
+	const isOnline = useIsUserOnline(id);
+
 	return (
 		<div className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
-			{avatarUrl ? (
-				<img
-					src={avatarUrl}
-					alt={username}
-					className="size-12 shrink-0 rounded-full object-cover"
-				/>
-			) : (
-				<div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-					{username[0]?.toUpperCase()}
-				</div>
-			)}
+			<div className="relative shrink-0">
+				{avatarUrl ? (
+					<img
+						src={avatarUrl}
+						alt={username}
+						className="size-12 rounded-full object-cover"
+					/>
+				) : (
+					<div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+						{username[0]?.toUpperCase()}
+					</div>
+				)}
+				<PresenceDot isOnline={isOnline} className="size-3.5" />
+			</div>
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center justify-between gap-2">
 					<div>

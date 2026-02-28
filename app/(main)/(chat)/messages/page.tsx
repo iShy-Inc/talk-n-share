@@ -30,7 +30,11 @@ import {
 	IconArrowLeft,
 	IconDots,
 	IconFlag3,
+	IconHeart,
+	IconTrash,
 	IconUserCircle,
+	IconUserCheck,
+	IconX,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,11 +43,14 @@ import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
 import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import { cn } from "@/lib/utils";
+import { useIsUserOnline } from "@/hooks/usePresence";
+import { PresenceDot } from "@/components/shared/PresenceDot";
 
 const supabase = createClient();
-type ViewerProfile =
-	Database["public"]["Functions"]["get_profile_for_viewer"]["Returns"][number];
 type PickerUser = Pick<Profile, "id" | "display_name" | "avatar_url" | "is_public">;
+type ActiveChatSession =
+	Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number];
 
 function MessagesPageContent() {
 	const user = useAuthStore((state) => state.user);
@@ -69,15 +76,13 @@ function MessagesPageContent() {
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	// Fetch chat sessions for the current user
-	const { data: contacts = [] } = useQuery({
+	const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
 		queryKey: ["chat-sessions", user?.id],
 		queryFn: async () => {
 			if (!user) return [];
-			const { data: sessions, error } = await supabase
-				.from("matches")
-				.select("*")
-				.or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-				.order("created_at", { ascending: false });
+			const { data: sessions, error } = await supabase.rpc(
+				"get_chat_sessions_for_viewer",
+			);
 			if (error) throw error;
 			const sessionIds = (sessions ?? []).map((session) => session.id);
 			if (sessionIds.length === 0) return [];
@@ -110,51 +115,21 @@ function MessagesPageContent() {
 				}
 			}
 
-			const otherUserIds = Array.from(
-				new Set(
-					(sessions ?? []).map((session) =>
-						session.user1_id === user.id ? session.user2_id : session.user1_id,
-					),
-				),
-			);
-
-			if (otherUserIds.length === 0) return [];
-
-			const profiles = await Promise.all(
-				otherUserIds.map(async (id) => {
-					const { data, error } = await supabase
-						.rpc("get_profile_for_viewer", {
-							target_profile_id: id,
-						})
-						.maybeSingle();
-					if (error) throw error;
-					return data as ViewerProfile | null;
-				}),
-			);
-
-			const profileMap = new Map(
-				(profiles ?? [])
-					.filter((profile): profile is NonNullable<typeof profile> => !!profile)
-					.map((profile) => [profile.id, profile]),
-			);
-
-			return (sessions ?? [])
+			const mappedContacts = (sessions ?? [])
 				.map((session) => {
-					const otherId =
-						session.user1_id === user.id ? session.user2_id : session.user1_id;
-					const otherProfile = profileMap.get(otherId);
 					const latest = latestBySession.get(session.id);
 					const latestReceived = latestReceivedBySession.get(session.id);
 					return {
 						id: session.id,
-						userId: otherId,
-						name: otherProfile?.display_name ?? "Người dùng",
-						avatar: otherProfile?.avatar_url ?? undefined,
-						sessionType: session.type,
+						userId: session.other_user_id,
+						name: session.display_name ?? "Người dùng",
+						avatar: session.avatar_url ?? undefined,
+						sessionType: session.session_type,
+						isRevealed: session.is_revealed,
 						lastMessage: latest?.content ?? "",
 						latestMessageAt: latest?.created_at ?? session.created_at,
 						latestReceivedAt: latestReceived?.created_at ?? null,
-						isPublic: otherProfile?.is_public ?? null,
+						isPublic: session.is_public,
 					} as ChatContact;
 				})
 				.sort((a, b) => {
@@ -174,6 +149,8 @@ function MessagesPageContent() {
 						: 0;
 					return latestB - latestA;
 				});
+
+			return mappedContacts;
 		},
 		enabled: !!user,
 	});
@@ -290,8 +267,84 @@ function MessagesPageContent() {
 	};
 
 	const handleSendMessage = (content: string) => {
-		if (!activeSessionId || !user) return;
+		if (!activeSessionId || !user || isEndedSession) return;
 		sendMessage(content, user.id);
+	};
+
+	const handleLikeCurrentMatch = async () => {
+		if (!activeSessionId || !activeSession || !user || !isMatchSession) return;
+
+		const otherUserLiked =
+			user.id === activeSession.user1_id
+				? activeSession.user2_liked
+				: activeSession.user1_liked;
+		const { data, error } = await supabase
+			.rpc("like_match_for_viewer", {
+				target_session_id: activeSessionId,
+			})
+			.maybeSingle();
+		if (error) {
+			toast.error("Không thể cập nhật trạng thái ghép đôi.");
+			return;
+		}
+		if (otherUserLiked && data?.is_revealed) {
+			toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
+		} else {
+			toast.success("Bạn đã bày tỏ thích với đối phương!");
+		}
+
+		queryClient.setQueryData(
+			["active-chat-session", activeSessionId],
+			(data ?? null) as ActiveChatSession | null,
+		);
+		if (user?.id) {
+			queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+		}
+	};
+
+	const handleEndCurrentMatch = async () => {
+		if (!activeSessionId || !isMatchSession) return;
+
+		const { error } = await supabase
+			.rpc("end_match_for_viewer", {
+				target_session_id: activeSessionId,
+			})
+			.maybeSingle();
+		if (error) {
+			toast.error("Không thể kết thúc cuộc trò chuyện.");
+			return;
+		}
+
+		if (user?.id) {
+			queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+		}
+		queryClient.invalidateQueries({
+			queryKey: ["active-chat-session", activeSessionId],
+		});
+		setActiveSessionId(null);
+		toast.success("Đã kết thúc cuộc trò chuyện.");
+	};
+
+	const handleHideCurrentSession = async () => {
+		if (!activeSessionId) return;
+
+		const { data, error } = await supabase.rpc("hide_chat_session_for_viewer", {
+			target_session_id: activeSessionId,
+		});
+		if (error || !data) {
+			toast.error("Không thể xóa cuộc trò chuyện khỏi lịch sử.");
+			return;
+		}
+
+		setIsMobileInfoOpen(false);
+		setActiveSessionId(null);
+		if (user?.id) {
+			queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+		}
+		queryClient.removeQueries({
+			queryKey: ["active-chat-session", activeSessionId],
+		});
+		toast.success("Đã xóa cuộc trò chuyện khỏi lịch sử.");
 	};
 
 	const pickerContacts: PickerContact[] = allUsers.map((u) => ({
@@ -300,44 +353,44 @@ function MessagesPageContent() {
 		avatar: u.avatar_url ?? undefined,
 	}));
 
-	const { data: participantPrivacyMap = {} } = useQuery({
-		queryKey: ["chat-participants-privacy", activeSessionId],
+	const { data: activeSession = null } = useQuery({
+		queryKey: ["active-chat-session", activeSessionId],
 		queryFn: async () => {
-			if (!activeSessionId) return {};
-			const { data: session, error: sessionError } = await supabase
-				.from("matches")
-				.select("user1_id, user2_id")
-				.eq("id", activeSessionId)
+			if (!activeSessionId) return null;
+			const { data, error } = await supabase
+				.rpc("get_chat_session_for_viewer", {
+					target_session_id: activeSessionId,
+				})
 				.maybeSingle();
-			if (sessionError || !session) return {};
-
-			const ids = [session.user1_id, session.user2_id];
-			const profiles = await Promise.all(
-				ids.map(async (id) => {
-					const { data, error } = await supabase
-						.rpc("get_profile_for_viewer", {
-							target_profile_id: id,
-						})
-						.maybeSingle();
-					if (error) return null;
-					return data as ViewerProfile | null;
-				}),
-			);
-
-			return Object.fromEntries(
-				profiles
-					.filter((entry): entry is NonNullable<typeof entry> => !!entry)
-					.map((entry) => [entry.id, entry.is_public ?? false]),
-			) as Record<string, boolean>;
+			if (error) throw error;
+			return (data ?? null) as ActiveChatSession | null;
 		},
 		enabled: !!activeSessionId,
 	});
 
-	const activeContact = contacts.find(
-		(contact) => contact.id === activeSessionId,
-	);
-	const activeContactName = activeContact?.name ?? "Cuộc trò chuyện";
-	const activeContactUserId = activeContact?.userId ?? null;
+	const activeContact = contacts.find((contact) => contact.id === activeSessionId);
+	const activeContactName =
+		activeSession?.display_name ?? activeContact?.name ?? "Cuộc trò chuyện";
+	const activeContactAvatar =
+		activeSession?.avatar_url ?? activeContact?.avatar ?? undefined;
+	const activeContactUserId =
+		activeSession?.other_user_id ?? activeContact?.userId ?? null;
+	const isActiveContactOnline = useIsUserOnline(activeContactUserId);
+	const isMatchSession = activeSession?.session_type === "match";
+	const isAnonymousMatchSession = isMatchSession && activeSession?.is_revealed === false;
+	const isEndedSession = activeSession?.status === "ended";
+	const canHideFromHistory =
+		activeSession?.session_type === "direct" || (isMatchSession && isEndedSession);
+	const partnerLiked = isMatchSession
+		? user?.id === activeSession?.user1_id
+			? (activeSession?.user2_liked ?? false)
+			: (activeSession?.user1_liked ?? false)
+		: false;
+	const userLiked = isMatchSession
+		? user?.id === activeSession?.user1_id
+			? (activeSession?.user1_liked ?? false)
+			: (activeSession?.user2_liked ?? false)
+		: false;
 	const showConversation = !!activeSessionId && !showContactPicker;
 	const showList = !showConversation && !showContactPicker;
 
@@ -346,6 +399,41 @@ function MessagesPageContent() {
 			setIsMobileInfoOpen(false);
 		}
 	}, [showConversation]);
+
+	useEffect(() => {
+		if (isLoadingContacts || !activeSessionId || showContactPicker) return;
+		if (contacts.some((contact) => contact.id === activeSessionId)) return;
+		setActiveSessionId(null);
+	}, [activeSessionId, contacts, isLoadingContacts, showContactPicker]);
+
+	useEffect(() => {
+		if (!activeSessionId) return;
+
+		const channel = supabase
+			.channel(`messages-session-meta:${activeSessionId}`)
+			.on(
+				"postgres_changes",
+				{
+					event: "UPDATE",
+					schema: "public",
+					table: "matches",
+					filter: `id=eq.${activeSessionId}`,
+				},
+				(payload) => {
+					queryClient.invalidateQueries({
+						queryKey: ["active-chat-session", activeSessionId],
+					});
+					if (user?.id) {
+						queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+					}
+				},
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [activeSessionId, queryClient, user?.id]);
 
 	const handleReportEvidenceSelected = async (
 		event: React.ChangeEvent<HTMLInputElement>,
@@ -409,22 +497,32 @@ function MessagesPageContent() {
 	const conversationInfoContent = (
 		<>
 			<div className="flex flex-col items-center border-b border-border/70 pb-4">
-				{activeContact?.avatar ? (
-					<img
-						src={activeContact.avatar}
-						alt=""
-						className="size-20 rounded-full object-cover"
-					/>
-				) : (
-					<div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
-						{activeContactName[0]?.toUpperCase()}
-					</div>
-				)}
+				<div className="relative">
+					{activeContactAvatar ? (
+						<img
+							src={activeContactAvatar}
+							alt=""
+							className="size-20 rounded-full object-cover"
+						/>
+					) : (
+						<div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
+							{activeContactName[0]?.toUpperCase()}
+						</div>
+					)}
+					{activeContactUserId && (
+						<PresenceDot isOnline={isActiveContactOnline} className="size-4" />
+					)}
+				</div>
 				<div className="mt-3 flex items-center gap-1.5">
 					<p className="text-base font-semibold">{activeContactName}</p>
 					<ProfileVisibilityIcon isPublic={activeContact?.isPublic} />
 				</div>
 				<p className="text-xs text-foreground/70">{messages.length} tin nhắn</p>
+				{isAnonymousMatchSession && (
+					<p className="mt-2 text-center text-xs text-muted-foreground">
+						Danh tính chỉ hiển thị khi cả hai cùng bấm thích.
+					</p>
+				)}
 			</div>
 			<div className="pt-4 text-sm text-foreground/70">
 				<p className="rounded-xl bg-accent p-3">
@@ -435,11 +533,11 @@ function MessagesPageContent() {
 						asChild
 						variant="outline"
 						className="justify-start rounded-xl"
-						disabled={!activeContactUserId}
+						disabled={!activeContactUserId || isAnonymousMatchSession}
 					>
 						<Link
 							href={
-								activeContactUserId
+								activeContactUserId && !isAnonymousMatchSession
 									? `/profile?userId=${activeContactUserId}`
 									: "#"
 							}
@@ -461,6 +559,17 @@ function MessagesPageContent() {
 						<IconFlag3 className="mr-2 size-4" />
 						Báo cáo người dùng
 					</Button>
+					{canHideFromHistory && (
+						<Button
+							type="button"
+							variant="outline"
+							className="justify-start rounded-xl"
+							onClick={handleHideCurrentSession}
+						>
+							<IconTrash className="mr-2 size-4" />
+							Xóa khỏi lịch sử
+						</Button>
+					)}
 				</div>
 			</div>
 		</>
@@ -547,17 +656,25 @@ function MessagesPageContent() {
 										>
 											<IconArrowLeft className="size-4" />
 										</Button>
-										{activeContact?.avatar ? (
-											<img
-												src={activeContact.avatar}
-												alt=""
-												className="size-10 rounded-full object-cover"
-											/>
-										) : (
-											<div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-												{activeContactName[0]?.toUpperCase()}
-											</div>
-										)}
+										<div className="relative">
+											{activeContactAvatar ? (
+												<img
+													src={activeContactAvatar}
+													alt=""
+													className="size-10 rounded-full object-cover"
+												/>
+											) : (
+												<div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+													{activeContactName[0]?.toUpperCase()}
+												</div>
+											)}
+											{activeContactUserId && (
+												<PresenceDot
+													isOnline={isActiveContactOnline}
+													className="size-3"
+												/>
+											)}
+										</div>
 										<div>
 											<div className="flex items-center gap-1.5">
 												<p className="text-sm font-semibold">
@@ -566,20 +683,90 @@ function MessagesPageContent() {
 												<ProfileVisibilityIcon
 													isPublic={activeContact?.isPublic}
 												/>
+												{isMatchSession && (
+													activeSession?.is_revealed ? (
+														<span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:text-green-300">
+															<IconUserCheck className="size-3" />
+															Matched
+														</span>
+													) : (
+														<span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+															Ẩn danh
+														</span>
+													)
+												)}
 											</div>
+											{isMatchSession && (
+												<p className="text-[11px] text-muted-foreground">
+													{isEndedSession
+														? "Cuộc ghép đôi đã kết thúc"
+														: isAnonymousMatchSession
+															? "Cùng bấm thích để hiện danh tính"
+															: "Đã hiện danh tính"}
+												</p>
+											)}
 										</div>
 									</div>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon-sm"
-										className="rounded-full xl:hidden"
-										onClick={() => setIsMobileInfoOpen(true)}
-										aria-label="Mở thông tin cuộc trò chuyện"
-									>
-										<IconDots className="size-4 text-[#0084ff]" />
-									</Button>
+									<div className="flex items-center gap-1">
+										{isMatchSession && !isEndedSession && (
+											<>
+												{activeSession?.is_revealed ? null : (
+													<>
+														{partnerLiked && !userLiked && (
+															<span className="hidden text-[11px] font-medium text-primary sm:inline-block">
+																Đối phương đã thích bạn
+															</span>
+														)}
+														<Button
+															type="button"
+															size="icon-sm"
+															variant={userLiked ? "secondary" : "ghost"}
+															className={cn(
+																"rounded-full",
+																userLiked
+																	? "bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30"
+																	: "text-muted-foreground hover:text-red-500",
+															)}
+															onClick={handleLikeCurrentMatch}
+															disabled={userLiked}
+															aria-label="Bấm thích để hiện danh tính"
+														>
+															<IconHeart
+																className={cn("size-4", userLiked && "fill-current")}
+															/>
+														</Button>
+													</>
+												)}
+												<Button
+													type="button"
+													variant="ghost"
+													size="sm"
+													className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+													onClick={handleEndCurrentMatch}
+												>
+													<IconX className="mr-1 size-4" />
+													End
+												</Button>
+											</>
+										)}
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon-sm"
+											className="rounded-full xl:hidden"
+											onClick={() => setIsMobileInfoOpen(true)}
+											aria-label="Mở thông tin cuộc trò chuyện"
+										>
+											<IconDots className="size-4 text-[#0084ff]" />
+										</Button>
+									</div>
 								</div>
+
+								{isAnonymousMatchSession && !isEndedSession && (
+									<div className="border-b border-border/70 bg-muted/30 px-4 py-2 text-center text-xs text-muted-foreground">
+										Hãy cùng bấm thích để hiện danh tính và lưu cuộc trò chuyện này.
+									</div>
+								)}
 
 								<div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 p-4 sm:p-6">
 									{messages.length === 0 ? (
@@ -599,7 +786,7 @@ function MessagesPageContent() {
 												}
 												note={
 													msg.sender_id !== user?.id &&
-													participantPrivacyMap[msg.sender_id] === false
+													activeSession?.is_public === false
 														? "Cẩn thận lừa đảo: hãy xác minh danh tính và tránh bấm link lạ."
 														: undefined
 												}
@@ -613,6 +800,12 @@ function MessagesPageContent() {
 									<ChatInput
 										onSend={handleSendMessage}
 										avatarUrl={profile?.avatar_url ?? undefined}
+										disabled={isEndedSession}
+										placeholder={
+											isEndedSession
+												? "Cuộc trò chuyện đã kết thúc"
+												: undefined
+										}
 									/>
 								</div>
 							</div>

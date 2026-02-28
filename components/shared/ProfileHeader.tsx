@@ -15,6 +15,8 @@ import { formatDateDDMMYYYY } from "@/utils/helpers/date";
 import type { Profile } from "@/types/supabase";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import { useIsUserOnline } from "@/hooks/usePresence";
+import { PresenceDot } from "@/components/shared/PresenceDot";
 
 export interface ProfileStat {
 	label: string;
@@ -27,6 +29,7 @@ export interface ProfileTab {
 }
 
 interface ProfileHeaderProps {
+	userId?: string;
 	name: string;
 	username?: string;
 	role?: Profile["role"] | null;
@@ -48,6 +51,7 @@ interface ProfileHeaderProps {
 const BIO_PREVIEW_CHAR_LIMIT = 220;
 
 export function ProfileHeader({
+	userId,
 	name,
 	username,
 	role,
@@ -68,6 +72,7 @@ export function ProfileHeader({
 	const { coverUrl, activeCoverUrl, markCoverAsFailed, refreshCover } =
 		useProfileCover();
 	const [isBioExpanded, setIsBioExpanded] = useState(false);
+	const isOnline = useIsUserOnline(userId);
 
 	const formattedJoinDate = formatDateDDMMYYYY(joinDate);
 	const normalizedBio = bio?.trim() ?? "";
@@ -105,17 +110,20 @@ export function ProfileHeader({
 
 			<div className="relative z-10 px-5 pb-4 md:px-7">
 				<div className="relative z-20 -mt-14 flex items-end gap-4">
-					{avatarUrl ? (
-						<img
-							src={avatarUrl}
-							alt={name}
-							className="relative z-20 size-28 shrink-0 rounded-full border-4 border-card object-cover"
-						/>
-					) : (
-						<div className="relative z-20 flex size-28 shrink-0 items-center justify-center rounded-full border-4 border-card bg-primary/10 text-4xl font-bold text-primary">
-							{name[0]?.toUpperCase()}
-						</div>
-					)}
+					<div className="relative z-20 shrink-0">
+						{avatarUrl ? (
+							<img
+								src={avatarUrl}
+								alt={name}
+								className="size-28 rounded-full border-4 border-card object-cover"
+							/>
+						) : (
+							<div className="flex size-28 items-center justify-center rounded-full border-4 border-card bg-primary/10 text-4xl font-bold text-primary">
+								{name[0]?.toUpperCase()}
+							</div>
+						)}
+						{userId && <PresenceDot isOnline={isOnline} className="size-5" />}
+					</div>
 				</div>
 
 				<div className="mt-3 flex items-start justify-between gap-3">
