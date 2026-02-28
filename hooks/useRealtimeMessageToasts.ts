@@ -26,37 +26,48 @@ type SessionToastMeta = {
 };
 
 const fetchSessionToastMeta = async (matchId: string) => {
-	const { data: matchRow, error: matchError } = await supabase
-		.from("matches")
-		.select("type, is_revealed")
-		.eq("id", matchId)
-		.maybeSingle();
+	try {
+		const { data, error } = await supabase.rpc("get_chat_session_for_viewer", {
+			target_session_id: matchId,
+		});
 
-	if (matchError) {
-		throw matchError;
-	}
+		if (error) {
+			throw error;
+		}
 
-	if (matchRow?.type === "match" && !matchRow.is_revealed) {
+		const session = ((data?.[0] ?? null) as
+			| Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number]
+			| null) ?? null;
+
+		if (!session) {
+			return {
+				displayName: null,
+				sessionType: null,
+				isRevealed: false,
+			} satisfies SessionToastMeta;
+		}
+
+		if (session.session_type === "match" && session.is_revealed === false) {
+			return {
+				displayName: null,
+				sessionType: "match",
+				isRevealed: false,
+			} satisfies SessionToastMeta;
+		}
+
+		return {
+			displayName: session.display_name?.trim() ?? null,
+			sessionType: session.session_type ?? null,
+			isRevealed: session.is_revealed ?? false,
+		} satisfies SessionToastMeta;
+	} catch {
+		// Fall back to the safest possible toast metadata when session details are unavailable.
 		return {
 			displayName: null,
-			sessionType: "match",
+			sessionType: null,
 			isRevealed: false,
 		} satisfies SessionToastMeta;
 	}
-
-	const { data } = await supabase.rpc("get_chat_session_for_viewer", {
-		target_session_id: matchId,
-	});
-
-	const session = ((data?.[0] ?? null) as
-		| Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number]
-		| null) ?? null;
-
-	return {
-		displayName: session?.display_name?.trim() ?? null,
-		sessionType: session?.session_type ?? matchRow?.type ?? null,
-		isRevealed: session?.is_revealed ?? matchRow?.is_revealed ?? false,
-	} satisfies SessionToastMeta;
 };
 
 export const useRealtimeMessageToasts = () => {
@@ -109,11 +120,16 @@ export const useRealtimeMessageToasts = () => {
 					sessionMetaCacheRef.current.set(next.match_id, sessionMeta);
 
 					const shouldHideSenderName =
-						sessionMeta.sessionType === "match" && !sessionMeta.isRevealed;
-					const description =
-						next.content?.trim() ||
-						(next.gif_id ? "Đã gửi một GIF." : null) ||
-						(next.image_url ? "Đã gửi một hình ảnh." : "Bạn có tin nhắn mới.");
+						sessionMeta.sessionType === "match"
+							? !sessionMeta.isRevealed
+							: false;
+					const description = shouldHideSenderName
+						? "Bạn có một tin nhắn từ người ghép đôi ẩn danh."
+						: next.content?.trim() ||
+							(next.gif_id ? "Đã gửi một GIF." : null) ||
+							(next.image_url
+								? "Đã gửi một hình ảnh."
+								: "Bạn có tin nhắn mới.");
 
 					shownMessageIdsRef.current.add(next.id);
 					toast(
