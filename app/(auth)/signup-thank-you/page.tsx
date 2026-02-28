@@ -12,8 +12,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/utils/supabase/client";
 import { getAuthRedirectUrl } from "@/utils/auth/get-auth-redirect-url";
+import { createEmailAuthClient } from "@/utils/supabase/email-client";
 import { toast } from "sonner";
 
 function SignupThankYouContent() {
@@ -21,7 +21,7 @@ function SignupThankYouContent() {
 	const email = searchParams.get("email");
 	const isExistingUser = searchParams.get("existing") === "1";
 	const [isResending, setIsResending] = useState(false);
-	const supabase = createClient();
+	const supabase = createEmailAuthClient();
 
 	const handleResendConfirmationEmail = async () => {
 		if (!email || isResending) {
@@ -34,7 +34,7 @@ function SignupThankYouContent() {
 			type: "signup",
 			email,
 			options: {
-				emailRedirectTo: getAuthRedirectUrl("/auth/confirm?next=/onboarding"),
+				emailRedirectTo: getAuthRedirectUrl("/auth/complete?next=/onboarding"),
 			},
 		});
 

@@ -48,6 +48,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 import { createClient } from "@/utils/supabase/client";
+import { createEmailAuthClient } from "@/utils/supabase/email-client";
 import { getAuthRedirectUrl } from "@/utils/auth/get-auth-redirect-url";
 import { toast } from "sonner";
 
@@ -61,6 +62,7 @@ export default function SignupPage() {
 	const [agreedToTerms, setAgreedToTerms] = useState(false);
 	const router = useRouter();
 	const supabase = createClient();
+	const emailAuthClient = createEmailAuthClient();
 
 	const handleSignup = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -80,11 +82,11 @@ export default function SignupPage() {
 		}
 		setIsLoading(true);
 
-		const { error, data } = await supabase.auth.signUp({
+		const { error, data } = await emailAuthClient.auth.signUp({
 			email: normalizedEmail,
 			password,
 			options: {
-				emailRedirectTo: getAuthRedirectUrl("/auth/confirm?next=/onboarding"),
+				emailRedirectTo: getAuthRedirectUrl("/auth/complete?next=/onboarding"),
 			},
 		});
 

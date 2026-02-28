@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
 import { getAuthRedirectUrl } from "@/utils/auth/get-auth-redirect-url";
+import { createEmailAuthClient } from "@/utils/supabase/email-client";
 import { toast } from "sonner";
 
-const supabase = createClient();
+const supabase = createEmailAuthClient();
 
 export default function ForgotPasswordPage() {
 	const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 		setIsLoading(true);
 
 		const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-			redirectTo: getAuthRedirectUrl("/auth/confirm?next=/reset"),
+			redirectTo: getAuthRedirectUrl("/auth/complete?next=/reset"),
 		});
 
 		if (error) {
