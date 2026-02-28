@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
 import { useChat } from "@/hooks/useChat";
 import useProfile from "@/hooks/useProfile";
-import type { Message } from "@/types/supabase";
+import type { Database, Message, Profile } from "@/types/supabase";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
 import { ChatList, ChatContact } from "@/components/chat/ChatList";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -41,6 +41,9 @@ import { markMessagesAsSeen } from "@/hooks/useUnreadMessages";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 
 const supabase = createClient();
+type ViewerProfile =
+	Database["public"]["Functions"]["get_profile_for_viewer"]["Returns"][number];
+type PickerUser = Pick<Profile, "id" | "display_name" | "avatar_url" | "is_public">;
 
 function MessagesPageContent() {
 	const user = useAuthStore((state) => state.user);
@@ -125,7 +128,7 @@ function MessagesPageContent() {
 						})
 						.maybeSingle();
 					if (error) throw error;
-					return data;
+					return data as ViewerProfile | null;
 				}),
 			);
 
@@ -185,7 +188,7 @@ function MessagesPageContent() {
 				.neq("id", user?.id ?? "")
 				.order("display_name");
 			if (error) throw error;
-			return data ?? [];
+			return (data ?? []) as PickerUser[];
 		},
 		enabled: !!user && showContactPicker,
 	});
@@ -290,10 +293,10 @@ function MessagesPageContent() {
 		sendMessage(content, user.id);
 	};
 
-	const pickerContacts: PickerContact[] = allUsers.map((u: any) => ({
+	const pickerContacts: PickerContact[] = allUsers.map((u) => ({
 		id: u.id,
 		name: u.display_name ?? "Người dùng",
-		avatar: u.avatar_url,
+		avatar: u.avatar_url ?? undefined,
 	}));
 
 	const { data: participantPrivacyMap = {} } = useQuery({
@@ -316,7 +319,7 @@ function MessagesPageContent() {
 						})
 						.maybeSingle();
 					if (error) return null;
-					return data;
+					return data as ViewerProfile | null;
 				}),
 			);
 

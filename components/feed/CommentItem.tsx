@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import type { Profile } from "@/types/supabase";
 import { createClient } from "@/utils/supabase/client";
 
 const supabase = createClient();
@@ -40,7 +41,7 @@ export function CommentItem({
 				})
 				.maybeSingle();
 			if (error) throw error;
-			return data;
+			return data as Profile | null;
 		},
 		enabled:
 			!!authorId &&

@@ -45,7 +45,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import { PostWithAuthor } from "@/types/supabase";
+import type { PostWithAuthor, Profile } from "@/types/supabase";
 import { usePosts } from "@/hooks/usePosts";
 import { createClient } from "@/utils/supabase/client";
 import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
@@ -142,7 +142,7 @@ export function PostCard({ post }: PostCardProps) {
 				})
 				.maybeSingle();
 			if (error) throw error;
-			return data;
+			return data as Profile | null;
 		},
 		enabled: !post.profiles?.display_name,
 	});
