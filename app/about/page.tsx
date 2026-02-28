@@ -10,17 +10,10 @@ import {
 	IconBrandReact,
 	IconShieldCheck,
 	IconGhost,
-	IconHeartHandshake,
-	IconMessageCircle,
 	IconFilter,
 	IconUserCheck,
 } from "@tabler/icons-react";
 import Link from "next/link";
-// import {
-// 	MainLayout,
-// 	AppLeftSidebar,
-// 	AppRightSidebar,
-// } from "@/components/shared";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const features = [
@@ -43,7 +36,7 @@ const features = [
 	{
 		title: "An toàn & kiểm duyệt",
 		description:
-			"Kiểm duyệt AI giúp cuộc trò chuyện lành mạnh. Chúng tôi ưu tiên môi trường không độc hại.",
+			"Kiểm duyệt tự động giúp cuộc trò chuyện lành mạnh. Chúng tôi ưu tiên môi trường không độc hại.",
 		icon: IconShieldCheck,
 		color: "text-emerald-500",
 		bg: "bg-emerald-500/10",
@@ -214,7 +207,7 @@ export default function AboutPage() {
 											{member.name}
 										</h3>
 										<p className="text-sm text-muted-foreground transition-colors duration-300">
-											Nhấn để mở hồ sơ Facebook cá nhân của thành viên này.
+											SE2019
 										</p>
 									</div>
 								</a>
@@ -229,7 +222,7 @@ export default function AboutPage() {
 				<div className="container mx-auto px-4">
 					<div className="mb-16 text-center">
 						<h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-							Vì sao chọn Talk-N-Share?
+							Vì sao nên chọn Talk-N-Share?
 						</h2>
 						<p className="mt-4 text-muted-foreground">
 							Các tính năng được thiết kế cho trải nghiệm xã hội hiện đại, an
