@@ -506,21 +506,7 @@ export type Database = {
       }
       end_match_for_viewer: {
         Args: { target_session_id: string }
-        Returns: {
-          avatar_url: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          is_public: boolean | null
-          is_revealed: boolean
-          other_user_id: string
-          session_type: string | null
-          status: string | null
-          user1_id: string
-          user1_liked: boolean
-          user2_id: string
-          user2_liked: boolean
-        }[]
+        Returns: boolean
       }
       heartbeat_presence: {
         Args: never

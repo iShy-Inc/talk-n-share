@@ -25,21 +25,36 @@ type SessionToastMeta = {
 };
 
 const fetchSessionToastMeta = async (matchId: string) => {
-	const { data } = await supabase
-		.rpc("get_chat_session_for_viewer", {
-			target_session_id: matchId,
-		})
+	const { data: matchRow, error: matchError } = await supabase
+		.from("matches")
+		.select("type, is_revealed")
+		.eq("id", matchId)
 		.maybeSingle();
 
-	const session =
-		(data as
-			| Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number]
-			| null) ?? null;
+	if (matchError) {
+		throw matchError;
+	}
+
+	if (matchRow?.type === "match" && !matchRow.is_revealed) {
+		return {
+			displayName: null,
+			sessionType: "match",
+			isRevealed: false,
+		} satisfies SessionToastMeta;
+	}
+
+	const { data } = await supabase.rpc("get_chat_session_for_viewer", {
+		target_session_id: matchId,
+	});
+
+	const session = ((data?.[0] ?? null) as
+		| Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number]
+		| null) ?? null;
 
 	return {
 		displayName: session?.display_name?.trim() ?? null,
-		sessionType: session?.session_type ?? null,
-		isRevealed: session?.is_revealed ?? false,
+		sessionType: session?.session_type ?? matchRow?.type ?? null,
+		isRevealed: session?.is_revealed ?? matchRow?.is_revealed ?? false,
 	} satisfies SessionToastMeta;
 };
 

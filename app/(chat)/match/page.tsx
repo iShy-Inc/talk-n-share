@@ -339,8 +339,7 @@ export default function MatchPage() {
 		const { error } = await supabase
 			.rpc("end_match_for_viewer", {
 				target_session_id: sessionId,
-			})
-			.maybeSingle();
+			});
 		if (error) {
 			toast.error("Không thể kết thúc cuộc trò chuyện.");
 			return;
@@ -407,12 +406,20 @@ export default function MatchPage() {
 			.on(
 				"postgres_changes",
 				{
-					event: "UPDATE",
+					event: "*",
 					schema: "public",
 					table: "matches",
 					filter: `id=eq.${sessionId}`,
 				},
 				(payload) => {
+					if (payload.eventType === "DELETE") {
+						setSessionId(null);
+						setSessionData(null);
+						setPartnerProfile(null);
+						setStatus("options");
+						toast("Cuộc trò chuyện ghép đôi đã kết thúc.");
+						return;
+					}
 					const nextSession = payload.new as {
 						status?: string | null;
 						is_revealed?: boolean;
@@ -428,26 +435,10 @@ export default function MatchPage() {
 					void loadMatchSession(sessionId);
 					if (nextSession.is_revealed && !sessionData?.is_revealed) {
 						toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
-					}
-				},
-			)
-			.on(
-				"postgres_changes",
-				{
-					event: "*",
-					schema: "public",
-					table: "ended_match_sessions",
-					filter: `session_id=eq.${sessionId}`,
-				},
-				() => {
-					setSessionId(null);
-					setSessionData(null);
-					setPartnerProfile(null);
-					setStatus("options");
-					toast("Cuộc trò chuyện ghép đôi đã kết thúc.");
-				},
-			)
-			.subscribe();
+						}
+					},
+				)
+				.subscribe();
 
 		return () => {
 			supabase.removeChannel(channel);

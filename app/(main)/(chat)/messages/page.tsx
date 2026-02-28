@@ -74,6 +74,7 @@ function MessagesPageContent() {
 	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
 	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const didAutoOpenMatchRef = useRef(Boolean(initialSessionId));
 
 	// Fetch chat sessions for the current user
 	const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
@@ -308,8 +309,7 @@ function MessagesPageContent() {
 		const { error } = await supabase
 			.rpc("end_match_for_viewer", {
 				target_session_id: activeSessionId,
-			})
-			.maybeSingle();
+			});
 		if (error) {
 			toast.error("Không thể kết thúc cuộc trò chuyện.");
 			return;
@@ -408,6 +408,18 @@ function MessagesPageContent() {
 	}, [activeSessionId, contacts, isLoadingContacts, showContactPicker]);
 
 	useEffect(() => {
+		if (didAutoOpenMatchRef.current) return;
+		if (isLoadingContacts || showContactPicker || activeSessionId) return;
+
+		const activeMatchContact =
+			contacts.find((contact) => contact.sessionType === "match") ?? null;
+		if (!activeMatchContact) return;
+
+		didAutoOpenMatchRef.current = true;
+		setActiveSessionId(activeMatchContact.id);
+	}, [activeSessionId, contacts, isLoadingContacts, showContactPicker]);
+
+	useEffect(() => {
 		if (!activeSessionId) return;
 
 		const channel = supabase
@@ -415,12 +427,24 @@ function MessagesPageContent() {
 			.on(
 				"postgres_changes",
 				{
-					event: "UPDATE",
+					event: "*",
 					schema: "public",
 					table: "matches",
 					filter: `id=eq.${activeSessionId}`,
 				},
 				(payload) => {
+					if (payload.eventType === "DELETE") {
+						if (user?.id) {
+							queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+						}
+						queryClient.removeQueries({
+							queryKey: ["active-chat-session", activeSessionId],
+						});
+						setActiveSessionId((current) =>
+							current === activeSessionId ? null : current,
+						);
+						return;
+					}
 					queryClient.invalidateQueries({
 						queryKey: ["active-chat-session", activeSessionId],
 					});
@@ -428,25 +452,8 @@ function MessagesPageContent() {
 						queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
 					}
 				},
-			)
-			.on(
-				"postgres_changes",
-				{
-					event: "*",
-					schema: "public",
-					table: "ended_match_sessions",
-					filter: `session_id=eq.${activeSessionId}`,
-				},
-				() => {
-					queryClient.invalidateQueries({
-						queryKey: ["active-chat-session", activeSessionId],
-					});
-					if (user?.id) {
-						queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
-					}
-				},
-			)
-			.subscribe();
+				)
+				.subscribe();
 
 		return () => {
 			supabase.removeChannel(channel);
