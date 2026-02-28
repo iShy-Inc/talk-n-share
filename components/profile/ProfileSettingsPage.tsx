@@ -138,7 +138,7 @@ export function ProfileSettingsPage() {
 				birth_date: values.birth_date || null,
 				birth_visibility: values.birth_visibility || "full",
 				relationship: values.relationship || "private",
-				zodiac: values.birth_date ? getZodiacSign(values.birth_date) : null,
+				zodiac: values.birth_date ? getZodiacSign(values.birth_date) : "",
 				is_public: values.is_public,
 			})
 			.eq("id", user.id);

@@ -290,8 +290,12 @@ function SearchPageContent() {
 											username={person.display_name || "User"}
 											role={person.role}
 											isPublic={person.is_public}
-											title={person.is_public ? person.location : undefined}
-											avatarUrl={person.avatar_url}
+											title={
+												person.is_public
+													? (person.location ?? undefined)
+													: undefined
+											}
+											avatarUrl={person.avatar_url ?? undefined}
 											onSendMessage={handleSendMessage}
 										/>
 									))}

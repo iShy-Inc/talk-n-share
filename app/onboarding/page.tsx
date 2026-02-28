@@ -218,7 +218,7 @@ export default function OnboardingPage() {
 					location,
 					bio: bio.trim() || null,
 					relationship: relationship || "private",
-					zodiac: birthDate ? zodiac : null,
+					zodiac: birthDate ? zodiac : "",
 					is_public: isPublic ?? true,
 				})
 				.eq("id", user.id);
@@ -226,7 +226,8 @@ export default function OnboardingPage() {
 
 			await queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
 			toast.success("Hoàn tất thiết lập hồ sơ");
-			router.replace("/profile/settings?section=general");
+			// Ve homepage feed
+			router.replace("/");
 		} catch (error: any) {
 			toast.error(error?.message ?? "Lưu hồ sơ khởi tạo thất bại");
 		} finally {
@@ -237,12 +238,12 @@ export default function OnboardingPage() {
 	return (
 		<div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-10">
 			<Card className="w-full border-border/60 bg-card/90 shadow-xl">
-					<CardHeader>
-						<CardTitle>Hoàn thiện hồ sơ ẩn danh</CardTitle>
-						<p className="text-sm text-muted-foreground">
-							Bước {step}/4. Bắt buộc: tên, giới tính, địa điểm, chế độ hiển thị.
-						</p>
-					</CardHeader>
+				<CardHeader>
+					<CardTitle>Hoàn thiện hồ sơ ẩn danh</CardTitle>
+					<p className="text-sm text-muted-foreground">
+						Bước {step}/4. Bắt buộc: tên, giới tính, địa điểm, chế độ hiển thị.
+					</p>
+				</CardHeader>
 				<CardContent className="space-y-6">
 					{step === 1 && (
 						<div className="space-y-4">
@@ -308,7 +309,9 @@ export default function OnboardingPage() {
 										<SelectItem value="month_year">
 											Ẩn ngày (chỉ tháng/năm)
 										</SelectItem>
-										<SelectItem value="day_month">Chỉ hiển thị ngày/tháng</SelectItem>
+										<SelectItem value="day_month">
+											Chỉ hiển thị ngày/tháng
+										</SelectItem>
 										<SelectItem value="year_only">Chỉ hiển thị năm</SelectItem>
 									</SelectContent>
 								</Select>
@@ -380,7 +383,9 @@ export default function OnboardingPage() {
 								<p className="text-xs text-muted-foreground">
 									Cung hoàng đạo được tự động xác định theo ngày sinh
 								</p>
-								<p className="text-sm font-semibold">{birthDate ? zodiac : "—"}</p>
+								<p className="text-sm font-semibold">
+									{birthDate ? zodiac : "—"}
+								</p>
 							</div>
 						</div>
 					)}
@@ -417,7 +422,9 @@ export default function OnboardingPage() {
 								<p>Tiểu sử: {bio || "—"}</p>
 								<p>
 									Mối quan hệ:{" "}
-									{relationship === "private" ? "Không muốn tiết lộ" : relationship}
+									{relationship === "private"
+										? "Không muốn tiết lộ"
+										: relationship}
 								</p>
 								<p>Quyền riêng tư ngày sinh: {birthVisibility}</p>
 								<p>Cung hoàng đạo: {birthDate ? zodiac : "—"}</p>
