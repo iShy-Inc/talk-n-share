@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
 	IconArchive,
@@ -51,7 +51,23 @@ export function ChatList({
 	onToggleCompact,
 }: ChatListProps) {
 	const [search, setSearch] = useState("");
+	const [isDesktopViewport, setIsDesktopViewport] = useState(false);
 	const presenceMap = usePresenceMap(contacts.map((contact) => contact.userId));
+	const isCompactDesktop = compact && isDesktopViewport;
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia("(min-width: 1024px)");
+		const updateViewport = () => {
+			setIsDesktopViewport(mediaQuery.matches);
+		};
+
+		updateViewport();
+		mediaQuery.addEventListener("change", updateViewport);
+
+		return () => {
+			mediaQuery.removeEventListener("change", updateViewport);
+		};
+	}, []);
 
 	const filteredContacts = useMemo(() => {
 		const q = search.trim().toLowerCase();
@@ -94,20 +110,20 @@ export function ChatList({
 			<div
 				className={cn(
 					"border-b border-border/70 pt-4",
-					compact ? "px-2 pb-4" : "px-4 pb-3",
+					isCompactDesktop ? "px-2 pb-4" : "px-4 pb-3",
 				)}
 			>
 				<div
 					className={cn(
 						"flex items-center gap-2",
-						compact ? "flex-col justify-center" : "mb-3 justify-between",
+						isCompactDesktop ? "flex-col justify-center" : "mb-3 justify-between",
 					)}
 				>
-					{!compact && <h2 className="text-2xl font-bold tracking-tight">Đoạn chat</h2>}
+					{!isCompactDesktop && <h2 className="text-2xl font-bold tracking-tight">Đoạn chat</h2>}
 					<div
 						className={cn(
 							"flex items-center gap-2",
-							compact && "flex-col",
+							isCompactDesktop && "flex-col",
 						)}
 					>
 						{onNewMessage && (
@@ -136,7 +152,7 @@ export function ChatList({
 								<IconArchive className="size-4" />
 							</Button>
 						)}
-						{onToggleCompact && (
+						{onToggleCompact && isDesktopViewport && (
 							<Button
 								type="button"
 								size="icon"
@@ -144,9 +160,13 @@ export function ChatList({
 								onClick={onToggleCompact}
 								className="rounded-full"
 								id="toggle-chat-list-compact"
-								title={compact ? "Mở rộng danh sách chat" : "Thu gọn danh sách chat"}
+								title={
+									isCompactDesktop
+										? "Mở rộng danh sách chat"
+										: "Thu gọn danh sách chat"
+								}
 							>
-								{compact ? (
+								{isCompactDesktop ? (
 									<IconChevronRight className="size-4" />
 								) : (
 									<IconChevronLeft className="size-4" />
@@ -155,7 +175,7 @@ export function ChatList({
 						)}
 					</div>
 				</div>
-				{!compact && (
+				{!isCompactDesktop && (
 					<div className="relative">
 						<IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
@@ -169,18 +189,25 @@ export function ChatList({
 				)}
 			</div>
 
-			<div className={cn("flex-1 overflow-y-auto py-2", compact ? "px-1.5" : "px-2")}>
+			<div
+				className={cn(
+					"flex-1 overflow-y-auto py-2",
+					isCompactDesktop ? "px-1.5" : "px-2",
+				)}
+			>
 				{filteredContacts.map((contact) => (
 					<button
 						key={contact.id}
 						onClick={() => onSelectContact(contact.id)}
 						className={cn(
 							"flex w-full items-center rounded-xl transition-colors hover:bg-muted/70",
-							compact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5 text-left",
+							isCompactDesktop
+								? "justify-center px-2 py-2.5"
+								: "gap-3 px-3 py-2.5 text-left",
 							activeContactId === contact.id && "bg-primary/10",
 						)}
 						id={`chat-contact-${contact.id}`}
-						title={compact ? contact.name : undefined}
+						title={isCompactDesktop ? contact.name : undefined}
 					>
 						<div className="relative shrink-0">
 							{contact.avatar ? (
@@ -199,7 +226,7 @@ export function ChatList({
 								className="size-3.5"
 							/>
 						</div>
-						{!compact && (
+						{!isCompactDesktop && (
 							<>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
