@@ -45,34 +45,16 @@ export default function MatchPage() {
 	const syncMatchingQueue = async (criteria: MatchCriteria) => {
 		if (!user) return;
 
-		const queueEntry = {
-			user_id: user.id,
-			target_gender: criteria.gender === "any" ? null : criteria.gender,
-			target_region: criteria.location === "any" ? null : criteria.location,
-			target_zodiac: criteria.zodiac === "any" ? null : criteria.zodiac,
-		};
-
-		const { error: upsertError } = await supabase.from("matching_queue").upsert(
-			queueEntry,
-			{ onConflict: "user_id" },
+		const { data, error } = await supabase.rpc(
+			"upsert_matching_queue_for_viewer",
+			{
+				p_gender: criteria.gender,
+				p_region: criteria.location,
+				p_zodiac: criteria.zodiac,
+			},
 		);
-		if (!upsertError) {
-			return;
-		}
-
-		const { error: deleteError } = await supabase
-			.from("matching_queue")
-			.delete()
-			.eq("user_id", user.id);
-		if (deleteError) {
-			throw upsertError;
-		}
-
-		const { error: insertError } = await supabase
-			.from("matching_queue")
-			.insert(queueEntry);
-		if (insertError) {
-			throw insertError;
+		if (error || !data) {
+			throw error ?? new Error("Could not sync matching queue");
 		}
 	};
 
@@ -191,7 +173,7 @@ export default function MatchPage() {
 
 	const handleCancelMatching = async () => {
 		if (!user) return;
-		await supabase.from("matching_queue").delete().eq("user_id", user.id);
+		await supabase.rpc("remove_matching_queue_for_viewer");
 		setPendingCriteria(null);
 		setElapsedSeconds(0);
 		setStatus("options");
@@ -242,7 +224,7 @@ export default function MatchPage() {
 
 			if (elapsed >= MIN_WAIT_SECONDS) {
 				isDisposed = true;
-				void supabase.from("matching_queue").delete().eq("user_id", user.id);
+				void supabase.rpc("remove_matching_queue_for_viewer");
 				toast("Không tìm thấy người phù hợp trong 60 giây. Hãy thử lại.");
 				setStatus("options");
 				setPendingCriteria(null);

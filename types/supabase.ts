@@ -599,6 +599,10 @@ export type Database = {
         Args: { target_session_id: string }
         Returns: boolean
       }
+      remove_matching_queue_for_viewer: {
+        Args: never
+        Returns: boolean
+      }
       find_match_v2: {
         Args: {
           current_user_id: string
@@ -607,6 +611,14 @@ export type Database = {
           p_zodiac?: string
         }
         Returns: string
+      }
+      upsert_matching_queue_for_viewer: {
+        Args: {
+          p_gender?: string
+          p_region?: string
+          p_zodiac?: string
+        }
+        Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_moder: { Args: never; Returns: boolean }
