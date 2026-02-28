@@ -86,6 +86,7 @@ export default function MatchPage() {
 			target_gender: criteria.gender === "any" ? null : criteria.gender,
 			target_region: criteria.location === "any" ? null : criteria.location,
 			target_zodiac: criteria.zodiac === "any" ? null : criteria.zodiac,
+			match_priority: criteria.priority,
 		};
 
 		const { data, error } = await supabase.rpc(
@@ -94,6 +95,7 @@ export default function MatchPage() {
 				p_gender: criteria.gender,
 				p_region: criteria.location,
 				p_zodiac: criteria.zodiac,
+				p_priority: criteria.priority,
 			},
 		);
 		if (error || !data) {
@@ -102,7 +104,9 @@ export default function MatchPage() {
 
 		const { data: queueRow, error: queueReadError } = await supabase
 			.from("matching_queue")
-			.select("user_id, target_gender, target_region, target_zodiac")
+			.select(
+				"user_id, target_gender, target_region, target_zodiac, match_priority",
+			)
 			.eq("user_id", user.id)
 			.maybeSingle();
 		if (queueReadError) {
@@ -112,7 +116,8 @@ export default function MatchPage() {
 		const isQueueSynced =
 			queueRow?.target_gender === normalizedCriteria.target_gender &&
 			queueRow?.target_region === normalizedCriteria.target_region &&
-			queueRow?.target_zodiac === normalizedCriteria.target_zodiac;
+			queueRow?.target_zodiac === normalizedCriteria.target_zodiac &&
+			queueRow?.match_priority === normalizedCriteria.match_priority;
 		if (isQueueSynced) {
 			return;
 		}
@@ -304,6 +309,7 @@ export default function MatchPage() {
 						p_gender: pendingCriteria.gender,
 						p_region: pendingCriteria.location,
 						p_zodiac: pendingCriteria.zodiac,
+						p_priority: pendingCriteria.priority,
 					},
 				);
 				if (matchError) throw matchError;
@@ -500,12 +506,12 @@ export default function MatchPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background p-4 md:p-8">
 			<div className="relative mx-auto h-[600px] w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-				<div className="pointer-events-none fixed left-0 right-0 top-4 z-10 flex items-center justify-between px-4">
+				<div className="pointer-events-none fixed left-0 right-0 top-4 z-10 flex items-center justify-end px-4 sm:justify-between">
 					<Button
 						variant="outline"
 						size="sm"
 						onClick={() => router.push("/")}
-						className="pointer-events-auto text-muted-foreground hover:text-foreground z-50"
+						className="pointer-events-auto z-50 hidden text-muted-foreground hover:text-foreground sm:inline-flex"
 					>
 						<IconHome className="mr-2 size-4" />
 						Trang chủ

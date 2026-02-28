@@ -12,11 +12,21 @@ import {
 	IconMoon,
 	IconSun,
 	IconLayoutDashboard,
+	IconMenu2,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
+import {
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from "@/components/ui/sheet";
 import { useTheme } from "next-themes";
 import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
@@ -41,6 +51,11 @@ export function MobileDock() {
 	const { theme, resolvedTheme, setTheme } = useTheme();
 	const isDark = (resolvedTheme ?? theme) === "dark";
 	const canAccessDashboard = profile?.role === "admin" || profile?.role === "moder";
+	const showHomeShortcut =
+		pathname === "/about" ||
+		pathname === "/contact" ||
+		pathname.startsWith("/match") ||
+		pathname.startsWith("/messages");
 	const supabase = createClient();
 
 	const handleLogout = async () => {
@@ -60,47 +75,91 @@ export function MobileDock() {
 	return (
 		<div className="fixed bottom-0 left-0 right-0 z-50 animate-fade-in-soft lg:hidden">
 			<div className="pointer-events-none mx-auto w-full max-w-xl px-4">
-				{user && (
-					<Button
-						type="button"
-						size="sm"
-						variant="secondary"
-						onClick={handleLogout}
-						className="pointer-events-auto fixed right-4 top-4 z-[60] rounded-full border border-border/80 bg-background/95 px-3 text-red-600 shadow-md backdrop-blur"
-						title="Đăng xuất"
-					>
-						<IconLogout className="size-5" />
-						<span className="ml-1 text-xs font-semibold">Đăng xuất</span>
-					</Button>
-				)}
-				<Button
-					type="button"
-					size="icon"
-					variant="secondary"
-					onClick={() => setTheme(isDark ? "light" : "dark")}
-						className="pointer-events-auto absolute bottom-20 right-4 z-[60] rounded-full border border-border/80 shadow-md animate-glow-pulse"
-					title={isDark ? "Chuyển sang sáng" : "Chuyển sang tối"}
-				>
-					{isDark ? (
-						<IconSun className="size-5" />
-					) : (
-						<IconMoon className="size-5" />
-					)}
-				</Button>
-				{user && canAccessDashboard && (
-					<Button
-						asChild
-						type="button"
-						size="icon"
-						variant="secondary"
-						className="pointer-events-auto absolute bottom-20 left-4 z-[60] rounded-full border border-border/80 shadow-md animate-glow-pulse"
-						title="Dashboard quản trị"
-					>
-						<Link href="/dashboard">
-							<IconLayoutDashboard className="size-5" />
-						</Link>
-					</Button>
-				)}
+				<Sheet>
+					<SheetTrigger asChild>
+						<Button
+							type="button"
+							size="icon"
+							variant="secondary"
+							className="pointer-events-auto fixed bottom-20 right-4 z-[60] size-11 rounded-full border border-border/80 bg-background/95 shadow-lg backdrop-blur"
+							title="Mở menu nhanh"
+						>
+							<IconMenu2 className="size-5" />
+						</Button>
+					</SheetTrigger>
+					<SheetContent side="top" className="mx-auto max-w-xl">
+						<SheetHeader className="pr-10 text-left">
+							<SheetTitle>Menu nhanh</SheetTitle>
+							<SheetDescription>
+								Các thao tác điều hướng và tùy chọn nhanh cho mobile.
+							</SheetDescription>
+						</SheetHeader>
+
+						<div className="mt-4 grid gap-2">
+							{showHomeShortcut && (
+								<SheetClose asChild>
+									<Button
+										asChild
+										type="button"
+										variant="outline"
+										className="h-11 justify-start rounded-2xl"
+									>
+										<Link href="/">
+											<IconHome className="mr-2 size-4" />
+											Trang chủ
+										</Link>
+									</Button>
+								</SheetClose>
+							)}
+
+							<SheetClose asChild>
+								<Button
+									type="button"
+									variant="outline"
+									className="h-11 justify-start rounded-2xl"
+									onClick={() => setTheme(isDark ? "light" : "dark")}
+								>
+									{isDark ? (
+										<IconSun className="mr-2 size-4" />
+									) : (
+										<IconMoon className="mr-2 size-4" />
+									)}
+									{isDark ? "Chuyển sang sáng" : "Chuyển sang tối"}
+								</Button>
+							</SheetClose>
+
+							{user && canAccessDashboard && (
+								<SheetClose asChild>
+									<Button
+										asChild
+										type="button"
+										variant="outline"
+										className="h-11 justify-start rounded-2xl"
+									>
+										<Link href="/dashboard">
+											<IconLayoutDashboard className="mr-2 size-4" />
+											Dashboard
+										</Link>
+									</Button>
+								</SheetClose>
+							)}
+
+							{user && (
+								<SheetClose asChild>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={handleLogout}
+										className="h-11 justify-start rounded-2xl text-red-600"
+									>
+										<IconLogout className="mr-2 size-4" />
+										Đăng xuất
+									</Button>
+								</SheetClose>
+							)}
+						</div>
+					</SheetContent>
+				</Sheet>
 			</div>
 			<div className="border-t border-border/70 bg-background/95 backdrop-blur">
 			<nav className="mx-auto flex h-16 w-full max-w-xl items-center justify-around px-1">

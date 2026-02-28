@@ -859,7 +859,7 @@ function MessagesPageContent() {
 
 	return (
 		<>
-			<div className="mb-2">
+			<div className="mb-2 hidden sm:block">
 				<Button asChild variant="outline" size="sm" className="rounded-xl">
 					<Link href="/">
 						<IconArrowLeft className="mr-2 size-4" />

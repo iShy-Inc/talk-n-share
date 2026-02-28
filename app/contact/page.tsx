@@ -38,7 +38,7 @@ export default function ContactPage() {
 
 	return (
 		<div className="min-h-screen bg-background pb-12">
-			<div className="container mx-auto px-4 pt-6">
+			<div className="container mx-auto hidden px-4 pt-6 sm:block">
 				<Button asChild variant="outline" size="sm" className="rounded-xl">
 					<Link href="/">
 						<IconArrowLeft className="mr-2 size-4" />

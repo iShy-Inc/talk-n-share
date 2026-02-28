@@ -217,6 +217,7 @@ export type Database = {
       matching_queue: {
         Row: {
           created_at: string | null
+          match_priority: string
           target_gender: string | null
           target_region: string | null
           target_zodiac: string | null
@@ -224,6 +225,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          match_priority?: string
           target_gender?: string | null
           target_region?: string | null
           target_zodiac?: string | null
@@ -231,6 +233,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          match_priority?: string
           target_gender?: string | null
           target_region?: string | null
           target_zodiac?: string | null
@@ -663,6 +666,7 @@ export type Database = {
         Args: {
           current_user_id: string
           p_gender?: string
+          p_priority?: string
           p_region?: string
           p_zodiac?: string
         }
@@ -671,6 +675,7 @@ export type Database = {
       upsert_matching_queue_for_viewer: {
         Args: {
           p_gender?: string
+          p_priority?: string
           p_region?: string
           p_zodiac?: string
         }
