@@ -63,7 +63,9 @@ export const useChat = (matchId: string) => {
 			{
 				match_id: resolvedMatchId,
 				content: normalizedContent,
-				type: gif ? "gif" : type,
+				// Keep the row type compatible with existing DB constraints.
+				// GIF rendering relies on gif_provider/gif_id, not the type column.
+				type,
 				sender_id,
 				gif_provider: gif?.provider ?? null,
 				gif_id: gif?.id ?? null,

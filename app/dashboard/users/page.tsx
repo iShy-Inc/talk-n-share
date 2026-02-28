@@ -15,6 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AvatarCategoryPicker } from "@/components/shared/AvatarCategoryPicker";
+import { LOCATION_OPTIONS } from "@/app/onboarding/page";
+import {
+	AvatarCategoryKey,
+	getAvatarCategoryForUrl,
+} from "@/lib/avatar-options";
 import {
 	Select,
 	SelectContent,
@@ -49,13 +56,20 @@ import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 
 export default function UsersPage() {
 	const { usersQuery, updateUser, deleteUser } = useDashboardUsers();
-	const { isAdmin, loading: roleLoading } = useAdminRole();
+	const { hasAccess, loading: roleLoading } = useAdminRole();
 	const [search, setSearch] = useState("");
 	const [editingUser, setEditingUser] = useState<Profile | null>(null);
+	const [selectedAvatarCategory, setSelectedAvatarCategory] =
+		useState<AvatarCategoryKey>("people");
 	const [editForm, setEditForm] = useState({
 		display_name: "",
+		avatar_url: "",
+		bio: "",
 		gender: "",
 		location: "",
+		birth_date: "",
+		birth_visibility: "full",
+		relationship: "private",
 		role: "user" as Profile["role"],
 		is_public: true,
 	});
@@ -69,12 +83,23 @@ export default function UsersPage() {
 
 	const handleEdit = (user: Profile) => {
 		setEditingUser(user);
+		setSelectedAvatarCategory(getAvatarCategoryForUrl(user.avatar_url));
 		setEditForm({
 			display_name: user.display_name ?? "",
+			avatar_url: user.avatar_url ?? "",
+			bio: user.bio ?? "",
 			gender: user.gender ?? "",
 			location: user.location ?? "",
+			birth_date: user.birth_date ?? "",
+			birth_visibility: user.birth_visibility ?? "full",
+			relationship: user.relationship ?? "private",
 			role: user.role ?? "user",
 			is_public: user.is_public ?? true,
+		});
+		requestAnimationFrame(() => {
+			document
+				.getElementById("edit-user-panel")
+				?.scrollIntoView({ behavior: "smooth", block: "start" });
 		});
 	};
 
@@ -84,8 +109,13 @@ export default function UsersPage() {
 			{
 				id: editingUser.id,
 				display_name: editForm.display_name || undefined,
+				avatar_url: editForm.avatar_url || null,
+				bio: editForm.bio || null,
 				gender: (editForm.gender || undefined) as Profile["gender"],
 				location: editForm.location || undefined,
+				birth_date: editForm.birth_date || null,
+				birth_visibility: editForm.birth_visibility || null,
+				relationship: editForm.relationship || null,
 				role: editForm.role,
 				is_public: editForm.is_public,
 			},
@@ -115,7 +145,7 @@ export default function UsersPage() {
 		);
 	}
 
-	if (!isAdmin) {
+	if (!hasAccess) {
 		return (
 			<div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
 				<div className="flex size-20 items-center justify-center rounded-2xl bg-muted">
@@ -124,7 +154,7 @@ export default function UsersPage() {
 				<div>
 					<h2 className="text-xl font-semibold">Access Restricted</h2>
 					<p className="mt-1 text-sm text-muted-foreground">
-						Only administrators can manage users.
+						Only administrators and moderators can manage users.
 					</p>
 				</div>
 			</div>
@@ -155,6 +185,234 @@ export default function UsersPage() {
 					</div>
 				</CardContent>
 			</Card>
+
+			{editingUser && (
+				<Card
+					id="edit-user-panel"
+					className="rounded-2xl border border-border/70 bg-card/95 shadow-sm"
+				>
+					<CardHeader>
+						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+							<div>
+								<CardTitle>Edit User</CardTitle>
+								<CardDescription>
+									Update user profile information in-page. Scroll the page to
+									review all fields.
+								</CardDescription>
+							</div>
+							<Button
+								variant="outline"
+								onClick={() => setEditingUser(null)}
+								type="button"
+							>
+								Close editor
+							</Button>
+						</div>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="edit-username">Username</Label>
+							<Input
+								id="edit-username"
+								value={editForm.display_name}
+								onChange={(e) =>
+									setEditForm({ ...editForm, display_name: e.target.value })
+								}
+							/>
+						</div>
+						<div className="space-y-2">
+							<AvatarCategoryPicker
+								selectedCategory={selectedAvatarCategory}
+								selectedAvatar={editForm.avatar_url}
+								onCategoryChange={setSelectedAvatarCategory}
+								onAvatarSelect={(avatarUrl) =>
+									setEditForm({ ...editForm, avatar_url: avatarUrl })
+								}
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-avatar-url">Avatar URL (custom)</Label>
+							<Input
+								id="edit-avatar-url"
+								value={editForm.avatar_url}
+								onChange={(e) =>
+									setEditForm({ ...editForm, avatar_url: e.target.value })
+								}
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-bio">Bio</Label>
+							<Textarea
+								id="edit-bio"
+								value={editForm.bio}
+								onChange={(e) =>
+									setEditForm({ ...editForm, bio: e.target.value })
+								}
+								rows={3}
+							/>
+						</div>
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<div className="space-y-2">
+								<Label htmlFor="edit-gender">Gender</Label>
+								<Select
+									value={editForm.gender || "unset"}
+									onValueChange={(value) =>
+										setEditForm({
+											...editForm,
+											gender: value === "unset" ? "" : value,
+										})
+									}
+								>
+									<SelectTrigger id="edit-gender">
+										<SelectValue placeholder="Select gender" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="unset">Unset</SelectItem>
+										<SelectItem value="male">male</SelectItem>
+										<SelectItem value="female">female</SelectItem>
+										<SelectItem value="others">others</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="edit-location">Location</Label>
+								<Select
+									value={editForm.location || "unset"}
+									onValueChange={(value) =>
+										setEditForm({
+											...editForm,
+											location: value === "unset" ? "" : value,
+										})
+									}
+								>
+									<SelectTrigger id="edit-location">
+										<SelectValue placeholder="Chọn địa điểm" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="unset">Unset</SelectItem>
+										{LOCATION_OPTIONS.map((loc) => (
+											<SelectItem key={loc} value={loc}>
+												{loc}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-birth-date">Birth date</Label>
+							<Input
+								id="edit-birth-date"
+								type="date"
+								value={editForm.birth_date}
+								onChange={(e) =>
+									setEditForm({ ...editForm, birth_date: e.target.value })
+								}
+							/>
+						</div>
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<div className="space-y-2">
+								<Label htmlFor="edit-birth-visibility">Birth visibility</Label>
+								<Select
+									value={editForm.birth_visibility || "full"}
+									onValueChange={(value) =>
+										setEditForm({
+											...editForm,
+											birth_visibility: value,
+										})
+									}
+								>
+									<SelectTrigger id="edit-birth-visibility">
+										<SelectValue placeholder="Chọn chế độ hiển thị ngày sinh" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="full">Hiển thị đầy đủ</SelectItem>
+										<SelectItem value="month_year">Ẩn ngày</SelectItem>
+										<SelectItem value="day_month">Chỉ ngày/tháng</SelectItem>
+										<SelectItem value="year_only">Chỉ năm</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="edit-relationship">Relationship</Label>
+								<Select
+									value={editForm.relationship || "private"}
+									onValueChange={(value) =>
+										setEditForm({
+											...editForm,
+											relationship: value,
+										})
+									}
+								>
+									<SelectTrigger id="edit-relationship">
+										<SelectValue placeholder="Chọn trạng thái mối quan hệ" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="single">Độc thân</SelectItem>
+										<SelectItem value="in_relationship">
+											Đang trong mối quan hệ
+										</SelectItem>
+										<SelectItem value="married">Đã kết hôn</SelectItem>
+										<SelectItem value="complicated">Phức tạp</SelectItem>
+										<SelectItem value="private">Không muốn tiết lộ</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-role">Role</Label>
+							<Select
+								value={editForm.role}
+								onValueChange={(value) =>
+									setEditForm({
+										...editForm,
+										role: value as Profile["role"],
+									})
+								}
+							>
+								<SelectTrigger id="edit-role">
+									<SelectValue placeholder="Select role" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="user">user</SelectItem>
+									<SelectItem value="moder">moder</SelectItem>
+									<SelectItem value="admin">admin</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="edit-is-public">Profile visibility</Label>
+							<Select
+								value={editForm.is_public ? "public" : "private"}
+								onValueChange={(value) =>
+									setEditForm({
+										...editForm,
+										is_public: value === "public",
+									})
+								}
+							>
+								<SelectTrigger id="edit-is-public">
+									<SelectValue placeholder="Chọn chế độ hiển thị hồ sơ" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="public">Hồ sơ công khai</SelectItem>
+									<SelectItem value="private">Hồ sơ riêng tư</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end">
+							<Button
+								variant="outline"
+								type="button"
+								onClick={() => setEditingUser(null)}
+							>
+								Cancel
+							</Button>
+							<Button onClick={handleSaveEdit}>Save Changes</Button>
+						</div>
+					</CardContent>
+				</Card>
+			)}
 
 			{/* Users Table */}
 			<Card className="rounded-2xl border border-border/70 bg-card/90 shadow-sm overflow-hidden">
@@ -407,99 +665,6 @@ export default function UsersPage() {
 				</CardContent>
 			</Card>
 
-			{/* Edit User Modal */}
-			<AlertDialog
-				open={!!editingUser}
-				onOpenChange={(open) => !open && setEditingUser(null)}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Edit User</AlertDialogTitle>
-						<AlertDialogDescription>
-							Update user profile information
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<div className="mt-2 space-y-4">
-						<div className="space-y-2">
-							<Label htmlFor="edit-username">Username</Label>
-							<Input
-								id="edit-username"
-								value={editForm.display_name}
-								onChange={(e) =>
-									setEditForm({ ...editForm, display_name: e.target.value })
-								}
-							/>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<Label htmlFor="edit-gender">Gender</Label>
-								<Input
-									id="edit-gender"
-									value={editForm.gender}
-									onChange={(e) =>
-										setEditForm({ ...editForm, gender: e.target.value })
-									}
-									placeholder="male / female / other"
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="edit-location">Location</Label>
-								<Input
-									id="edit-location"
-									value={editForm.location}
-									onChange={(e) =>
-										setEditForm({ ...editForm, location: e.target.value })
-									}
-								/>
-							</div>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="edit-role">Role</Label>
-							<Select
-								value={editForm.role}
-								onValueChange={(value) =>
-									setEditForm({
-										...editForm,
-										role: value as Profile["role"],
-									})
-								}
-							>
-								<SelectTrigger id="edit-role">
-									<SelectValue placeholder="Select role" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="user">user</SelectItem>
-									<SelectItem value="moder">moder</SelectItem>
-									<SelectItem value="admin">admin</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-						<div className="flex items-center gap-2">
-							<Input
-								type="checkbox"
-								id="edit-is-public"
-								checked={editForm.is_public}
-								onChange={(e) =>
-									setEditForm({
-										...editForm,
-										is_public: e.target.checked,
-									})
-								}
-								className="size-4 rounded border-input accent-primary"
-							/>
-							<Label htmlFor="edit-is-public">Public profile</Label>
-						</div>
-					</div>
-					<AlertDialogFooter>
-						<AlertDialogCancel onClick={() => setEditingUser(null)}>
-							Cancel
-						</AlertDialogCancel>
-						<AlertDialogAction onClick={handleSaveEdit}>
-							Save Changes
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
 		</div>
 	);
 }
