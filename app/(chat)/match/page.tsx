@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import useProfile, { isProfileComplete } from "@/hooks/useProfile";
@@ -38,12 +38,85 @@ export default function MatchPage() {
 
 	const { messages, sendMessage } = useChat(sessionId ?? "");
 
+	const loadMatchSession = useEffectEvent(async (matchedId: string) => {
+		if (!user) return false;
+
+		const { data: session, error: sessionError } = await supabase
+			.from("matches")
+			.select("*")
+			.eq("id", matchedId)
+			.maybeSingle();
+		if (sessionError || !session) {
+			throw sessionError ?? new Error("Matched session not found");
+		}
+		if (session.type !== "match") {
+			console.warn("Ignoring non-match session returned by find_match_v2", {
+				matchedId,
+				type: session.type,
+			});
+			return false;
+		}
+		if (session.status && session.status !== "active") {
+			return false;
+		}
+
+		const partnerId =
+			session.user1_id === user.id ? session.user2_id : session.user1_id;
+		const { data: partner, error: partnerError } = await supabase
+			.from("profiles")
+			.select("*")
+			.eq("id", partnerId)
+			.maybeSingle();
+		if (partnerError) throw partnerError;
+
+		setSessionId(session.id);
+		setSessionData(session as ChatSession);
+		setPartnerProfile(partner ?? null);
+		setPendingCriteria(null);
+		setElapsedSeconds(0);
+		setStatus("active");
+		return true;
+	});
+
 	useEffect(() => {
 		if (!user || isLoadingProfile) return;
 		if (!isProfileComplete(profile)) {
 			router.replace("/onboarding");
 		}
 	}, [user, isLoadingProfile, profile, router]);
+
+	useEffect(() => {
+		if (!user || isLoadingProfile || !isProfileComplete(profile)) return;
+		if (status !== "options" || sessionId) return;
+
+		let isCancelled = false;
+
+		const restoreActiveMatch = async () => {
+			const { data: existingSession, error } = await supabase
+				.from("matches")
+				.select("id")
+				.or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+				.eq("type", "match")
+				.eq("status", "active")
+				.order("created_at", { ascending: false })
+				.limit(1)
+				.maybeSingle();
+
+			if (error || !existingSession?.id || isCancelled) return;
+
+			try {
+				await loadMatchSession(existingSession.id);
+			} catch (restoreError) {
+				console.error("Failed to restore active match:", restoreError);
+			}
+		};
+
+		void restoreActiveMatch();
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [user, isLoadingProfile, profile, sessionId, status]);
 
 	// Find a match
 	const handleStartMatch = (criteria: MatchCriteria) => {
@@ -68,42 +141,6 @@ export default function MatchPage() {
 		let isDisposed = false;
 		const startedAt = Date.now();
 
-		const activateMatchedSession = async (matchedId: string) => {
-			const { data: session, error: sessionError } = await supabase
-				.from("matches")
-				.select("*")
-				.eq("id", matchedId)
-				.maybeSingle();
-			if (sessionError || !session) {
-				throw sessionError ?? new Error("Matched session not found");
-			}
-			if (session.type !== "match") {
-				console.warn("Ignoring non-match session returned by find_match_v2", {
-					matchedId,
-					type: session.type,
-				});
-				return false;
-			}
-
-			const partnerId =
-				session.user1_id === user.id ? session.user2_id : session.user1_id;
-			const { data: partner, error: partnerError } = await supabase
-				.from("profiles")
-				.select("*")
-				.eq("id", partnerId)
-				.maybeSingle();
-			if (partnerError) throw partnerError;
-
-			if (isDisposed) return;
-			setSessionId(session.id);
-			setSessionData(session as ChatSession);
-			setPartnerProfile(partner ?? null);
-			setPendingCriteria(null);
-			setElapsedSeconds(0);
-			setStatus("active");
-			return true;
-		};
-
 		const tryFindMatch = async () => {
 			try {
 				const { data: matchedId, error: matchError } = await supabase.rpc(
@@ -117,7 +154,7 @@ export default function MatchPage() {
 				);
 				if (matchError) throw matchError;
 				if (matchedId) {
-					await activateMatchedSession(matchedId);
+					await loadMatchSession(matchedId);
 				}
 			} catch (error) {
 				console.error("Matching error:", error);
