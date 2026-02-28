@@ -284,7 +284,7 @@ export default function MatchPage() {
 						status?: string | null;
 						is_revealed?: boolean;
 					};
-					if (nextSession.status === "ended") {
+					if (nextSession.status && nextSession.status !== "active") {
 						setSessionId(null);
 						setSessionData(null);
 						setPartnerProfile(null);
@@ -296,6 +296,22 @@ export default function MatchPage() {
 					if (nextSession.is_revealed && !sessionData?.is_revealed) {
 						toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
 					}
+				},
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "ended_match_sessions",
+					filter: `session_id=eq.${sessionId}`,
+				},
+				() => {
+					setSessionId(null);
+					setSessionData(null);
+					setPartnerProfile(null);
+					setStatus("options");
+					toast("Cuộc trò chuyện ghép đôi đã kết thúc.");
 				},
 			)
 			.subscribe();

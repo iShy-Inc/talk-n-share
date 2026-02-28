@@ -8,6 +8,44 @@ create table if not exists public.hidden_chat_sessions (
 create index if not exists idx_hidden_chat_sessions_session_id
 	on public.hidden_chat_sessions(session_id);
 
+create table if not exists public.ended_match_sessions (
+	session_id uuid primary key references public.matches(id) on delete cascade,
+	ended_by_user_id uuid not null references public.profiles(id) on delete cascade,
+	ended_at timestamptz not null default now()
+);
+
+alter table public.ended_match_sessions enable row level security;
+
+drop policy if exists "Participants can view ended match sessions" on public.ended_match_sessions;
+create policy "Participants can view ended match sessions"
+on public.ended_match_sessions
+for select
+to authenticated
+using (
+	exists (
+		select 1
+		from public.matches as m
+		where m.id = session_id
+			and auth.uid() in (m.user1_id, m.user2_id)
+	)
+);
+
+drop policy if exists "Participants can end match sessions" on public.ended_match_sessions;
+create policy "Participants can end match sessions"
+on public.ended_match_sessions
+for insert
+to authenticated
+with check (
+	auth.uid() = ended_by_user_id
+	and exists (
+		select 1
+		from public.matches as m
+		where m.id = session_id
+			and m.type = 'match'
+			and auth.uid() in (m.user1_id, m.user2_id)
+	)
+);
+
 alter table public.hidden_chat_sessions enable row level security;
 
 drop policy if exists "Users can view their hidden sessions" on public.hidden_chat_sessions;
@@ -71,7 +109,10 @@ begin
 		end as is_public,
 		m.type as session_type,
 		coalesce(m.is_revealed, false) as is_revealed,
-		m.status,
+		case
+			when m.type = 'match' and ems.session_id is not null then 'ended'
+			else coalesce(m.status, 'active')
+		end as status,
 		m.created_at
 	from public.matches as m
 	left join public.profiles as p
@@ -79,6 +120,8 @@ begin
 			when m.user1_id = current_user_id then m.user2_id
 			else m.user1_id
 		end
+	left join public.ended_match_sessions as ems
+		on ems.session_id = m.id
 	where current_user_id in (m.user1_id, m.user2_id)
 		and not exists (
 			select 1
@@ -145,7 +188,10 @@ begin
 		end as is_public,
 		m.type as session_type,
 		coalesce(m.is_revealed, false) as is_revealed,
-		m.status,
+		case
+			when m.type = 'match' and ems.session_id is not null then 'ended'
+			else coalesce(m.status, 'active')
+		end as status,
 		m.created_at,
 		m.user1_id,
 		m.user2_id,
@@ -157,6 +203,8 @@ begin
 			when m.user1_id = current_user_id then m.user2_id
 			else m.user1_id
 		end
+	left join public.ended_match_sessions as ems
+		on ems.session_id = m.id
 	where m.id = target_session_id
 		and current_user_id in (m.user1_id, m.user2_id)
 		and not exists (
@@ -188,9 +236,16 @@ begin
 		raise exception 'Target session is required';
 	end if;
 
-	select m.type, coalesce(m.status, 'active')
+	select
+		m.type,
+		case
+			when m.type = 'match' and ems.session_id is not null then 'ended'
+			else coalesce(m.status, 'active')
+		end
 	into target_match_type, target_match_status
 	from public.matches as m
+	left join public.ended_match_sessions as ems
+		on ems.session_id = m.id
 	where m.id = target_session_id
 		and current_user_id in (m.user1_id, m.user2_id)
 	limit 1;

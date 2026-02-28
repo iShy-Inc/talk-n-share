@@ -378,7 +378,8 @@ function MessagesPageContent() {
 	const isActiveContactOnline = useIsUserOnline(activeContactUserId);
 	const isMatchSession = activeSession?.session_type === "match";
 	const isAnonymousMatchSession = isMatchSession && activeSession?.is_revealed === false;
-	const isEndedSession = activeSession?.status === "ended";
+	const isEndedSession =
+		isMatchSession && !!activeSession?.status && activeSession.status !== "active";
 	const canHideFromHistory =
 		activeSession?.session_type === "direct" || (isMatchSession && isEndedSession);
 	const partnerLiked = isMatchSession
@@ -420,6 +421,23 @@ function MessagesPageContent() {
 					filter: `id=eq.${activeSessionId}`,
 				},
 				(payload) => {
+					queryClient.invalidateQueries({
+						queryKey: ["active-chat-session", activeSessionId],
+					});
+					if (user?.id) {
+						queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+					}
+				},
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "ended_match_sessions",
+					filter: `session_id=eq.${activeSessionId}`,
+				},
+				() => {
 					queryClient.invalidateQueries({
 						queryKey: ["active-chat-session", activeSessionId],
 					});
