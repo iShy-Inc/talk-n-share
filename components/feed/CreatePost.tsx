@@ -134,7 +134,7 @@ export function CreatePost() {
 	};
 
 	return (
-		<div className="animate-fade-up mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:shadow-md">
+		<div className="animate-fade-up mb-6 w-full overflow-visible rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:shadow-md">
 			<form onSubmit={handleSubmit}>
 				<label htmlFor="image-upload" className="sr-only">
 					Tải ảnh lên
@@ -235,6 +235,7 @@ export function CreatePost() {
 							<EmojiPickerButton
 								onSelect={handleSelectEmoji}
 								disabled={isSubmitting}
+								panelSide="bottom"
 							/>
 
 							<button

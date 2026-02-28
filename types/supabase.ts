@@ -181,6 +181,39 @@ export type Database = {
           },
         ]
       }
+      hidden_chat_sessions: {
+        Row: {
+          archived_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hidden_chat_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hidden_chat_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matching_queue: {
         Row: {
           created_at: string | null
@@ -530,6 +563,21 @@ export type Database = {
         Args: never
         Returns: string
       }
+      get_archived_chat_sessions_for_viewer: {
+        Args: never
+        Returns: {
+          archived_at: string
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_public: boolean | null
+          is_revealed: boolean
+          other_user_id: string
+          session_type: string | null
+          status: string | null
+        }[]
+      }
       get_chat_sessions_for_viewer: {
         Args: never
         Returns: {
@@ -600,6 +648,10 @@ export type Database = {
         }[]
       }
       hide_chat_session_for_viewer: {
+        Args: { target_session_id: string }
+        Returns: boolean
+      }
+      restore_chat_session_for_viewer: {
         Args: { target_session_id: string }
         Returns: boolean
       }

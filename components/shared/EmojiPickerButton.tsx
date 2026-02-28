@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { IconMoodSmile } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const EMOJI_GROUPS = [
@@ -138,47 +143,36 @@ interface EmojiPickerButtonProps {
 	onSelect: (emoji: string) => void;
 	disabled?: boolean;
 	className?: string;
+	panelSide?: "top" | "bottom";
 }
 
 export function EmojiPickerButton({
 	onSelect,
 	disabled = false,
 	className,
+	panelSide = "top",
 }: EmojiPickerButtonProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const containerRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!isOpen) return;
-
-		const handlePointerDown = (event: MouseEvent) => {
-			if (!containerRef.current?.contains(event.target as Node)) {
-				setIsOpen(false);
-			}
-		};
-
-		document.addEventListener("mousedown", handlePointerDown);
-		return () => {
-			document.removeEventListener("mousedown", handlePointerDown);
-		};
-	}, [isOpen]);
 
 	return (
-		<div ref={containerRef} className={cn("relative shrink-0", className)}>
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon"
-				className="rounded-full text-primary"
-				disabled={disabled}
-				onClick={() => setIsOpen((prev) => !prev)}
-				aria-label="Mở emoji picker"
+		<Popover open={isOpen} onOpenChange={setIsOpen}>
+			<PopoverTrigger asChild>
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					className={cn("rounded-full text-primary", className)}
+					disabled={disabled}
+					aria-label="Mở emoji picker"
+				>
+					<IconMoodSmile className="size-5" />
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent
+				className="w-80"
+				align="end"
+				side={panelSide === "top" ? "top" : "bottom"}
 			>
-				<IconMoodSmile className="size-5" />
-			</Button>
-
-			{isOpen && (
-				<div className="absolute bottom-12 right-0 z-50 w-80 rounded-2xl border border-border/80 bg-card p-3 shadow-xl">
 					<div className="mb-2 text-xs font-medium text-muted-foreground">
 						Chọn emoji
 					</div>
@@ -207,8 +201,7 @@ export function EmojiPickerButton({
 							</div>
 						))}
 					</div>
-				</div>
-			)}
-		</div>
+			</PopoverContent>
+		</Popover>
 	);
 }

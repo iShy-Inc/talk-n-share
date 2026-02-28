@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
+	IconArchive,
 	IconChevronLeft,
 	IconChevronRight,
 	IconEdit,
@@ -33,6 +34,8 @@ interface ChatListProps {
 	activeContactId?: string;
 	onSelectContact: (contactId: string) => void;
 	onNewMessage?: () => void;
+	onOpenArchive?: () => void;
+	isArchiveActive?: boolean;
 	compact?: boolean;
 	onToggleCompact?: () => void;
 }
@@ -42,6 +45,8 @@ export function ChatList({
 	activeContactId,
 	onSelectContact,
 	onNewMessage,
+	onOpenArchive,
+	isArchiveActive = false,
 	compact = false,
 	onToggleCompact,
 }: ChatListProps) {
@@ -86,10 +91,25 @@ export function ChatList({
 
 	return (
 		<div className="flex h-full flex-col bg-card">
-			<div className={cn("border-b border-border/70 px-4 pt-4", compact ? "pb-4" : "pb-3")}>
-				<div className={cn("flex items-center gap-2", compact ? "justify-center" : "mb-3 justify-between")}>
+			<div
+				className={cn(
+					"border-b border-border/70 pt-4",
+					compact ? "px-2 pb-4" : "px-4 pb-3",
+				)}
+			>
+				<div
+					className={cn(
+						"flex items-center gap-2",
+						compact ? "flex-col justify-center" : "mb-3 justify-between",
+					)}
+				>
 					{!compact && <h2 className="text-2xl font-bold tracking-tight">Đoạn chat</h2>}
-					<div className="flex items-center gap-2">
+					<div
+						className={cn(
+							"flex items-center gap-2",
+							compact && "flex-col",
+						)}
+					>
 						{onNewMessage && (
 							<Button
 								type="button"
@@ -101,6 +121,19 @@ export function ChatList({
 								title="Tin nhắn mới"
 							>
 								<IconEdit className="size-4" />
+							</Button>
+						)}
+						{onOpenArchive && (
+							<Button
+								type="button"
+								size="icon"
+								variant={isArchiveActive ? "default" : "secondary"}
+								onClick={onOpenArchive}
+								className="rounded-full"
+								id="open-archived-chats-btn"
+								title={isArchiveActive ? "Quay lại hộp thư" : "Kho lưu trữ"}
+							>
+								<IconArchive className="size-4" />
 							</Button>
 						)}
 						{onToggleCompact && (

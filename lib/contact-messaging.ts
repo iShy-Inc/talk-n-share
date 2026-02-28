@@ -81,6 +81,13 @@ export const startOrRequestConversation = async ({
 
 	if (existingSessionError) throw existingSessionError;
 	if (existingSession?.id) {
+		const { error: restoreError } = await supabase.rpc(
+			"restore_chat_session_for_viewer",
+			{
+				target_session_id: existingSession.id,
+			},
+		);
+		if (restoreError) throw restoreError;
 		return { kind: "session_ready", sessionId: existingSession.id };
 	}
 

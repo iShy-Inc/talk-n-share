@@ -52,13 +52,16 @@ export const useChat = (matchId: string) => {
 		sender_id: string,
 		type = "text",
 		gif?: GifSelection | null,
+		targetMatchId?: string,
 	) => {
 		const normalizedContent = content.trim() || null;
+		const resolvedMatchId = targetMatchId ?? matchId;
 		if (!normalizedContent && !gif) return;
+		if (!resolvedMatchId) return;
 
 		await supabase.from("messages").insert([
 			{
-				match_id: matchId,
+				match_id: resolvedMatchId,
 				content: normalizedContent,
 				type: gif ? "gif" : type,
 				sender_id,

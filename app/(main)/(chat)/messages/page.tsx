@@ -52,6 +52,9 @@ const supabase = createClient();
 type PickerUser = Pick<Profile, "id" | "display_name" | "avatar_url" | "is_public">;
 type ActiveChatSession =
 	Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number];
+type ArchivedChatSession =
+	Database["public"]["Functions"]["get_archived_chat_sessions_for_viewer"]["Returns"][number];
+type DraftDirectContact = PickerContact & { isPublic?: boolean | null };
 
 function MessagesPageContent() {
 	const user = useAuthStore((state) => state.user);
@@ -62,7 +65,10 @@ function MessagesPageContent() {
 	const [activeSessionId, setActiveSessionId] = useState<string | null>(
 		initialSessionId,
 	);
+	const [draftDirectContact, setDraftDirectContact] =
+		useState<DraftDirectContact | null>(null);
 	const [showContactPicker, setShowContactPicker] = useState(false);
+	const [showArchiveView, setShowArchiveView] = useState(false);
 	const [chatListWidth, setChatListWidth] = useState(300);
 	const [isResizingChatList, setIsResizingChatList] = useState(false);
 	const [isChatListCollapsed, setIsChatListCollapsed] = useState(false);
@@ -74,8 +80,10 @@ function MessagesPageContent() {
 	);
 	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
 	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+	const [isCreatingDirectSession, setIsCreatingDirectSession] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const didAutoOpenMatchRef = useRef(Boolean(initialSessionId));
+	const shouldRestoreCompactAfterArchiveRef = useRef(false);
 
 	// Fetch chat sessions for the current user
 	const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
@@ -159,6 +167,20 @@ function MessagesPageContent() {
 		enabled: !!user,
 	});
 
+	const { data: archivedSessions = [], isLoading: isLoadingArchivedSessions } =
+		useQuery({
+			queryKey: ["archived-chat-sessions", user?.id, showArchiveView],
+			queryFn: async () => {
+				if (!user) return [];
+				const { data, error } = await supabase.rpc(
+					"get_archived_chat_sessions_for_viewer",
+				);
+				if (error) throw error;
+				return (data ?? []) as ArchivedChatSession[];
+			},
+			enabled: !!user && showArchiveView,
+		});
+
 	// Fetch all users for contact picker
 	const { data: allUsers = [] } = useQuery({
 		queryKey: ["all-users-for-picker"],
@@ -205,7 +227,12 @@ function MessagesPageContent() {
 				(payload) => {
 					const matchId = (payload.new as { match_id?: string }).match_id;
 					if (!matchId) return;
-					if (!contacts.some((contact) => contact.id === matchId)) return;
+					if (
+						matchId !== activeSessionId &&
+						!contacts.some((contact) => contact.id === matchId)
+					) {
+						return;
+					}
 					queryClient.invalidateQueries({
 						queryKey: ["chat-sessions", user.id],
 					});
@@ -216,7 +243,7 @@ function MessagesPageContent() {
 		return () => {
 			supabase.removeChannel(channel);
 		};
-	}, [user, contacts, queryClient]);
+	}, [activeSessionId, user, contacts, queryClient]);
 
 	useEffect(() => {
 		if (!isResizingChatList) return;
@@ -244,35 +271,128 @@ function MessagesPageContent() {
 	}, [isResizingChatList]);
 
 	const handleSelectContact = (contactId: string) => {
+		setDraftDirectContact(null);
 		setActiveSessionId(contactId);
 		setShowContactPicker(false);
+		setShowArchiveView(false);
 	};
 
 	const handleNewMessage = () => {
+		setDraftDirectContact(null);
+		setShowArchiveView(false);
 		setShowContactPicker(true);
+	};
+
+	const handleToggleArchiveView = () => {
+		setShowContactPicker(false);
+		setDraftDirectContact(null);
+		setShowArchiveView((prev) => {
+			const next = !prev;
+			if (next) {
+				shouldRestoreCompactAfterArchiveRef.current = isChatListCollapsed;
+				if (isChatListCollapsed) {
+					setIsChatListCollapsed(false);
+				}
+				return true;
+			}
+
+			if (shouldRestoreCompactAfterArchiveRef.current) {
+				setIsChatListCollapsed(true);
+			}
+			shouldRestoreCompactAfterArchiveRef.current = false;
+			return false;
+		});
 	};
 
 	const handlePickContact = async (contact: PickerContact) => {
 		if (!user) return;
-		try {
-			const target = allUsers.find((person) => person.id === contact.id);
-			const result = await startOrRequestConversation({
-				viewerId: user.id,
-				viewerDisplayName: profile?.display_name,
-				targetUserId: contact.id,
-				targetDisplayName: target?.display_name,
-				targetIsPublic: target?.is_public,
-			});
-			handleSelectContact(result.sessionId);
-		} catch {
-			toast.error("Không thể bắt đầu cuộc trò chuyện.");
+
+		const existingDirectSession = contacts.find(
+			(currentContact) =>
+				currentContact.userId === contact.id &&
+				currentContact.sessionType === "direct",
+		);
+		if (existingDirectSession) {
+			handleSelectContact(existingDirectSession.id);
+			return;
 		}
+
+		const target = allUsers.find((person) => person.id === contact.id);
+		setActiveSessionId(null);
+		setDraftDirectContact({
+			...contact,
+			isPublic: target?.is_public ?? null,
+		});
 		setShowContactPicker(false);
 	};
 
-	const handleSendMessage = (content: string, gif?: GifSelection | null) => {
-		if (!activeSessionId || !user || isEndedSession) return;
-		sendMessage(content, user.id, "text", gif);
+	const handleSendMessage = async (
+		content: string,
+		gif?: GifSelection | null,
+	) => {
+		if (!user || isEndedSession || isCreatingDirectSession) return;
+
+		if (!activeSessionId) {
+			if (!draftDirectContact) return;
+
+			try {
+				setIsCreatingDirectSession(true);
+				const result = await startOrRequestConversation({
+					viewerId: user.id,
+					viewerDisplayName: profile?.display_name,
+					targetUserId: draftDirectContact.id,
+					targetDisplayName: draftDirectContact.name,
+					targetIsPublic: draftDirectContact.isPublic,
+				});
+				queryClient.setQueryData<ChatContact[]>(
+					["chat-sessions", user.id],
+					(currentContacts = []) => {
+						const nextContact: ChatContact = {
+							id: result.sessionId,
+							userId: draftDirectContact.id,
+							name: draftDirectContact.name,
+							avatar: draftDirectContact.avatar,
+							sessionType: "direct",
+							isPublic: draftDirectContact.isPublic ?? undefined,
+							lastMessage: content.trim() || (gif ? "Đã gửi một GIF." : ""),
+							latestMessageAt: new Date().toISOString(),
+							latestReceivedAt: null,
+						};
+						const existingIndex = currentContacts.findIndex(
+							(currentContact) => currentContact.id === result.sessionId,
+						);
+						if (existingIndex >= 0) {
+							const updated = [...currentContacts];
+							updated[existingIndex] = {
+								...updated[existingIndex],
+								...nextContact,
+							};
+							return updated;
+						}
+						return [nextContact, ...currentContacts];
+					},
+				);
+				setDraftDirectContact(null);
+				setShowArchiveView(false);
+				setActiveSessionId(result.sessionId);
+				await sendMessage(content, user.id, "text", gif, result.sessionId);
+				await Promise.all([
+					queryClient.invalidateQueries({
+						queryKey: ["chat-sessions", user.id],
+					}),
+					queryClient.invalidateQueries({
+						queryKey: ["archived-chat-sessions", user.id],
+					}),
+				]);
+			} catch {
+				toast.error("Không thể bắt đầu cuộc trò chuyện.");
+			} finally {
+				setIsCreatingDirectSession(false);
+			}
+			return;
+		}
+
+		await sendMessage(content, user.id, "text", gif);
 	};
 
 	const handleLikeCurrentMatch = async () => {
@@ -343,11 +463,34 @@ function MessagesPageContent() {
 		setActiveSessionId(null);
 		if (user?.id) {
 			queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+			queryClient.invalidateQueries({
+				queryKey: ["archived-chat-sessions", user.id],
+			});
 		}
 		queryClient.removeQueries({
 			queryKey: ["active-chat-session", activeSessionId],
 		});
 		toast.success("Đã xóa cuộc trò chuyện khỏi lịch sử.");
+	};
+
+	const handleRestoreSession = async (sessionId: string) => {
+		const { data, error } = await supabase.rpc("restore_chat_session_for_viewer", {
+			target_session_id: sessionId,
+		});
+		if (error || !data) {
+			toast.error("Không thể khôi phục cuộc trò chuyện.");
+			return;
+		}
+
+		if (user?.id) {
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] }),
+				queryClient.invalidateQueries({
+					queryKey: ["archived-chat-sessions", user.id],
+				}),
+			]);
+		}
+		toast.success("Đã khôi phục cuộc trò chuyện.");
 	};
 
 	const pickerContacts: PickerContact[] = allUsers.map((u) => ({
@@ -356,31 +499,47 @@ function MessagesPageContent() {
 		avatar: u.avatar_url ?? undefined,
 	}));
 
-	const { data: activeSession = null } = useQuery({
-		queryKey: ["active-chat-session", activeSessionId],
-		queryFn: async () => {
-			if (!activeSessionId) return null;
-			const { data, error } = await supabase
-				.rpc("get_chat_session_for_viewer", {
-					target_session_id: activeSessionId,
-				})
-				.maybeSingle();
-			if (error) throw error;
-			return (data ?? null) as ActiveChatSession | null;
-		},
-		enabled: !!activeSessionId,
-	});
+	const { data: activeSession = null, isLoading: isLoadingActiveSession } =
+		useQuery({
+			queryKey: ["active-chat-session", activeSessionId],
+			queryFn: async () => {
+				if (!activeSessionId) return null;
+				const { data, error } = await supabase
+					.rpc("get_chat_session_for_viewer", {
+						target_session_id: activeSessionId,
+					})
+					.maybeSingle();
+				if (error) throw error;
+				return (data ?? null) as ActiveChatSession | null;
+			},
+			enabled: !!activeSessionId,
+		});
 
 	const activeContact = contacts.find((contact) => contact.id === activeSessionId);
 	const activeContactName =
-		activeSession?.display_name ?? activeContact?.name ?? "Cuộc trò chuyện";
+		activeSession?.display_name ??
+		activeContact?.name ??
+		draftDirectContact?.name ??
+		"Cuộc trò chuyện";
 	const activeContactAvatar =
-		activeSession?.avatar_url ?? activeContact?.avatar ?? undefined;
+		activeSession?.avatar_url ??
+		activeContact?.avatar ??
+		draftDirectContact?.avatar ??
+		undefined;
 	const activeContactUserId =
-		activeSession?.other_user_id ?? activeContact?.userId ?? null;
+		activeSession?.other_user_id ??
+		activeContact?.userId ??
+		draftDirectContact?.id ??
+		null;
+	const activeContactIsPublic =
+		activeSession?.is_public ??
+		activeContact?.isPublic ??
+		draftDirectContact?.isPublic ??
+		null;
 	const isActiveContactOnline = useIsUserOnline(activeContactUserId);
 	const isMatchSession = activeSession?.session_type === "match";
 	const isAnonymousMatchSession = isMatchSession && activeSession?.is_revealed === false;
+	const isDraftDirectConversation = !activeSessionId && !!draftDirectContact;
 	const isEndedSession =
 		isMatchSession && !!activeSession?.status && activeSession.status !== "active";
 	const canHideFromHistory =
@@ -395,7 +554,8 @@ function MessagesPageContent() {
 			? (activeSession?.user1_liked ?? false)
 			: (activeSession?.user2_liked ?? false)
 		: false;
-	const showConversation = !!activeSessionId && !showContactPicker;
+	const showConversation =
+		(!!activeSessionId || isDraftDirectConversation) && !showContactPicker;
 	const showList = !showConversation && !showContactPicker;
 
 	useEffect(() => {
@@ -405,10 +565,27 @@ function MessagesPageContent() {
 	}, [showConversation]);
 
 	useEffect(() => {
-		if (isLoadingContacts || !activeSessionId || showContactPicker) return;
+		if (
+			isLoadingContacts ||
+			isLoadingActiveSession ||
+			!activeSessionId ||
+			showContactPicker
+		) {
+			return;
+		}
 		if (contacts.some((contact) => contact.id === activeSessionId)) return;
+		if (activeSession) return;
+		if (messages.length > 0) return;
 		setActiveSessionId(null);
-	}, [activeSessionId, contacts, isLoadingContacts, showContactPicker]);
+	}, [
+		activeSession,
+		activeSessionId,
+		contacts,
+		isLoadingActiveSession,
+		isLoadingContacts,
+		messages.length,
+		showContactPicker,
+	]);
 
 	useEffect(() => {
 		if (didAutoOpenMatchRef.current) return;
@@ -543,9 +720,14 @@ function MessagesPageContent() {
 				</div>
 				<div className="mt-3 flex items-center gap-1.5">
 					<p className="text-base font-semibold">{activeContactName}</p>
-					<ProfileVisibilityIcon isPublic={activeContact?.isPublic} />
+					<ProfileVisibilityIcon isPublic={activeContactIsPublic} />
 				</div>
 				<p className="text-xs text-foreground/70">{messages.length} tin nhắn</p>
+				{isDraftDirectConversation && (
+					<p className="mt-2 text-center text-xs text-muted-foreground">
+						Session sẽ được tạo khi có tin nhắn đầu tiên.
+					</p>
+				)}
 				{isAnonymousMatchSession && (
 					<p className="mt-2 text-center text-xs text-muted-foreground">
 						Danh tính chỉ hiển thị khi cả hai cùng bấm thích.
@@ -603,6 +785,78 @@ function MessagesPageContent() {
 		</>
 	);
 
+	const archiveContent = (
+		<div className="flex h-full flex-col bg-card">
+			<div className="border-b border-border/70 px-4 py-4">
+				<div className="flex items-center justify-between gap-2">
+					<h2 className="text-2xl font-bold tracking-tight">Archive</h2>
+					<Button
+						type="button"
+						variant="secondary"
+						size="sm"
+						className="rounded-full"
+						onClick={handleToggleArchiveView}
+					>
+						Quay lại
+					</Button>
+				</div>
+				<p className="mt-2 text-xs text-muted-foreground">
+					Các cuộc trò chuyện đã ẩn sẽ nằm ở đây cho đến khi bạn khôi phục.
+				</p>
+			</div>
+			<div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
+				{isLoadingArchivedSessions ? (
+					<p className="py-8 text-center text-sm text-muted-foreground">
+						Đang tải lưu trữ...
+					</p>
+				) : archivedSessions.length === 0 ? (
+					<p className="py-8 text-center text-sm text-muted-foreground">
+						Chưa có cuộc trò chuyện nào trong archive.
+					</p>
+				) : (
+					archivedSessions.map((session) => (
+						<div
+							key={session.id}
+							className="rounded-2xl border border-border/70 bg-background p-3"
+						>
+							<div className="flex items-start gap-3">
+								{session.avatar_url ? (
+									<img
+										src={session.avatar_url}
+										alt=""
+										className="size-11 rounded-full object-cover"
+									/>
+								) : (
+									<div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+										{(session.display_name ?? "N")[0]?.toUpperCase()}
+									</div>
+								)}
+								<div className="min-w-0 flex-1">
+									<p className="truncate font-semibold">
+										{session.display_name ?? "Người dùng"}
+									</p>
+									<p className="mt-0.5 text-xs text-muted-foreground">
+										Lưu trữ lúc{" "}
+										{format(new Date(session.archived_at), "HH:mm dd/MM")}
+									</p>
+								</div>
+							</div>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								className="mt-3 w-full rounded-xl"
+								onClick={() => void handleRestoreSession(session.id)}
+							>
+								Khôi phục
+							</Button>
+						</div>
+					))
+				)}
+			</div>
+		</div>
+	);
+
 	return (
 		<>
 			<div className="mb-2">
@@ -625,14 +879,20 @@ function MessagesPageContent() {
 							} as Record<string, string>
 						}
 					>
-						<ChatList
-							contacts={contacts}
-							activeContactId={activeSessionId ?? undefined}
-							onSelectContact={handleSelectContact}
-							onNewMessage={handleNewMessage}
-							compact={isChatListCollapsed}
-							onToggleCompact={() => setIsChatListCollapsed((prev) => !prev)}
-						/>
+						{showArchiveView ? (
+							archiveContent
+						) : (
+							<ChatList
+								contacts={contacts}
+								activeContactId={activeSessionId ?? undefined}
+								onSelectContact={handleSelectContact}
+								onNewMessage={handleNewMessage}
+								onOpenArchive={handleToggleArchiveView}
+								isArchiveActive={showArchiveView}
+								compact={isChatListCollapsed}
+								onToggleCompact={() => setIsChatListCollapsed((prev) => !prev)}
+							/>
+						)}
 					</div>
 					{!isChatListCollapsed && (
 						<div
@@ -677,6 +937,7 @@ function MessagesPageContent() {
 											variant="ghost"
 											size="icon-sm"
 											onClick={() => {
+												setDraftDirectContact(null);
 												setActiveSessionId(null);
 											}}
 											className="lg:hidden"
@@ -709,7 +970,7 @@ function MessagesPageContent() {
 													{activeContactName}
 												</p>
 												<ProfileVisibilityIcon
-													isPublic={activeContact?.isPublic}
+													isPublic={activeContactIsPublic}
 												/>
 												{isMatchSession && (
 													activeSession?.is_revealed ? (
@@ -800,7 +1061,9 @@ function MessagesPageContent() {
 									{messages.length === 0 ? (
 										<div className="flex h-full items-center justify-center">
 											<p className="text-center text-sm text-foreground/70">
-												Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.
+												{isDraftDirectConversation
+													? "Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện."
+													: "Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện."}
 											</p>
 										</div>
 									) : (
@@ -830,11 +1093,15 @@ function MessagesPageContent() {
 									<ChatInput
 										onSend={handleSendMessage}
 										avatarUrl={profile?.avatar_url ?? undefined}
-										disabled={isEndedSession}
+										disabled={isEndedSession || isCreatingDirectSession}
 										placeholder={
 											isEndedSession
 												? "Cuộc trò chuyện đã kết thúc"
-												: undefined
+												: isCreatingDirectSession
+													? "Đang tạo cuộc trò chuyện..."
+													: isDraftDirectConversation
+														? "Nhắn tin để tạo cuộc trò chuyện mới..."
+														: undefined
 										}
 									/>
 								</div>

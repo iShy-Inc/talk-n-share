@@ -12,6 +12,7 @@ import {
 	ProfileStat,
 	ProfileTab,
 } from "@/components/shared/ProfileHeader";
+import { CreatePost } from "@/components/feed/CreatePost";
 import { PostCard } from "@/components/feed/PostCard";
 import { SuggestedFriendsFacebookCard } from "@/components/shared/SuggestedFriendsFacebookCard";
 import { toast } from "sonner";
@@ -508,6 +509,9 @@ function ProfilePageContent() {
 
 			{effectiveActiveTab === "my-posts" && (
 				<div className="space-y-4">
+					{isOwnProfile && !isPrivateStatePending && !shouldHidePrivateInfo && (
+						<CreatePost />
+					)}
 					{isPrivateStatePending ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
