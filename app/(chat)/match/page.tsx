@@ -42,6 +42,40 @@ export default function MatchPage() {
 
 	const { messages, sendMessage } = useChat(sessionId ?? "");
 
+	const syncMatchingQueue = async (criteria: MatchCriteria) => {
+		if (!user) return;
+
+		const queueEntry = {
+			user_id: user.id,
+			target_gender: criteria.gender === "any" ? null : criteria.gender,
+			target_region: criteria.location === "any" ? null : criteria.location,
+			target_zodiac: criteria.zodiac === "any" ? null : criteria.zodiac,
+		};
+
+		const { error: upsertError } = await supabase.from("matching_queue").upsert(
+			queueEntry,
+			{ onConflict: "user_id" },
+		);
+		if (!upsertError) {
+			return;
+		}
+
+		const { error: deleteError } = await supabase
+			.from("matching_queue")
+			.delete()
+			.eq("user_id", user.id);
+		if (deleteError) {
+			throw upsertError;
+		}
+
+		const { error: insertError } = await supabase
+			.from("matching_queue")
+			.insert(queueEntry);
+		if (insertError) {
+			throw insertError;
+		}
+	};
+
 	const loadMatchSession = useEffectEvent(async (matchedId: string) => {
 		if (!user) return false;
 
@@ -141,8 +175,15 @@ export default function MatchPage() {
 	}, [user, isLoadingProfile, profile, sessionId, status]);
 
 	// Find a match
-	const handleStartMatch = (criteria: MatchCriteria) => {
+	const handleStartMatch = async (criteria: MatchCriteria) => {
 		if (!user) return;
+		try {
+			await syncMatchingQueue(criteria);
+		} catch (error) {
+			console.error("Failed to sync matching queue:", error);
+			toast.error("Không thể bắt đầu tìm kiếm ghép đôi.");
+			return;
+		}
 		setPendingCriteria(criteria);
 		setElapsedSeconds(0);
 		setStatus("loading");
