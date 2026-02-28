@@ -45,6 +45,12 @@ export default function MatchPage() {
 	const syncMatchingQueue = async (criteria: MatchCriteria) => {
 		if (!user) return;
 
+		const normalizedCriteria = {
+			target_gender: criteria.gender === "any" ? null : criteria.gender,
+			target_region: criteria.location === "any" ? null : criteria.location,
+			target_zodiac: criteria.zodiac === "any" ? null : criteria.zodiac,
+		};
+
 		const { data, error } = await supabase.rpc(
 			"upsert_matching_queue_for_viewer",
 			{
@@ -55,6 +61,58 @@ export default function MatchPage() {
 		);
 		if (error || !data) {
 			throw error ?? new Error("Could not sync matching queue");
+		}
+
+		const { data: queueRow, error: queueReadError } = await supabase
+			.from("matching_queue")
+			.select("user_id, target_gender, target_region, target_zodiac")
+			.eq("user_id", user.id)
+			.maybeSingle();
+		if (queueReadError) {
+			throw queueReadError;
+		}
+
+		const isQueueSynced =
+			queueRow?.target_gender === normalizedCriteria.target_gender &&
+			queueRow?.target_region === normalizedCriteria.target_region &&
+			queueRow?.target_zodiac === normalizedCriteria.target_zodiac;
+		if (isQueueSynced) {
+			return;
+		}
+
+		const { error: fallbackWriteError } = await supabase
+			.from("matching_queue")
+			.upsert(
+				{
+					user_id: user.id,
+					...normalizedCriteria,
+				},
+				{ onConflict: "user_id" },
+			);
+		if (fallbackWriteError) {
+			throw fallbackWriteError;
+		}
+
+		const { data: repairedQueueRow, error: repairedQueueReadError } =
+			await supabase
+				.from("matching_queue")
+				.select("user_id, target_gender, target_region, target_zodiac")
+				.eq("user_id", user.id)
+				.maybeSingle();
+		if (repairedQueueReadError) {
+			throw repairedQueueReadError;
+		}
+
+		const isQueueRepaired =
+			repairedQueueRow?.target_gender === normalizedCriteria.target_gender &&
+			repairedQueueRow?.target_region === normalizedCriteria.target_region &&
+			repairedQueueRow?.target_zodiac === normalizedCriteria.target_zodiac;
+		if (!isQueueRepaired) {
+			console.error("Matching queue sync mismatch", {
+				expected: normalizedCriteria,
+				actual: repairedQueueRow ?? null,
+			});
+			throw new Error("Matching queue did not persist expected criteria");
 		}
 	};
 
