@@ -48,6 +48,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 import { createClient } from "@/utils/supabase/client";
+import { getAuthRedirectUrl } from "@/utils/auth/get-auth-redirect-url";
 import { toast } from "sonner";
 
 // ... (GoogleIcon component remains)
@@ -63,8 +64,14 @@ export default function SignupPage() {
 
 	const handleSignup = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const normalizedEmail = email.trim().toLowerCase();
+
 		if (!agreedToTerms) {
 			toast.error("You must agree to the Terms and Chính sách riêng tư");
+			return;
+		}
+		if (!normalizedEmail) {
+			toast.error("Email is required");
 			return;
 		}
 		if (password !== confirmPassword) {
@@ -74,10 +81,10 @@ export default function SignupPage() {
 		setIsLoading(true);
 
 		const { error, data } = await supabase.auth.signUp({
-			email,
+			email: normalizedEmail,
 			password,
 			options: {
-				emailRedirectTo: `${location.origin}/auth/confirm?next=/onboarding`,
+				emailRedirectTo: getAuthRedirectUrl("/auth/confirm?next=/onboarding"),
 			},
 		});
 
@@ -87,11 +94,31 @@ export default function SignupPage() {
 			return;
 		}
 
+		const isExistingUser =
+			!data?.session &&
+			Array.isArray(data?.user?.identities) &&
+			data.user.identities.length === 0;
+
+		if (isExistingUser) {
+			toast.info(
+				"Email này đã được đăng ký trước đó. Nếu tài khoản chưa xác minh, bạn có thể gửi lại email xác nhận ở bước tiếp theo.",
+			);
+			router.push(
+				"/signup-thank-you?email=" +
+					encodeURIComponent(normalizedEmail) +
+					"&existing=1",
+			);
+			setIsLoading(false);
+			return;
+		}
+
 		if (data?.user) {
 			toast.success(
 				"Tạo tài khoản thành công! Vui lòng kiểm tra email để xác minh tài khoản.",
 			);
-			router.push("/signup-thank-you?email=" + encodeURIComponent(email));
+			router.push(
+				"/signup-thank-you?email=" + encodeURIComponent(normalizedEmail),
+			);
 		}
 		setIsLoading(false);
 	};
@@ -101,7 +128,7 @@ export default function SignupPage() {
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider,
 			options: {
-				redirectTo: `${location.origin}/auth/callback?next=/onboarding`,
+				redirectTo: getAuthRedirectUrl("/auth/callback?next=/onboarding"),
 			},
 		});
 

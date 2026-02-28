@@ -18,14 +18,14 @@ export function ThemeSettings() {
 	}
 
 	return (
-		<div className="space-y-6">
-			<div>
+		<div className="max-w-2xl space-y-6">
+			<div className="space-y-3">
 				<h3 className="text-base font-semibold">Chế độ màu</h3>
-				<p className="mt-2 text-sm text-muted-foreground">
+				<p className="text-sm text-muted-foreground">
 					Chọn cách ứng dụng hiển thị sáng và tối.
 				</p>
 				<Select value={theme} onValueChange={setTheme}>
-					<SelectTrigger className="mt-3 w-full max-w-xs rounded-xl">
+					<SelectTrigger className="w-full rounded-xl sm:max-w-xs">
 						<SelectValue placeholder="Chọn chế độ" />
 					</SelectTrigger>
 					<SelectContent>
@@ -36,16 +36,16 @@ export function ThemeSettings() {
 				</Select>
 			</div>
 
-			<div>
+			<div className="space-y-3">
 				<h3 className="text-base font-semibold">Kiểu giao diện</h3>
-				<p className="mt-2 text-sm text-muted-foreground">
+				<p className="text-sm text-muted-foreground">
 					Chọn bảng màu giao diện bạn yêu thích.
 				</p>
 				<Select
 					value={themeStyle}
 					onValueChange={(value) => setThemeStyle(value as ThemeStyle)}
 				>
-					<SelectTrigger className="mt-3 w-full max-w-xs rounded-xl">
+					<SelectTrigger className="w-full rounded-xl sm:max-w-xs">
 						<SelectValue placeholder="Chọn kiểu" />
 					</SelectTrigger>
 					<SelectContent>

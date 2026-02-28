@@ -53,7 +53,7 @@ export function PrivacySettingsForm({
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="mx-auto flex w-full max-w-md flex-col gap-5"
+			className="mx-auto flex w-full max-w-2xl flex-col gap-5"
 		>
 			<div className="space-y-2">
 				<Label htmlFor="privacy-birth-date">Ngày sinh</Label>
@@ -116,7 +116,11 @@ export function PrivacySettingsForm({
 				</Select>
 			</div>
 
-			<Button type="submit" className="w-40" id="privacy-save-btn">
+			<Button
+				type="submit"
+				className="w-full sm:w-auto sm:min-w-40"
+				id="privacy-save-btn"
+			>
 				Lưu thay đổi
 			</Button>
 		</form>

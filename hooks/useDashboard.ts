@@ -187,20 +187,67 @@ export const useDashboardReports = () => {
 
 	const resolveReport = useMutation({
 		mutationFn: async ({
-			reportId,
+			report,
 			status,
 		}: {
-			reportId: string;
+			report: ReportWithReporter;
 			status: ReportWithReporter["status"];
 		}) => {
+			if (!status) {
+				throw new Error("Missing report status");
+			}
+
+			if (status === "resolved") {
+				if (report.target_type === "post") {
+					if (!report.target_id) {
+						throw new Error("Missing post target for this report");
+					}
+
+					const { error: postError } = await supabase
+						.from("posts")
+						.update({ status: "rejected" })
+						.eq("id", report.target_id);
+					if (postError) throw postError;
+				}
+
+				if (report.target_type === "comment") {
+					if (!report.target_id) {
+						throw new Error("Missing comment target for this report");
+					}
+
+					const { error: commentError } = await supabase
+						.from("comments")
+						.delete()
+						.eq("id", report.target_id);
+					if (commentError) throw commentError;
+				}
+
+				if (report.target_type === "user") {
+					if (!report.reported_user_id) {
+						throw new Error("Missing reported user for this report");
+					}
+
+					const { error: userError } = await supabase
+						.from("profiles")
+						.update({ is_public: false })
+						.eq("id", report.reported_user_id);
+					if (userError) throw userError;
+				}
+			}
+
 			const { error } = await supabase
 				.from("reports")
 				.update({ status })
-				.eq("id", reportId);
+				.eq("id", report.id);
 			if (error) throw error;
 		},
-		onSuccess: () =>
-			queryClient.invalidateQueries({ queryKey: ["dashboard-reports"] }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["dashboard-reports"] });
+			queryClient.invalidateQueries({ queryKey: ["dashboard-posts"] });
+			queryClient.invalidateQueries({ queryKey: ["dashboard-comments"] });
+			queryClient.invalidateQueries({ queryKey: ["dashboard-users"] });
+			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+		},
 	});
 
 	return { reportsQuery, updateReport, deleteReport, resolveReport };

@@ -74,6 +74,19 @@ export const startOrRequestConversation = async ({
 }: ContactMessagingParams): Promise<ContactMessagingResult> => {
 	const supabase = createClient();
 
+	const { data: existingSession, error: existingSessionError } = await supabase
+		.from("matches")
+		.select("id")
+		.or(
+			`and(user1_id.eq.${viewerId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${viewerId})`,
+		)
+		.maybeSingle();
+
+	if (existingSessionError) throw existingSessionError;
+	if (existingSession?.id) {
+		return { kind: "session_ready", sessionId: existingSession.id };
+	}
+
 	if (targetIsPublic === false) {
 		const senderName = viewerDisplayName?.trim() || "Someone";
 		const receiverName = targetDisplayName?.trim() || "you";
@@ -86,19 +99,6 @@ export const startOrRequestConversation = async ({
 			reference_id: viewerId,
 		});
 		return { kind: "request_sent" };
-	}
-
-	const { data: existingSession, error: existingSessionError } = await supabase
-		.from("matches")
-		.select("id")
-		.or(
-			`and(user1_id.eq.${viewerId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${viewerId})`,
-		)
-		.maybeSingle();
-
-	if (existingSessionError) throw existingSessionError;
-	if (existingSession?.id) {
-		return { kind: "session_ready", sessionId: existingSession.id };
 	}
 
 	const { data: newSession, error: newSessionError } = await supabase

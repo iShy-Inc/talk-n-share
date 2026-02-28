@@ -19,7 +19,7 @@ interface AccountSettingsProps {
 
 export function AccountSettings({ onDeleteAccount }: AccountSettingsProps) {
 	return (
-		<div>
+		<div className="max-w-2xl">
 			<h3 className="text-base font-semibold">Xóa tài khoản</h3>
 			<p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
 				Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn toàn bộ dữ liệu
@@ -30,7 +30,7 @@ export function AccountSettings({ onDeleteAccount }: AccountSettingsProps) {
 				<AlertDialogTrigger asChild>
 					<Button
 						variant="outline"
-						className="mt-6 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+						className="mt-6 w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground sm:w-auto"
 						id="delete-account-btn"
 					>
 						Xóa tài khoản của tôi

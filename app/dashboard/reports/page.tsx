@@ -53,6 +53,12 @@ const targetTypeIcons: Record<ReportTargetType, React.ElementType> = {
 	user: IconUser,
 };
 
+const resolutionActionLabels: Record<ReportTargetType, string> = {
+	post: "Ẩn bài viết khỏi bảng tin",
+	comment: "Xóa bình luận bị báo cáo",
+	user: "Chuyển hồ sơ sang riêng tư",
+};
+
 export default function ReportsPage() {
 	const { reportsQuery, deleteReport, resolveReport } = useDashboardReports();
 	const [search, setSearch] = useState("");
@@ -68,12 +74,31 @@ export default function ReportsPage() {
 		return matchesSearch && report.status === filter;
 	});
 
-	const handleResolve = (reportId: string, status: ReportStatus) => {
+	const handleResolve = (report: ReportWithReporter, status: ReportStatus) => {
 		resolveReport.mutate(
-			{ reportId, status },
+			{ report, status },
 			{
-				onSuccess: () => toast.success(`Report marked as ${status}`),
-				onError: () => toast.error("Failed to update report"),
+				onSuccess: () => {
+					if (status === "reviewed") {
+						toast.success("Báo cáo đã được đánh dấu đang xem xét");
+						return;
+					}
+
+					if (status === "dismissed") {
+						toast.success("Báo cáo đã bị bác bỏ, nội dung được giữ nguyên");
+						return;
+					}
+
+					toast.success(
+						`${resolutionActionLabels[report.target_type]} và đóng báo cáo`,
+					);
+				},
+				onError: (error) =>
+					toast.error(
+						error instanceof Error
+							? error.message
+							: "Không thể cập nhật trạng thái báo cáo",
+					),
 			},
 		);
 	};
@@ -159,6 +184,8 @@ export default function ReportsPage() {
 								{filteredReports.map((report) => {
 									const safeStatus: ReportStatus = report.status ?? "pending";
 									const TargetIcon = targetTypeIcons[report.target_type];
+									const canModerate =
+										safeStatus === "pending" || safeStatus === "reviewed";
 									return (
 										<div
 											key={report.id}
@@ -208,13 +235,27 @@ export default function ReportsPage() {
 													View evidence
 												</a>
 											)}
+											<p className="mt-2 text-xs text-muted-foreground">
+												Resolved: {resolutionActionLabels[report.target_type]}
+											</p>
 											<div className="mt-2 flex items-center justify-end gap-1">
-												{safeStatus === "pending" && (
+												{canModerate && (
 													<>
+														{safeStatus === "pending" && (
+															<Button
+																variant="ghost"
+																size="sm"
+																onClick={() => handleResolve(report, "reviewed")}
+																className="h-8 px-2 text-xs"
+																id={`review-report-mobile-${report.id}`}
+															>
+																Đang xem
+															</Button>
+														)}
 														<Button
 															variant="ghost"
 															size="icon-sm"
-															onClick={() => handleResolve(report.id, "resolved")}
+															onClick={() => handleResolve(report, "resolved")}
 															title="Resolve"
 															id={`resolve-report-mobile-${report.id}`}
 														>
@@ -223,7 +264,7 @@ export default function ReportsPage() {
 														<Button
 															variant="ghost"
 															size="icon-sm"
-															onClick={() => handleResolve(report.id, "dismissed")}
+															onClick={() => handleResolve(report, "dismissed")}
 															title="Dismiss"
 															id={`dismiss-report-mobile-${report.id}`}
 														>
@@ -295,6 +336,8 @@ export default function ReportsPage() {
 									{filteredReports.map((report) => {
 										const safeStatus: ReportStatus = report.status ?? "pending";
 										const TargetIcon = targetTypeIcons[report.target_type];
+										const canModerate =
+											safeStatus === "pending" || safeStatus === "reviewed";
 										return (
 											<tr key={report.id} className="group transition-colors hover:bg-muted/30">
 												<td className="px-6 py-4">
@@ -338,6 +381,9 @@ export default function ReportsPage() {
 															View evidence
 														</a>
 													)}
+													<p className="mt-1 text-xs text-muted-foreground">
+														Resolved: {resolutionActionLabels[report.target_type]}
+													</p>
 												</td>
 												<td className="px-6 py-4">
 													<Badge
@@ -358,13 +404,26 @@ export default function ReportsPage() {
 												</td>
 												<td className="px-6 py-4">
 													<div className="flex items-center justify-end gap-1">
-														{safeStatus === "pending" && (
+														{canModerate && (
 															<>
+																{safeStatus === "pending" && (
+																	<Button
+																		variant="ghost"
+																		size="sm"
+																		onClick={() =>
+																			handleResolve(report, "reviewed")
+																		}
+																		className="h-8 px-2 text-xs"
+																		id={`review-report-${report.id}`}
+																	>
+																		Đang xem
+																	</Button>
+																)}
 																<Button
 																	variant="ghost"
 																	size="icon-sm"
 																	onClick={() =>
-																		handleResolve(report.id, "resolved")
+																		handleResolve(report, "resolved")
 																	}
 																	title="Resolve"
 																	id={`resolve-report-${report.id}`}
@@ -375,7 +434,7 @@ export default function ReportsPage() {
 																	variant="ghost"
 																	size="icon-sm"
 																	onClick={() =>
-																		handleResolve(report.id, "dismissed")
+																		handleResolve(report, "dismissed")
 																	}
 																	title="Dismiss"
 																	id={`dismiss-report-${report.id}`}

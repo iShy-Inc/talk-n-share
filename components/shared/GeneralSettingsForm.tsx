@@ -91,7 +91,7 @@ export function GeneralSettingsForm({
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="mx-auto flex w-full max-w-md flex-col gap-5"
+			className="mx-auto flex w-full max-w-2xl flex-col gap-5"
 		>
 			<AvatarCategoryPicker
 				selectedCategory={selectedAvatarCategory}
@@ -117,6 +117,7 @@ export function GeneralSettingsForm({
 						variant="ghost"
 						size="icon"
 						className="absolute right-1 top-1 h-8 w-8"
+						aria-label="Tạo tên ngẫu nhiên"
 						title="Tạo tên ngẫu nhiên"
 					>
 						<RefreshCw className="h-4 w-4" />
@@ -130,9 +131,9 @@ export function GeneralSettingsForm({
 							variant="outline"
 							size="sm"
 							onClick={() => setDisplayName(name)}
-							className="rounded-full"
+							className="max-w-full rounded-full"
 						>
-							{name}
+							<span className="truncate">{name}</span>
 						</Button>
 					))}
 				</div>
@@ -162,7 +163,11 @@ export function GeneralSettingsForm({
 					</SelectContent>
 				</Select>
 			</div>
-			<Button type="submit" className="w-40" id="settings-save-btn">
+			<Button
+				type="submit"
+				className="w-full sm:w-auto sm:min-w-40"
+				id="settings-save-btn"
+			>
 				Lưu thay đổi
 			</Button>
 		</form>
