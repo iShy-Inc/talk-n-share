@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { PostWithAuthor } from "@/types/supabase";
@@ -66,6 +67,7 @@ interface PostCardProps {
 
 type CommentRow = {
 	id: string;
+	author_id: string;
 	parent_id: string | null;
 	content: string | null;
 	created_at: string;
@@ -78,6 +80,7 @@ type CommentRow = {
 
 type BaseCommentData = {
 	id: string;
+	authorId: string;
 	authorName: string;
 	authorAvatar?: string;
 	authorRole?: string;
@@ -190,7 +193,7 @@ export function PostCard({ post }: PostCardProps) {
 			const { data, error } = await supabase
 				.from("comments")
 				.select(
-					"id, parent_id, content, created_at, profiles(display_name, avatar_url)",
+					"id, author_id, parent_id, content, created_at, profiles(display_name, avatar_url)",
 				)
 				.eq("post_id", post.id)
 				.order("created_at", { ascending: true })
@@ -213,6 +216,7 @@ export function PostCard({ post }: PostCardProps) {
 		for (const c of loadedComments) {
 			map.set(c.id, {
 				id: c.id,
+				authorId: c.author_id,
 				parentId: c.parent_id,
 				authorName: c.profiles?.display_name ?? "Anonymous",
 				authorAvatar: c.profiles?.avatar_url ?? undefined,
@@ -529,6 +533,7 @@ export function PostCard({ post }: PostCardProps) {
 			>
 				<CommentItem
 					authorName={comment.authorName}
+					authorId={comment.authorId}
 					authorAvatar={comment.authorAvatar}
 					content={comment.content}
 					timeAgo={comment.timeAgo}
@@ -551,32 +556,39 @@ export function PostCard({ post }: PostCardProps) {
 		>
 			<div className="mb-3 flex items-start justify-between">
 				<div className="flex items-center gap-3">
-					<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-secondary">
-						{post?.profiles?.avatar_url ? (
-							<Image
-								src={post?.profiles?.avatar_url}
-								alt={displayName}
-								width={40}
-								height={40}
-								className="object-cover"
-							/>
-						) : (
-							<span className="text-xl">{displayName}</span>
-						)}
-					</div>
-					<div>
-						<div className="flex items-center gap-2">
-							<h3 className="text-sm font-semibold">{displayName}</h3>
-							{!shouldMaskAuthor && (
-								<RoleVerifiedBadge role={post.profiles?.role ?? null} />
+					<Link
+						href={`/profile?userId=${post.author_id}`}
+						className="flex items-center gap-3"
+					>
+						<div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-secondary">
+							{post?.profiles?.avatar_url ? (
+								<Image
+									src={post?.profiles?.avatar_url}
+									alt={displayName}
+									width={40}
+									height={40}
+									className="object-cover"
+								/>
+							) : (
+								<span className="text-xl">{displayName}</span>
 							)}
 						</div>
-						<p className="text-xs text-foreground/70">
-							{formatDistanceToNow(new Date(post.created_at), {
-								addSuffix: true,
-							})}
-						</p>
-					</div>
+						<div>
+							<div className="flex items-center gap-2">
+								<h3 className="text-sm font-semibold hover:underline">
+									{displayName}
+								</h3>
+								{!shouldMaskAuthor && (
+									<RoleVerifiedBadge role={post.profiles?.role ?? null} />
+								)}
+							</div>
+							<p className="text-xs text-foreground/70">
+								{formatDistanceToNow(new Date(post.created_at), {
+									addSuffix: true,
+								})}
+							</p>
+						</div>
+					</Link>
 				</div>
 				{isAuthor && (
 					<DropdownMenu>

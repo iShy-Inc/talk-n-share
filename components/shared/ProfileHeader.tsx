@@ -115,7 +115,7 @@ export function ProfileHeader({
 					)}
 				</div>
 
-				<div className="flex justify-between items-center mt-3">
+				<div className="mt-3 flex items-start justify-between gap-3">
 					<div className="mt-0">
 						<div className="flex items-center gap-2">
 							<h2 className="text-xl font-bold tracking-tight">{name}</h2>
@@ -123,13 +123,15 @@ export function ProfileHeader({
 						</div>
 						{username && <p className="text-sm text-foreground/75">@{username}</p>}
 					</div>
-					{joinDate && (
-						<div className="mt-2 flex flex-col items-end gap-2 text-xs text-foreground/70">
+					{(actionSlot || joinDate) && (
+						<div className="flex shrink-0 flex-col items-end gap-2 text-xs text-foreground/70">
 							{actionSlot}
+							{joinDate && (
 							<span className="inline-flex items-center gap-1.5">
 								<IconCalendarMonth className="size-4" />
 								Tham gia từ {formattedJoinDate}
 							</span>
+							)}
 						</div>
 					)}
 				</div>

@@ -34,26 +34,28 @@ export default function FeedPage() {
 	const { posts, fetchNextPage, hasNextPage } = usePosts();
 	const { profile } = useProfile();
 	const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+	const visibleExpandedPostId = user ? expandedPostId : null;
 
 	// Fetch comments for expanded post
 	const { data: comments = [] } = useQuery({
-		queryKey: ["post-comments", expandedPostId],
+		queryKey: ["post-comments", visibleExpandedPostId],
 		queryFn: async () => {
-			if (!expandedPostId) return [];
+			if (!visibleExpandedPostId) return [];
 			const { data } = await supabase
 				.from("comments")
 				.select("*, profiles(display_name, avatar_url)")
-				.eq("post_id", expandedPostId)
+				.eq("post_id", visibleExpandedPostId)
 				.order("created_at", { ascending: true });
 			return (data ?? []).map((c: any) => ({
 				id: c.id,
+				authorId: c.author_id,
 				authorName: c.profiles?.display_name ?? c.author_name ?? "Anonymous",
 				authorAvatar: c.profiles?.avatar_url ?? c.author_avatar,
 				content: c.content,
 				timeAgo: formatDateDDMMYYYY(c.created_at),
 			})) as CommentData[];
 		},
-		enabled: !!expandedPostId,
+		enabled: !!visibleExpandedPostId,
 	});
 
 	const handleAddComment = async (content: string) => {
@@ -208,7 +210,7 @@ export default function FeedPage() {
 
 						{/* Comment toggle */}
 						<div className="px-1">
-							{expandedPostId === post.id ? (
+							{visibleExpandedPostId === post.id ? (
 								<div className="mt-2 rounded-xl border border-border bg-card p-4">
 									<CommentList
 										comments={comments}
@@ -226,7 +228,13 @@ export default function FeedPage() {
 							) : (
 								(post.comments_count ?? 0) > 0 && (
 									<button
-										onClick={() => setExpandedPostId(post.id)}
+										onClick={() => {
+											if (!user) {
+												router.push("/login");
+												return;
+											}
+											setExpandedPostId(post.id);
+										}}
 										className="mt-1 text-xs text-muted-foreground hover:text-foreground"
 									>
 										Xem {post.comments_count} bình luận

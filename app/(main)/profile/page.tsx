@@ -460,9 +460,9 @@ function ProfilePageContent() {
 									: "Thành viên Talk N Share"
 				}
 				avatarUrl={
-					shouldHidePrivateInfo ? undefined : (profile?.avatar_url ?? undefined)
+					profile?.avatar_url ?? undefined
 				}
-				joinDate={profile?.created_at}
+				joinDate={shouldHidePrivateInfo ? undefined : profile?.created_at}
 				bio={shouldHidePrivateInfo ? undefined : (profile?.bio ?? undefined)}
 				birthday={
 					shouldHidePrivateInfo || !profile?.birth_date

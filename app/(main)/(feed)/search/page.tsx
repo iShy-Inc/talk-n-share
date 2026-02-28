@@ -71,7 +71,7 @@ function SearchPageContent() {
 			const { data } = await supabase
 				.from("profiles")
 				.select("*")
-				.or(`display_name.ilike.%${query}%, location.ilike.%${query}%`) // Searching by location as title placeholder
+				.ilike("display_name", `%${query}%`)
 				.neq("id", user?.id ?? "")
 				.limit(20);
 			return data ?? [];
@@ -292,8 +292,8 @@ function SearchPageContent() {
 											key={person.id}
 											id={person.id}
 											username={person.display_name || "User"}
-											role={person.role}
-											title={person.location} // using location as title/role placeholder
+											role={person.is_public ? person.role : null}
+											title={person.is_public ? person.location : undefined}
 											avatarUrl={person.avatar_url}
 											onSendMessage={handleSendMessage}
 										/>

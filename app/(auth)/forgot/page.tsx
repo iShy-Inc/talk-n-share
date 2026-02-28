@@ -14,22 +14,38 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { getAuthRedirectUrl } from "@/utils/auth/get-auth-redirect-url";
+import { toast } from "sonner";
+
+const supabase = createClient();
 
 export default function ForgotPasswordPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [email, setEmail] = useState("");
-	const router = useRouter();
 
-	const handleForgotPassword = (e: React.FormEvent) => {
+	const handleForgotPassword = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const normalizedEmail = email.trim().toLowerCase();
+		if (!normalizedEmail) return;
+
 		setIsLoading(true);
-		setTimeout(() => {
-			console.log("Reset link sent to:", email);
+
+		const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+			redirectTo: getAuthRedirectUrl("/auth/confirm?next=/reset"),
+		});
+
+		if (error) {
+			toast.error(error.message);
 			setIsLoading(false);
-			// Optionally move to a "check email" state or reset password directly for demo
-			router.push("/reset?email=" + encodeURIComponent(email));
-		}, 1000);
+			return;
+		}
+
+		toast.success(
+			"Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.",
+		);
+		setEmail("");
+		setIsLoading(false);
 	};
 
 	return (

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 export interface CommentData {
 	id: string;
 	authorName: string;
+	authorId?: string;
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
@@ -67,6 +68,7 @@ export function CommentList({
 				<CommentItem
 					key={comment.id}
 					authorName={comment.authorName}
+					authorId={comment.authorId}
 					authorAvatar={comment.authorAvatar}
 					authorRole={comment.authorRole}
 					content={comment.content}

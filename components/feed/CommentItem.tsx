@@ -1,9 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface CommentItemProps {
 	authorName: string;
+	authorId?: string;
 	authorAvatar?: string;
 	authorRole?: string;
 	content: string;
@@ -14,6 +15,7 @@ interface CommentItemProps {
 
 export function CommentItem({
 	authorName,
+	authorId,
 	authorAvatar,
 	authorRole,
 	content,
@@ -21,23 +23,52 @@ export function CommentItem({
 	isAuthor = false,
 	onReply,
 }: CommentItemProps) {
+	const authorProfileHref = authorId ? `/profile?userId=${authorId}` : null;
+
 	return (
 		<div className="flex gap-3 rounded-xl border border-border/70 bg-card p-4">
-			{authorAvatar ? (
-				<img
-					src={authorAvatar}
-					alt=""
-					className="size-10 shrink-0 rounded-full object-cover"
-				/>
+			{authorProfileHref ? (
+				<Link href={authorProfileHref} className="shrink-0">
+					{authorAvatar ? (
+						<img
+							src={authorAvatar}
+							alt=""
+							className="size-10 rounded-full object-cover"
+						/>
+					) : (
+						<div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+							{authorName[0]?.toUpperCase()}
+						</div>
+					)}
+				</Link>
 			) : (
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-					{authorName[0]?.toUpperCase()}
-				</div>
+				<>
+					{authorAvatar ? (
+						<img
+							src={authorAvatar}
+							alt=""
+							className="size-10 shrink-0 rounded-full object-cover"
+						/>
+					) : (
+						<div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+							{authorName[0]?.toUpperCase()}
+						</div>
+					)}
+				</>
 			)}
 
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-semibold">{authorName}</span>
+					{authorProfileHref ? (
+						<Link
+							href={authorProfileHref}
+							className="truncate text-sm font-semibold hover:underline"
+						>
+							{authorName}
+						</Link>
+					) : (
+						<span className="text-sm font-semibold">{authorName}</span>
+					)}
 					{isAuthor && (
 						<span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
 							Tác giả

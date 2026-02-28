@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,28 +14,85 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
+
+const supabase = createClient();
 
 function ResetPasswordContent() {
-	const searchParams = useSearchParams();
-	const email = searchParams.get("email") || "your account";
 	const [isLoading, setIsLoading] = useState(false);
+	const [isCheckingRecovery, setIsCheckingRecovery] = useState(true);
+	const [hasRecoverySession, setHasRecoverySession] = useState(false);
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const router = useRouter();
 
-	const handleResetPassword = (e: React.FormEvent) => {
+	useEffect(() => {
+		let isMounted = true;
+
+		const checkRecoverySession = async () => {
+			const { data, error } = await supabase.auth.getSession();
+			if (!isMounted) return;
+
+			if (error) {
+				toast.error(error.message);
+				setHasRecoverySession(false);
+				setIsCheckingRecovery(false);
+				return;
+			}
+
+			setHasRecoverySession(Boolean(data.session));
+			setIsCheckingRecovery(false);
+		};
+
+		void checkRecoverySession();
+
+		const {
+			data: { subscription },
+		} = supabase.auth.onAuthStateChange((event, session) => {
+			if (!isMounted) return;
+
+			if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+				setHasRecoverySession(Boolean(session));
+				setIsCheckingRecovery(false);
+			}
+		});
+
+		return () => {
+			isMounted = false;
+			subscription.unsubscribe();
+		};
+	}, []);
+
+	const handleResetPassword = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (password !== confirmPassword) {
-			alert("Mật khẩu xác nhận không khớp");
+		if (!hasRecoverySession) {
+			toast.error("Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
 			return;
 		}
+		if (password !== confirmPassword) {
+			toast.error("Mật khẩu xác nhận không khớp");
+			return;
+		}
+		if (password.length < 6) {
+			toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+			return;
+		}
+
 		setIsLoading(true);
-		setTimeout(() => {
-			console.log("Password reset for:", email, "New Password:", password);
+
+		const { error } = await supabase.auth.updateUser({ password });
+
+		if (error) {
+			toast.error(error.message);
 			setIsLoading(false);
-			router.push("/login");
-		}, 1000);
+			return;
+		}
+
+		toast.success("Đặt lại mật khẩu thành công. Bạn có thể đăng nhập lại.");
+		setIsLoading(false);
+		router.push("/login");
 	};
 
 	return (
@@ -44,43 +101,60 @@ function ResetPasswordContent() {
 				<CardTitle className="text-2xl font-bold tracking-tight">
 					Đặt lại mật khẩu
 				</CardTitle>
-				<CardDescription>Nhập mật khẩu mới của bạn bên dưới</CardDescription>
+				<CardDescription>
+					{isCheckingRecovery
+						? "Đang xác minh liên kết đặt lại mật khẩu..."
+						: hasRecoverySession
+							? "Nhập mật khẩu mới của bạn bên dưới"
+							: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."}
+				</CardDescription>
 			</CardHeader>
 			<CardContent className="grid gap-4">
-				<form onSubmit={handleResetPassword} className="grid gap-4">
-					<div className="grid gap-2">
-						<Label htmlFor="password">Mật khẩu mới</Label>
-						<Input
-							id="password"
-							type="password"
-							placeholder="••••••••"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							required
-							className="bg-background/50"
-						/>
+				{hasRecoverySession ? (
+					<form onSubmit={handleResetPassword} className="grid gap-4">
+						<div className="grid gap-2">
+							<Label htmlFor="password">Mật khẩu mới</Label>
+							<Input
+								id="password"
+								type="password"
+								placeholder="••••••••"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+								className="bg-background/50"
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+							<Input
+								id="confirmPassword"
+								type="password"
+								placeholder="••••••••"
+								value={confirmPassword}
+								onChange={(e) => setConfirmPassword(e.target.value)}
+								required
+								className="bg-background/50"
+							/>
+						</div>
+						<Button
+							type="submit"
+							className="w-full"
+							disabled={isLoading || isCheckingRecovery}
+						>
+							{isLoading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
+						</Button>
+					</form>
+				) : (
+					<div className="rounded-xl border border-border bg-card/60 p-4 text-sm text-muted-foreground">
+						Vui lòng yêu cầu một liên kết mới từ trang quên mật khẩu trước khi
+						tiếp tục.
 					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
-						<Input
-							id="confirmPassword"
-							type="password"
-							placeholder="••••••••"
-							value={confirmPassword}
-							onChange={(e) => setConfirmPassword(e.target.value)}
-							required
-							className="bg-background/50"
-						/>
-					</div>
-					<Button type="submit" className="w-full" disabled={isLoading}>
-						{isLoading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
-					</Button>
-				</form>
+				)}
 			</CardContent>
 			<CardFooter className="flex justify-center">
 				<Link
 					href="/login"
-					className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+					className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
 				>
 					<ArrowLeft className="mr-2 h-4 w-4" />
 					Quay lại đăng nhập
@@ -92,10 +166,8 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
 	return (
-		<div className="flex min-h-screen items-center justify-center w-full p-4">
-			<Suspense fallback={<div>Đang tải...</div>}>
-				<ResetPasswordContent />
-			</Suspense>
+		<div className="flex min-h-screen w-full items-center justify-center p-4">
+			<ResetPasswordContent />
 		</div>
 	);
 }
