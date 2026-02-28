@@ -175,7 +175,7 @@ export default function OnboardingPage() {
 			return;
 		}
 		if (!isLoadingProfile && isProfileComplete(profile)) {
-			router.replace("/profile?tab=settings&section=general");
+			router.replace("/profile/settings?section=general");
 		}
 	}, [user, isLoadingProfile, profile, router]);
 
@@ -226,7 +226,7 @@ export default function OnboardingPage() {
 
 			await queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
 			toast.success("Hoàn tất thiết lập hồ sơ");
-			router.replace("/profile?tab=settings&section=general");
+			router.replace("/profile/settings?section=general");
 		} catch (error: any) {
 			toast.error(error?.message ?? "Lưu hồ sơ khởi tạo thất bại");
 		} finally {

@@ -1,34 +1,19 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import useProfile, {
-	MY_PROFILE_QUERY_KEY,
-	UserProfile,
-} from "@/hooks/useProfile";
+import useProfile, { UserProfile } from "@/hooks/useProfile";
 import { createClient } from "@/utils/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
 	ProfileHeader,
 	ProfileStat,
 	ProfileTab,
 } from "@/components/shared/ProfileHeader";
-import {
-	SettingsLayout,
-	SettingsMenuItem,
-} from "@/components/shared/SettingsLayout";
-import { GeneralSettingsForm } from "@/components/shared/GeneralSettingsForm";
-import { PrivacySettingsForm } from "@/components/shared/PrivacySettingsForm";
-import { AccountSettings } from "@/components/shared/AccountSettings";
-import { ThemeSettings } from "@/components/shared/ThemeSettings";
 import { PostCard } from "@/components/feed/PostCard";
 import { SuggestedFriendsFacebookCard } from "@/components/shared/SuggestedFriendsFacebookCard";
-import {
-	AvatarCategoryKey,
-	getAvatarCategoryForUrl,
-} from "@/lib/avatar-options";
-import { getZodiacSign } from "@/lib/zodiac";
 import { toast } from "sonner";
 import { PostWithAuthor } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
@@ -56,22 +41,11 @@ const supabase = createClient();
 
 const profileTabs: ProfileTab[] = [
 	{ label: "Bài viết của tôi", value: "my-posts" },
-	{ label: "Bài viết đã lưu", value: "saved-posts" },
-	{ label: "Cài đặt", value: "settings" },
+	{ label: "Bài viết đã thích", value: "liked-posts" },
+	{ label: "Bài viết đã repost", value: "reposted-posts" },
 ];
 
-const visitorTabs: ProfileTab[] = [
-	{ label: "Bài viết", value: "my-posts" },
-	{ label: "Bài viết đã lưu", value: "saved-posts" },
-];
-
-const settingsMenuItems: SettingsMenuItem[] = [
-	{ label: "Chung", value: "general" },
-	{ label: "Riêng tư", value: "privacy" },
-	{ label: "Giao diện", value: "appearance" },
-	{ label: "Tài khoản", value: "account" },
-	{ label: "Đăng xuất", value: "logout" },
-];
+const visitorTabs: ProfileTab[] = [{ label: "Bài viết", value: "my-posts" }];
 
 const formatBirthDateByPrivacy = (
 	value?: string | null,
@@ -102,23 +76,16 @@ function ProfilePageContent() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const queryClient = useQueryClient();
 	const requestedProfileId = searchParams.get("userId");
 	const isOwnProfile = !requestedProfileId || requestedProfileId === user?.id;
 	const profileId = isOwnProfile ? user?.id : requestedProfileId;
 	const [activeTab, setActiveTab] = useState(
-		searchParams.get("tab") === "settings" && isOwnProfile
-			? "settings"
-			: searchParams.get("tab") === "saved-posts"
-				? "saved-posts"
+		searchParams.get("tab") === "liked-posts"
+				? "liked-posts"
+				: searchParams.get("tab") === "reposted-posts"
+					? "reposted-posts"
 				: "my-posts",
 	);
-	const [settingsTab, setSettingsTab] = useState(
-		searchParams.get("section") ?? "general",
-	);
-	const [selectedAvatar, setSelectedAvatar] = useState("");
-	const [selectedAvatarCategory, setSelectedAvatarCategory] =
-		useState<AvatarCategoryKey>("people");
 	const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 	const [reportReason, setReportReason] = useState("harassment");
 	const [reportEvidenceUrl, setReportEvidenceUrl] = useState<string | null>(
@@ -144,15 +111,39 @@ function ProfilePageContent() {
 	});
 
 	const profile = isOwnProfile ? myProfile : visitedProfile;
-	const effectiveAvatar = selectedAvatar || profile?.avatar_url || "";
-	const effectiveAvatarCategory = selectedAvatar
-		? selectedAvatarCategory
-		: getAvatarCategoryForUrl(profile?.avatar_url);
 	const shouldHidePrivateInfo =
 		!isOwnProfile && (profile?.is_public ?? true) === false;
 
-	const effectiveActiveTab =
-		!isOwnProfile && activeTab === "settings" ? "my-posts" : activeTab;
+	const effectiveActiveTab = !isOwnProfile ? "my-posts" : activeTab;
+
+	useEffect(() => {
+		if (
+			isOwnProfile &&
+			searchParams.get("tab") === "settings"
+		) {
+			const section = searchParams.get("section");
+			router.replace(
+				section
+					? `/profile/settings?section=${encodeURIComponent(section)}`
+					: "/profile/settings",
+			);
+			return;
+		}
+
+		if (isOwnProfile) return;
+
+		const currentTab = searchParams.get("tab");
+		const currentSection = searchParams.get("section");
+
+		if (!currentTab && !currentSection) return;
+
+		const nextParams = new URLSearchParams(searchParams.toString());
+		nextParams.delete("tab");
+		nextParams.delete("section");
+
+		const nextQuery = nextParams.toString();
+		router.replace(nextQuery ? `/profile?${nextQuery}` : "/profile");
+	}, [isOwnProfile, router, searchParams]);
 
 	const { data: myPosts = [] } = useQuery({
 		queryKey: ["my-posts", profileId],
@@ -173,22 +164,42 @@ function ProfilePageContent() {
 			!shouldHidePrivateInfo,
 	});
 
-	const { data: savedPosts = [] } = useQuery({
-		queryKey: ["saved-posts", user?.id],
+	const { data: likedPosts = [] } = useQuery({
+		queryKey: ["liked-posts", user?.id],
 		queryFn: async () => {
 			if (!user) return [];
-			const { data } = await supabase
+			const { data, error } = await supabase
 				.from("likes")
 				.select(
-					"*, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role))",
+					"created_at, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role))",
 				)
 				.eq("user_id", user.id)
 				.order("created_at", { ascending: false });
+			if (error) throw error;
 			return (data ?? [])
-				.map((s) => s.posts)
+				.map((item: any) => item.posts)
 				.filter(Boolean) as PostWithAuthor[];
 		},
-		enabled: !!user && isOwnProfile && effectiveActiveTab === "saved-posts",
+		enabled: !!user && isOwnProfile && effectiveActiveTab === "liked-posts",
+	});
+
+	const { data: repostedPosts = [] } = useQuery({
+		queryKey: ["reposted-posts", user?.id],
+		queryFn: async () => {
+			if (!user) return [];
+			const { data, error } = await supabase
+				.from("post_reposts")
+				.select(
+					"created_at, posts!post_reposts_post_id_fkey(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role))",
+				)
+				.eq("reposter_id", user.id)
+				.order("created_at", { ascending: false });
+			if (error) throw error;
+			return (data ?? [])
+				.map((item: any) => item.posts)
+				.filter(Boolean) as PostWithAuthor[];
+		},
+		enabled: !!user && isOwnProfile && effectiveActiveTab === "reposted-posts",
 	});
 
 	const { data: suggestedFriends = [] } = useQuery({
@@ -266,86 +277,6 @@ function ProfilePageContent() {
 					),
 				},
 			];
-
-	const handleSaveGeneral = async (values: {
-		display_name: string;
-		bio: string;
-		avatarUrl: string;
-		location: string;
-	}) => {
-		if (!user) return;
-
-		const { error } = await supabase
-			.from("profiles")
-			.update({
-				display_name: values.display_name,
-				bio: values.bio || null,
-				avatar_url: values.avatarUrl || null,
-				location: values.location || null,
-			})
-			.eq("id", user.id);
-
-		if (error) {
-			toast.error("Không thể lưu cài đặt");
-		} else {
-			toast.success("Đã lưu cài đặt thành công");
-			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
-		}
-	};
-
-	const handleSavePrivacy = async (values: {
-		birth_date: string;
-		birth_visibility: string;
-		relationship: string;
-		is_public: boolean;
-	}) => {
-		if (!user) return;
-
-		const isSwitchingToPublic =
-			(myProfile?.is_public ?? true) === false && values.is_public;
-		if (isSwitchingToPublic) {
-			const confirmed = window.confirm(
-				"Chuyển sang công khai sẽ làm thông tin hồ sơ hiển thị với người khác. Tiếp tục?",
-			);
-			if (!confirmed) {
-				toast("Hồ sơ của bạn vẫn ở chế độ riêng tư.");
-				return;
-			}
-		}
-
-		const { error } = await supabase
-			.from("profiles")
-			.update({
-				birth_date: values.birth_date || null,
-				birth_visibility: values.birth_visibility || "full",
-				relationship: values.relationship || "private",
-				zodiac: values.birth_date ? getZodiacSign(values.birth_date) : null,
-				is_public: values.is_public,
-			})
-			.eq("id", user.id);
-
-		if (error) {
-			toast.error("Không thể lưu cài đặt");
-		} else {
-			toast.success("Đã lưu cài đặt thành công");
-			queryClient.invalidateQueries({ queryKey: [MY_PROFILE_QUERY_KEY] });
-		}
-	};
-
-	const handleDeleteAccount = async () => {
-		toast.error(
-			"Xóa tài khoản cần quản trị viên xử lý. Vui lòng liên hệ hỗ trợ.",
-		);
-	};
-
-	const handleSettingsMenuChange = (value: string) => {
-		if (value === "logout") {
-			supabase.auth.signOut();
-			window.location.href = "/login";
-			return;
-		}
-		setSettingsTab(value);
-	};
 
 	const handleSendMessage = async () => {
 		if (!user) {
@@ -482,7 +413,11 @@ function ProfilePageContent() {
 						: formatRelationship(profile?.relationship)
 				}
 				actionSlot={
-					!isOwnProfile ? (
+					isOwnProfile ? (
+						<Button asChild size="sm" variant="outline" className="rounded-full">
+							<Link href="/profile/settings?section=general">Cài đặt</Link>
+						</Button>
+					) : (
 						<div className="flex items-center gap-2">
 							<Button
 								onClick={handleSendMessage}
@@ -500,7 +435,7 @@ function ProfilePageContent() {
 								Báo cáo
 							</Button>
 						</div>
-					) : undefined
+					)
 				}
 				stats={stats}
 				tabs={isOwnProfile ? profileTabs : visitorTabs}
@@ -545,73 +480,40 @@ function ProfilePageContent() {
 				</div>
 			)}
 
-			{!isOwnProfile && effectiveActiveTab === "saved-posts" && (
+			{isOwnProfile && effectiveActiveTab === "liked-posts" && (
 				<div className="space-y-4">
-					<div className="rounded-2xl border border-border bg-card py-16 text-center">
-						<p className="text-base font-medium text-muted-foreground">
-							{shouldHidePrivateInfo
-								? "Đây là hồ sơ riêng tư"
-								: "Bài viết đã lưu là riêng tư"}
-						</p>
-					</div>
-				</div>
-			)}
-
-			{isOwnProfile && effectiveActiveTab === "saved-posts" && (
-				<div className="space-y-4">
-					{savedPosts.length === 0 ? (
+					{likedPosts.length === 0 ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
-								Chưa có bài viết đã lưu
+								Chưa có bài viết đã thích
 							</p>
 							<p className="mt-1 text-sm text-muted-foreground/70">
-								Lưu bài viết từ bảng tin để xem lại sau
+								Thả tim bài viết từ bảng tin để xem lại tại đây
 							</p>
 						</div>
 					) : (
-						savedPosts.map((post) => <PostCard key={post.id} post={post} />)
+						likedPosts.map((post) => <PostCard key={post.id} post={post} />)
 					)}
 				</div>
 			)}
 
-			{isOwnProfile && effectiveActiveTab === "settings" && (
-				<SettingsLayout
-					menuItems={settingsMenuItems}
-					activeItem={settingsTab}
-					onMenuChange={handleSettingsMenuChange}
-				>
-					{settingsTab === "general" && (
-						<GeneralSettingsForm
-							key={`${profile?.id ?? "profile"}-${profile?.updated_at ?? "init"}`}
-							initialValues={{
-								display_name: profile?.display_name ?? "",
-								bio: profile?.bio ?? "",
-								location: profile?.location ?? "",
-							}}
-							selectedAvatar={effectiveAvatar}
-							selectedAvatarCategory={effectiveAvatarCategory}
-							onAvatarSelect={setSelectedAvatar}
-							onAvatarCategoryChange={setSelectedAvatarCategory}
-							onSave={handleSaveGeneral}
-						/>
+			{isOwnProfile && effectiveActiveTab === "reposted-posts" && (
+				<div className="space-y-4">
+					{repostedPosts.length === 0 ? (
+						<div className="rounded-2xl border border-border bg-card py-16 text-center">
+							<p className="text-base font-medium text-muted-foreground">
+								Chưa có bài viết đã repost
+							</p>
+							<p className="mt-1 text-sm text-muted-foreground/70">
+								Repost bài viết từ bảng tin để xem lại tại đây
+							</p>
+						</div>
+					) : (
+						repostedPosts.map((post) => (
+							<PostCard key={post.id} post={post} />
+						))
 					)}
-					{settingsTab === "privacy" && (
-						<PrivacySettingsForm
-							key={`${profile?.id ?? "profile"}-${profile?.updated_at ?? "init"}-privacy`}
-							initialValues={{
-								birth_date: profile?.birth_date ?? "",
-								birth_visibility: profile?.birth_visibility ?? "full",
-								relationship: profile?.relationship ?? "private",
-								is_public: profile?.is_public,
-							}}
-							onSave={handleSavePrivacy}
-						/>
-					)}
-					{settingsTab === "account" && (
-						<AccountSettings onDeleteAccount={handleDeleteAccount} />
-					)}
-					{settingsTab === "appearance" && <ThemeSettings />}
-				</SettingsLayout>
+				</div>
 			)}
 
 			<Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>

@@ -38,7 +38,7 @@ export function ThemeProfileBanner() {
 					<p className="leading-6">
 						Bạn có thể đổi giao diện của website trong{" "}
 						<Link
-							href="/profile?tab=settings&section=appearance"
+							href="/profile/settings?section=appearance"
 							className="font-semibold text-primary underline underline-offset-4"
 						>
 							Profile

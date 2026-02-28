@@ -428,7 +428,7 @@ export function PostCard({ post }: PostCardProps) {
 			}
 
 			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
-			queryClient.invalidateQueries({ queryKey: ["saved-posts", user.id] });
+			queryClient.invalidateQueries({ queryKey: ["liked-posts", user.id] });
 			queryClient.invalidateQueries({
 				queryKey: ["post-liked-by-me", post.id, user.id],
 			});
@@ -501,6 +501,7 @@ export function PostCard({ post }: PostCardProps) {
 			queryClient.invalidateQueries({
 				queryKey: ["post-reposted-by-me", post.id, user.id],
 			});
+			queryClient.invalidateQueries({ queryKey: ["reposted-posts", user.id] });
 		} catch {
 			toast.error("Failed to repost");
 		} finally {
