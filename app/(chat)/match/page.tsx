@@ -20,6 +20,8 @@ import { toast } from "sonner";
 const supabase = createClient();
 const MIN_WAIT_SECONDS = 60;
 const POLL_INTERVAL_MS = 5000;
+const MATCH_SESSION_RETRY_COUNT = 3;
+const MATCH_SESSION_RETRY_DELAY_MS = 300;
 
 type MatchStatus = "options" | "loading" | "active";
 type MatchSessionView =
@@ -43,13 +45,30 @@ export default function MatchPage() {
 	const loadMatchSession = useEffectEvent(async (matchedId: string) => {
 		if (!user) return false;
 
-		const { data: session, error: sessionError } = await supabase
-			.rpc("get_chat_session_for_viewer", {
-				target_session_id: matchedId,
-			})
-			.maybeSingle();
-		if (sessionError || !session) {
-			throw sessionError ?? new Error("Matched session not found");
+		let session: MatchSessionView | null = null;
+
+		for (let attempt = 0; attempt < MATCH_SESSION_RETRY_COUNT; attempt += 1) {
+			const { data, error: sessionError } = await supabase
+				.rpc("get_chat_session_for_viewer", {
+					target_session_id: matchedId,
+				})
+				.maybeSingle();
+			if (sessionError) {
+				throw sessionError;
+			}
+			if (data) {
+				session = data as MatchSessionView;
+				break;
+			}
+			if (attempt < MATCH_SESSION_RETRY_COUNT - 1) {
+				await new Promise((resolve) =>
+					window.setTimeout(resolve, MATCH_SESSION_RETRY_DELAY_MS),
+				);
+			}
+		}
+
+		if (!session) {
+			return false;
 		}
 		if (session.session_type !== "match") {
 			console.warn("Ignoring non-match session returned by find_match_v2", {
