@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -29,7 +29,7 @@ function removeHashFromUrl() {
 	);
 }
 
-export default function AuthCompletePage() {
+function AuthCompleteContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isLoading, setIsLoading] = useState(true);
@@ -146,5 +146,28 @@ export default function AuthCompletePage() {
 				) : null}
 			</Card>
 		</div>
+	);
+}
+
+export default function AuthCompletePage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex min-h-screen w-full items-center justify-center p-4">
+					<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm">
+						<CardHeader className="text-center">
+							<CardTitle className="text-2xl font-bold tracking-tight">
+								Hoàn tất xác thực
+							</CardTitle>
+							<CardDescription>
+								Đang xác minh liên kết của bạn...
+							</CardDescription>
+						</CardHeader>
+					</Card>
+				</div>
+			}
+		>
+			<AuthCompleteContent />
+		</Suspense>
 	);
 }
