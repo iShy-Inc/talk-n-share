@@ -48,6 +48,21 @@ const describeError = (error: unknown) => {
 	return String(error);
 };
 
+const clearMatchingQueueForUser = async (userId: string) => {
+	const { data, error } = await supabase.rpc("remove_matching_queue_for_viewer");
+	if (!error && data) {
+		return;
+	}
+
+	const { error: deleteError } = await supabase
+		.from("matching_queue")
+		.delete()
+		.eq("user_id", userId);
+	if (deleteError) {
+		throw deleteError;
+	}
+};
+
 export default function MatchPage() {
 	const user = useAuthStore((state) => state.user);
 	const router = useRouter();
@@ -258,7 +273,15 @@ export default function MatchPage() {
 
 	const handleCancelMatching = async () => {
 		if (!user) return;
-		await supabase.rpc("remove_matching_queue_for_viewer");
+		try {
+			await clearMatchingQueueForUser(user.id);
+		} catch (error) {
+			console.error("Failed to clear matching queue on cancel:", {
+				error,
+				userId: user.id,
+				errorMessage: describeError(error),
+			});
+		}
 		setPendingCriteria(null);
 		setElapsedSeconds(0);
 		setStatus("options");
@@ -296,6 +319,13 @@ export default function MatchPage() {
 				});
 				if (isDisposed) return;
 				toast.error(`Hiện tại chưa thể ghép đôi: ${errorMessage}`);
+				void clearMatchingQueueForUser(user.id).catch((queueError) => {
+					console.error("Failed to clear matching queue after match error:", {
+						error: queueError,
+						userId: user.id,
+						errorMessage: describeError(queueError),
+					});
+				});
 				setStatus("options");
 				setPendingCriteria(null);
 				setElapsedSeconds(0);
@@ -313,17 +343,27 @@ export default function MatchPage() {
 			if (isDisposed) return;
 			setElapsedSeconds(elapsed);
 
-			if (elapsed >= MIN_WAIT_SECONDS) {
-				isDisposed = true;
-				void supabase.rpc("remove_matching_queue_for_viewer");
-				toast("Không tìm thấy người phù hợp trong 60 giây. Hãy thử lại.");
-				setStatus("options");
-				setPendingCriteria(null);
-				setElapsedSeconds(0);
-				window.clearInterval(pollId);
-				window.clearInterval(tickerId);
-			}
-		}, 1000);
+				if (elapsed >= MIN_WAIT_SECONDS) {
+					isDisposed = true;
+					window.clearInterval(pollId);
+					window.clearInterval(tickerId);
+					void (async () => {
+						try {
+							await clearMatchingQueueForUser(user.id);
+						} catch (error) {
+							console.error("Failed to clear matching queue after timeout:", {
+								error,
+								userId: user.id,
+								errorMessage: describeError(error),
+							});
+						}
+						toast("Không tìm thấy người phù hợp trong 60 giây. Hãy thử lại.");
+						setStatus("options");
+						setPendingCriteria(null);
+						setElapsedSeconds(0);
+					})();
+				}
+			}, 1000);
 
 		return () => {
 			isDisposed = true;

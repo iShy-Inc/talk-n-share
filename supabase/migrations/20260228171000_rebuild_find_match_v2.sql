@@ -124,26 +124,82 @@ begin
 			or candidate_profile.gender::text = normalized_gender
 		)
 		and (
-			normalized_region is null
-			or candidate_profile.location = normalized_region
-		)
-		and (
-			normalized_zodiac is null
-			or candidate_profile.zodiac = normalized_zodiac
+			(normalized_gender is null and normalized_region is null and normalized_zodiac is null)
+			or (
+				(normalized_gender is not null and candidate_profile.gender::text = normalized_gender)
+				or (normalized_region is not null and candidate_profile.location = normalized_region)
+				or (normalized_zodiac is not null and candidate_profile.zodiac = normalized_zodiac)
+			)
 		)
 		and (
 			q.target_gender is null
 			or current_profile.gender::text = q.target_gender
 		)
 		and (
-			q.target_region is null
-			or current_profile.location = q.target_region
+			(q.target_gender is null and q.target_region is null and q.target_zodiac is null)
+			or (
+				(q.target_gender is not null and current_profile.gender::text = q.target_gender)
+				or (q.target_region is not null and current_profile.location = q.target_region)
+				or (q.target_zodiac is not null and current_profile.zodiac = q.target_zodiac)
+			)
 		)
-		and (
-			q.target_zodiac is null
-			or current_profile.zodiac = q.target_zodiac
-		)
-	order by q.created_at asc nulls first, q.user_id asc
+	order by
+		(
+			case
+				when normalized_gender is not null and candidate_profile.gender::text = normalized_gender then 1
+				else 0
+			end
+			+ case
+				when normalized_region is not null and candidate_profile.location = normalized_region then 1
+				else 0
+			end
+			+ case
+				when normalized_zodiac is not null and candidate_profile.zodiac = normalized_zodiac then 1
+				else 0
+			end
+		) desc,
+		(
+			case
+				when q.target_gender is not null and current_profile.gender::text = q.target_gender then 1
+				else 0
+			end
+			+ case
+				when q.target_region is not null and current_profile.location = q.target_region then 1
+				else 0
+			end
+			+ case
+				when q.target_zodiac is not null and current_profile.zodiac = q.target_zodiac then 1
+				else 0
+			end
+		) desc,
+		(
+			case
+				when normalized_gender is not null and candidate_profile.gender::text = normalized_gender then 1
+				else 0
+			end
+			+ case
+				when normalized_region is not null and candidate_profile.location = normalized_region then 1
+				else 0
+			end
+			+ case
+				when normalized_zodiac is not null and candidate_profile.zodiac = normalized_zodiac then 1
+				else 0
+			end
+			+ case
+				when q.target_gender is not null and current_profile.gender::text = q.target_gender then 1
+				else 0
+			end
+			+ case
+				when q.target_region is not null and current_profile.location = q.target_region then 1
+				else 0
+			end
+			+ case
+				when q.target_zodiac is not null and current_profile.zodiac = q.target_zodiac then 1
+				else 0
+			end
+		) desc,
+		q.created_at asc nulls first,
+		q.user_id asc
 	limit 1
 	for update skip locked;
 
