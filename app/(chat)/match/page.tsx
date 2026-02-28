@@ -16,6 +16,7 @@ import type { Database } from "@/types/supabase";
 import { Button } from "@/components/ui/button";
 import { IconHome, IconMessage } from "@tabler/icons-react";
 import { toast } from "sonner";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 const supabase = createClient();
 const MIN_WAIT_SECONDS = 60;
@@ -26,6 +27,26 @@ const MATCH_SESSION_RETRY_DELAY_MS = 300;
 type MatchStatus = "options" | "loading" | "active";
 type MatchSessionView =
 	Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number];
+
+const describeError = (error: unknown) => {
+	if (!error) return "Unknown error";
+	if (typeof error === "object" && error !== null) {
+		const candidate = error as Partial<PostgrestError> & { message?: string };
+		const parts = [
+			candidate.code,
+			candidate.message,
+			candidate.details,
+			candidate.hint,
+		].filter(Boolean);
+		if (parts.length > 0) {
+			return parts.join(" | ");
+		}
+	}
+	if (error instanceof Error) {
+		return error.message;
+	}
+	return String(error);
+};
 
 export default function MatchPage() {
 	const user = useAuthStore((state) => state.user);
@@ -220,8 +241,14 @@ export default function MatchPage() {
 		try {
 			await syncMatchingQueue(criteria);
 		} catch (error) {
-			console.error("Failed to sync matching queue:", error);
-			toast.error("Không thể bắt đầu tìm kiếm ghép đôi.");
+			const errorMessage = describeError(error);
+			console.error("Failed to sync matching queue:", {
+				error,
+				criteria,
+				userId: user.id,
+				errorMessage,
+			});
+			toast.error(`Không thể bắt đầu tìm kiếm ghép đôi: ${errorMessage}`);
 			return;
 		}
 		setPendingCriteria(criteria);
@@ -260,9 +287,15 @@ export default function MatchPage() {
 					await loadMatchSession(matchedId);
 				}
 			} catch (error) {
-				console.error("Matching error:", error);
+				const errorMessage = describeError(error);
+				console.error("Matching error:", {
+					error,
+					errorMessage,
+					userId: user.id,
+					pendingCriteria,
+				});
 				if (isDisposed) return;
-				toast.error("Hiện tại chưa thể ghép đôi.");
+				toast.error(`Hiện tại chưa thể ghép đôi: ${errorMessage}`);
 				setStatus("options");
 				setPendingCriteria(null);
 				setElapsedSeconds(0);
