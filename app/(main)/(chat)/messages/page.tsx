@@ -150,6 +150,7 @@ function MessagesPageContent() {
 						userId: otherId,
 						name: otherProfile?.display_name ?? "Người dùng",
 						avatar: otherProfile?.avatar_url ?? undefined,
+						sessionType: session.type,
 						lastMessage: latest?.content ?? "",
 						latestMessageAt: latest?.created_at ?? session.created_at,
 						latestReceivedAt: latestReceived?.created_at ?? null,

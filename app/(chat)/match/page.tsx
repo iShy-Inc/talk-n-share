@@ -77,6 +77,13 @@ export default function MatchPage() {
 			if (sessionError || !session) {
 				throw sessionError ?? new Error("Matched session not found");
 			}
+			if (session.type !== "match") {
+				console.warn("Ignoring non-match session returned by find_match_v2", {
+					matchedId,
+					type: session.type,
+				});
+				return false;
+			}
 
 			const partnerId =
 				session.user1_id === user.id ? session.user2_id : session.user1_id;
@@ -94,6 +101,7 @@ export default function MatchPage() {
 			setPendingCriteria(null);
 			setElapsedSeconds(0);
 			setStatus("active");
+			return true;
 		};
 
 		const tryFindMatch = async () => {

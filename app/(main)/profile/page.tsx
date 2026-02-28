@@ -45,7 +45,11 @@ const profileTabs: ProfileTab[] = [
 	{ label: "Bài viết đã repost", value: "reposted-posts" },
 ];
 
-const visitorTabs: ProfileTab[] = [{ label: "Bài viết", value: "my-posts" }];
+const visitorTabs: ProfileTab[] = [
+	{ label: "Bài viết", value: "my-posts" },
+	{ label: "Bài viết đã thích", value: "liked-posts" },
+	{ label: "Bài viết đã repost", value: "reposted-posts" },
+];
 
 const formatBirthDateByPrivacy = (
 	value?: string | null,
@@ -79,13 +83,13 @@ function ProfilePageContent() {
 	const requestedProfileId = searchParams.get("userId");
 	const isOwnProfile = !requestedProfileId || requestedProfileId === user?.id;
 	const profileId = isOwnProfile ? user?.id : requestedProfileId;
-	const [activeTab, setActiveTab] = useState(
+	const requestedTab =
 		searchParams.get("tab") === "liked-posts"
-				? "liked-posts"
-				: searchParams.get("tab") === "reposted-posts"
-					? "reposted-posts"
-				: "my-posts",
-	);
+			? "liked-posts"
+			: searchParams.get("tab") === "reposted-posts"
+				? "reposted-posts"
+				: "my-posts";
+	const [activeTab, setActiveTab] = useState(requestedTab);
 	const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 	const [reportReason, setReportReason] = useState("harassment");
 	const [reportEvidenceUrl, setReportEvidenceUrl] = useState<string | null>(
@@ -142,14 +146,17 @@ function ProfilePageContent() {
 		!isLoadingVisitedProfile &&
 		(visitedProfile === null || (profile?.is_public ?? true) === false);
 	const isPrivateStatePending = !isOwnProfile && isLoadingVisitedProfile;
+	const canViewActivityTabs =
+		isOwnProfile || (!isPrivateStatePending && !shouldHidePrivateInfo);
 
-	const effectiveActiveTab = !isOwnProfile ? "my-posts" : activeTab;
+	const effectiveActiveTab = canViewActivityTabs ? activeTab : "my-posts";
 
 	useEffect(() => {
-		if (
-			isOwnProfile &&
-			searchParams.get("tab") === "settings"
-		) {
+		setActiveTab(requestedTab);
+	}, [requestedProfileId, requestedTab]);
+
+	useEffect(() => {
+		if (isOwnProfile && searchParams.get("tab") === "settings") {
 			const section = searchParams.get("section");
 			router.replace(
 				section
@@ -159,15 +166,10 @@ function ProfilePageContent() {
 			return;
 		}
 
-		if (isOwnProfile) return;
-
-		const currentTab = searchParams.get("tab");
 		const currentSection = searchParams.get("section");
-
-		if (!currentTab && !currentSection) return;
+		if (!currentSection) return;
 
 		const nextParams = new URLSearchParams(searchParams.toString());
-		nextParams.delete("tab");
 		nextParams.delete("section");
 
 		const nextQuery = nextParams.toString();
@@ -201,15 +203,15 @@ function ProfilePageContent() {
 	});
 
 	const { data: likedPosts = [] } = useQuery({
-		queryKey: ["liked-posts", user?.id],
+		queryKey: ["liked-posts", profileId],
 		queryFn: async () => {
-			if (!user) return [];
+			if (!profileId) return [];
 			const { data, error } = await supabase
 				.from("likes")
 				.select(
 					"created_at, posts(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role))",
 				)
-				.eq("user_id", user.id)
+				.eq("user_id", profileId)
 				.order("created_at", { ascending: false });
 			if (error) throw error;
 			return (data ?? [])
@@ -226,19 +228,23 @@ function ProfilePageContent() {
 				})
 				.filter(Boolean) as PostWithAuthor[];
 		},
-		enabled: !!user && isOwnProfile && effectiveActiveTab === "liked-posts",
+		enabled:
+			!!profileId &&
+			canViewActivityTabs &&
+			effectiveActiveTab === "liked-posts" &&
+			!isPrivateStatePending,
 	});
 
 	const { data: repostedPosts = [] } = useQuery({
-		queryKey: ["reposted-posts", user?.id],
+		queryKey: ["reposted-posts", profileId],
 		queryFn: async () => {
-			if (!user) return [];
+			if (!profileId) return [];
 			const { data, error } = await supabase
 				.from("post_reposts")
 				.select(
 					"created_at, posts!post_reposts_post_id_fkey(*, profiles!posts_author_id_fkey(display_name, avatar_url, is_public, role))",
 				)
-				.eq("reposter_id", user.id)
+				.eq("reposter_id", profileId)
 				.order("created_at", { ascending: false });
 			if (error) throw error;
 			return (data ?? [])
@@ -255,7 +261,11 @@ function ProfilePageContent() {
 				})
 				.filter(Boolean) as PostWithAuthor[];
 		},
-		enabled: !!user && isOwnProfile && effectiveActiveTab === "reposted-posts",
+		enabled:
+			!!profileId &&
+			canViewActivityTabs &&
+			effectiveActiveTab === "reposted-posts" &&
+			!isPrivateStatePending,
 	});
 
 	const { data: suggestedFriends = [] } = useQuery({
@@ -490,7 +500,7 @@ function ProfilePageContent() {
 					)
 				}
 				stats={stats}
-				tabs={isOwnProfile ? profileTabs : visitorTabs}
+				tabs={canViewActivityTabs ? (isOwnProfile ? profileTabs : visitorTabs) : []}
 				activeTab={effectiveActiveTab}
 				onTabChange={setActiveTab}
 			/>
@@ -538,16 +548,18 @@ function ProfilePageContent() {
 				</div>
 			)}
 
-			{isOwnProfile && effectiveActiveTab === "liked-posts" && (
+			{canViewActivityTabs && effectiveActiveTab === "liked-posts" && (
 				<div className="space-y-4">
 					{likedPosts.length === 0 ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
 								Chưa có bài viết đã thích
 							</p>
-							<p className="mt-1 text-sm text-muted-foreground/70">
-								Thả tim bài viết từ bảng tin để xem lại tại đây
-							</p>
+							{isOwnProfile && (
+								<p className="mt-1 text-sm text-muted-foreground/70">
+									Thả tim bài viết từ bảng tin để xem lại tại đây
+								</p>
+							)}
 						</div>
 					) : (
 						likedPosts.map((post) => <PostCard key={post.id} post={post} />)
@@ -555,16 +567,18 @@ function ProfilePageContent() {
 				</div>
 			)}
 
-			{isOwnProfile && effectiveActiveTab === "reposted-posts" && (
+			{canViewActivityTabs && effectiveActiveTab === "reposted-posts" && (
 				<div className="space-y-4">
 					{repostedPosts.length === 0 ? (
 						<div className="rounded-2xl border border-border bg-card py-16 text-center">
 							<p className="text-base font-medium text-muted-foreground">
 								Chưa có bài viết đã repost
 							</p>
-							<p className="mt-1 text-sm text-muted-foreground/70">
-								Repost bài viết từ bảng tin để xem lại tại đây
-							</p>
+							{isOwnProfile && (
+								<p className="mt-1 text-sm text-muted-foreground/70">
+									Repost bài viết từ bảng tin để xem lại tại đây
+								</p>
+							)}
 						</div>
 					) : (
 						repostedPosts.map((post) => (

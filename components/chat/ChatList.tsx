@@ -17,6 +17,7 @@ export interface ChatContact {
 	userId: string;
 	name: string;
 	avatar?: string;
+	sessionType?: string | null;
 	lastMessage?: string;
 	latestMessageAt?: string | null;
 	latestReceivedAt?: string | null;
@@ -61,6 +62,22 @@ export function ChatList({
 			hour: "2-digit",
 			minute: "2-digit",
 		});
+	};
+
+	const getSessionTypeLabel = (sessionType?: string | null) => {
+		if (sessionType === "match") return "Ghép đôi";
+		if (sessionType === "direct") return "Trực tiếp";
+		return "Khác";
+	};
+
+	const getSessionTypeClasses = (sessionType?: string | null) => {
+		if (sessionType === "match") {
+			return "bg-amber-500/15 text-amber-700 dark:text-amber-300";
+		}
+		if (sessionType === "direct") {
+			return "bg-sky-500/15 text-sky-700 dark:text-sky-300";
+		}
+		return "bg-muted text-muted-foreground";
 	};
 
 	return (
@@ -150,6 +167,14 @@ export function ChatList({
 											isPublic={contact.isPublic}
 											className="shrink-0"
 										/>
+										<span
+											className={cn(
+												"inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+												getSessionTypeClasses(contact.sessionType),
+											)}
+										>
+											{getSessionTypeLabel(contact.sessionType)}
+										</span>
 									</div>
 									<p className="mt-0.5 truncate text-xs text-muted-foreground">
 										{contact.lastMessage || "Bắt đầu cuộc trò chuyện"}

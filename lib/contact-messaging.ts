@@ -76,6 +76,7 @@ export const startOrRequestConversation = async ({
 		.or(
 			`and(user1_id.eq.${viewerId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${viewerId})`,
 		)
+		.eq("type", "direct")
 		.maybeSingle();
 
 	if (existingSessionError) throw existingSessionError;
@@ -83,26 +84,23 @@ export const startOrRequestConversation = async ({
 		return { kind: "session_ready", sessionId: existingSession.id };
 	}
 
-	const { data: newSession, error: newSessionError } = await supabase
-		.from("matches")
-		.insert({
-			user1_id: viewerId,
-			user2_id: targetUserId,
-			type: "match",
-			status: "active",
-			is_revealed: false,
-			user1_liked: false,
-			user2_liked: false,
-		})
-		.select("id")
-		.single();
+	const { data: sessionId, error: createSessionError } = await supabase.rpc(
+		"create_or_get_direct_chat",
+		{
+			target_user_id: targetUserId,
+		},
+	);
 
-	if (newSessionError) throw newSessionError;
+	if (createSessionError) throw createSessionError;
+	if (!sessionId) {
+		throw new Error("Direct chat session was not created");
+	}
+
 	await notifyConversationStarted(supabase, {
 		recipientId: targetUserId,
 		senderId: viewerId,
-		sessionId: newSession.id,
+		sessionId,
 		senderDisplayName: viewerDisplayName,
 	});
-	return { kind: "session_ready", sessionId: newSession.id };
+	return { kind: "session_ready", sessionId };
 };

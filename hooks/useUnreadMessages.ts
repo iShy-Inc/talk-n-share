@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -25,7 +24,6 @@ const getOrInitLastSeenAt = (userId: string) => {
 
 export const useUnreadMessages = () => {
 	const user = useAuthStore((state) => state.user);
-	const queryClient = useQueryClient();
 
 	const { data: unreadCount = 0 } = useQuery({
 		queryKey: ["unread-messages-count", user?.id],
@@ -55,33 +53,6 @@ export const useUnreadMessages = () => {
 		},
 		enabled: !!user,
 	});
-
-	useEffect(() => {
-		if (!user) return;
-		const channel = supabase
-			.channel(`unread-messages:${user.id}`)
-			.on(
-				"postgres_changes",
-				{
-					event: "INSERT",
-					schema: "public",
-					table: "messages",
-				},
-				(payload) => {
-					const senderId = (payload.new as { sender_id?: string }).sender_id;
-					if (senderId && senderId !== user.id) {
-						queryClient.invalidateQueries({
-							queryKey: ["unread-messages-count", user.id],
-						});
-					}
-				},
-			)
-			.subscribe();
-
-		return () => {
-			supabase.removeChannel(channel);
-		};
-	}, [user, queryClient]);
 
 	return { unreadCount };
 };

@@ -5,6 +5,7 @@ import {
 	AppNotification,
 	useNotificationStore,
 } from "@/store/useNotificationStore";
+import { toast } from "sonner";
 
 const supabase = createClient();
 const hiddenKeyFor = (userId: string) => `notifications-hidden:${userId}`;
@@ -85,6 +86,18 @@ export const useNotificationBootstrap = () => {
 					const next = payload.new as AppNotification;
 					const sender = await fetchSenderProfile(next.sender_id);
 					upsertNotification({ ...next, sender });
+					const senderName = sender?.display_name?.trim();
+					toast(senderName ? `Thông báo từ ${senderName}` : "Thông báo mới", {
+						description: next.content,
+						action: next.link
+							? {
+									label: "Mở",
+									onClick: () => {
+										window.location.href = next.link;
+									},
+								}
+							: undefined,
+					});
 				},
 			)
 			.on(

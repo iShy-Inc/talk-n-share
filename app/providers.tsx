@@ -4,10 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotificationBootstrap } from "@/hooks/useNotifications";
+import { useRealtimeMessageToasts } from "@/hooks/useRealtimeMessageToasts";
 
 function AuthBootstrap() {
 	useAuth();
 	useNotificationBootstrap();
+	useRealtimeMessageToasts();
 	return null;
 }
 
