@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CommentItem } from "./CommentItem";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { EmojiPickerButton } from "@/components/shared/EmojiPickerButton";
 import { GifPickerButton } from "@/components/shared/GifPickerButton";
 import type { GifSelection } from "@/lib/giphy";
 
@@ -41,6 +42,7 @@ export function CommentList({
 }: CommentListProps) {
 	const [commentText, setCommentText] = useState("");
 	const [selectedGif, setSelectedGif] = useState<GifSelection | null>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -48,6 +50,24 @@ export function CommentList({
 		onSubmitComment({ content: commentText.trim(), gif: selectedGif });
 		setCommentText("");
 		setSelectedGif(null);
+	};
+
+	const handleSelectEmoji = (emoji: string) => {
+		const input = inputRef.current;
+		const selectionStart = input?.selectionStart ?? commentText.length;
+		const selectionEnd = input?.selectionEnd ?? commentText.length;
+		const nextText =
+			commentText.slice(0, selectionStart) +
+			emoji +
+			commentText.slice(selectionEnd);
+		const nextCursor = selectionStart + emoji.length;
+
+		setCommentText(nextText);
+
+		requestAnimationFrame(() => {
+			inputRef.current?.focus({ preventScroll: true });
+			inputRef.current?.setSelectionRange(nextCursor, nextCursor);
+		});
 	};
 
 	return (
@@ -88,6 +108,7 @@ export function CommentList({
 							</div>
 						)}
 						<Input
+							ref={inputRef}
 							value={commentText}
 							onChange={(e) => setCommentText(e.target.value)}
 							placeholder="Viết bình luận của bạn..."
@@ -95,6 +116,7 @@ export function CommentList({
 							id="comment-input"
 						/>
 						<GifPickerButton onSelect={setSelectedGif} className="rounded-xl" />
+						<EmojiPickerButton onSelect={handleSelectEmoji} />
 						<Button
 							type="submit"
 							disabled={!commentText.trim() && !selectedGif}

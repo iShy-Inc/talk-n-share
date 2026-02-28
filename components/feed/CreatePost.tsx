@@ -7,6 +7,7 @@ import { usePosts } from "@/hooks/usePosts";
 import { STORAGE_BUCKETS, uploadFileToBucket } from "@/lib/supabase-storage";
 import { toast } from "sonner";
 import useProfile from "@/hooks/useProfile";
+import { EmojiPickerButton } from "@/components/shared/EmojiPickerButton";
 import { GifPickerButton } from "@/components/shared/GifPickerButton";
 import { registerGiphySend, type GifSelection } from "@/lib/giphy";
 
@@ -24,6 +25,7 @@ export function CreatePost() {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const imageInputRef = useRef<HTMLInputElement>(null);
+	const contentInputRef = useRef<HTMLTextAreaElement>(null);
 	const { createPost } = usePosts();
 
 	useEffect(() => {
@@ -113,6 +115,24 @@ export function CreatePost() {
 		toast.success("Đã chọn ảnh. Ảnh sẽ được tải lên khi bạn đăng bài.");
 	};
 
+	const handleSelectEmoji = (emoji: string) => {
+		const input = contentInputRef.current;
+		const selectionStart = input?.selectionStart ?? post.content.length;
+		const selectionEnd = input?.selectionEnd ?? post.content.length;
+		const nextContent =
+			post.content.slice(0, selectionStart) +
+			emoji +
+			post.content.slice(selectionEnd);
+		const nextCursor = selectionStart + emoji.length;
+
+		setPost((prev) => ({ ...prev, content: nextContent }));
+
+		requestAnimationFrame(() => {
+			contentInputRef.current?.focus({ preventScroll: true });
+			contentInputRef.current?.setSelectionRange(nextCursor, nextCursor);
+		});
+	};
+
 	return (
 		<div className="animate-fade-up mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:shadow-md">
 			<form onSubmit={handleSubmit}>
@@ -145,6 +165,7 @@ export function CreatePost() {
 					</div>
 					<div className="flex-1">
 						<textarea
+							ref={contentInputRef}
 							value={post.content}
 							onChange={(e) => setPost({ ...post, content: e.target.value })}
 							placeholder={`Bạn đang nghĩ gì${
@@ -210,6 +231,10 @@ export function CreatePost() {
 								}}
 								disabled={isSubmitting}
 								className="rounded-lg"
+							/>
+							<EmojiPickerButton
+								onSelect={handleSelectEmoji}
+								disabled={isSubmitting}
 							/>
 
 							<button

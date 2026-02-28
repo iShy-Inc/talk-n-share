@@ -87,7 +87,10 @@ export function GifPickerButton({
 			</Button>
 
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
-				<DialogContent className="max-w-2xl">
+				<DialogContent
+					className="z-[320] max-w-2xl"
+					overlayClassName="z-[310]"
+				>
 					<DialogHeader>
 						<DialogTitle>Chọn GIF</DialogTitle>
 						<DialogDescription>

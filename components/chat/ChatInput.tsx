@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { IconMoodSmile, IconSend } from "@tabler/icons-react";
+import { IconSend } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EmojiPickerButton } from "@/components/shared/EmojiPickerButton";
 import { GifPickerButton } from "@/components/shared/GifPickerButton";
 import type { GifSelection } from "@/lib/giphy";
 
@@ -38,32 +39,20 @@ export function ChatInput({
 		}
 	};
 
-	const handleOpenEmojiKeyboard = () => {
-		if (disabled) return;
-
+	const handleSelectEmoji = (emoji: string) => {
 		const input = inputRef.current;
-		if (!input) return;
+		const selectionStart = input?.selectionStart ?? message.length;
+		const selectionEnd = input?.selectionEnd ?? message.length;
+		const nextMessage =
+			message.slice(0, selectionStart) + emoji + message.slice(selectionEnd);
+		const nextCursor = selectionStart + emoji.length;
 
-		input.focus({ preventScroll: true });
-		const cursorPosition = input.value.length;
-		input.setSelectionRange(cursorPosition, cursorPosition);
+		setMessage(nextMessage);
 
-		const pickerInput = input as HTMLInputElement & {
-			showPicker?: () => void;
-		};
-		if (typeof pickerInput.showPicker === "function") {
-			try {
-				pickerInput.showPicker();
-				return;
-			} catch {
-				// Some browsers expose the API but do not support it for text inputs.
-			}
-		}
-
-		const nav = window.navigator as Navigator & {
-			virtualKeyboard?: { show?: () => void };
-		};
-		nav.virtualKeyboard?.show?.();
+		requestAnimationFrame(() => {
+			inputRef.current?.focus({ preventScroll: true });
+			inputRef.current?.setSelectionRange(nextCursor, nextCursor);
+		});
 	};
 
 	return (
@@ -116,17 +105,10 @@ export function ChatInput({
 					className="rounded-full px-3"
 					label="GIF"
 				/>
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					className="shrink-0 rounded-full text-primary"
+				<EmojiPickerButton
+					onSelect={handleSelectEmoji}
 					disabled={disabled}
-					onClick={handleOpenEmojiKeyboard}
-					aria-label="Mở bàn phím emoji"
-				>
-					<IconMoodSmile className="size-5" />
-				</Button>
+				/>
 				<Button
 					onClick={handleSend}
 					disabled={(!message.trim() && !selectedGif) || disabled}

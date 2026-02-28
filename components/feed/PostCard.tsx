@@ -60,6 +60,7 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { RoleVerifiedBadge } from "@/components/shared/RoleVerifiedBadge";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
+import { EmojiPickerButton } from "@/components/shared/EmojiPickerButton";
 import { GifPickerButton } from "@/components/shared/GifPickerButton";
 import { GiphyGif } from "@/components/shared/GiphyGif";
 import { registerGiphySend, type GifSelection } from "@/lib/giphy";
@@ -113,6 +114,7 @@ export function PostCard({ post }: PostCardProps) {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 	const loadMoreRef = useRef<HTMLDivElement | null>(null);
+	const commentInputRef = useRef<HTMLInputElement | null>(null);
 
 	const [editContent, setEditContent] = useState(post.content);
 	const [isEditing, setIsEditing] = useState(false);
@@ -543,6 +545,24 @@ export function PostCard({ post }: PostCardProps) {
 		}
 	};
 
+	const handleSelectCommentEmoji = (emoji: string) => {
+		const input = commentInputRef.current;
+		const selectionStart = input?.selectionStart ?? newComment.length;
+		const selectionEnd = input?.selectionEnd ?? newComment.length;
+		const nextComment =
+			newComment.slice(0, selectionStart) +
+			emoji +
+			newComment.slice(selectionEnd);
+		const nextCursor = selectionStart + emoji.length;
+
+		setNewComment(nextComment);
+
+		requestAnimationFrame(() => {
+			commentInputRef.current?.focus({ preventScroll: true });
+			commentInputRef.current?.setSelectionRange(nextCursor, nextCursor);
+		});
+	};
+
 	const handleRepost = async (e: React.MouseEvent) => {
 		if (!handleAuthAction(e) || !user || isReposting) return;
 		try {
@@ -898,6 +918,7 @@ export function PostCard({ post }: PostCardProps) {
 														</div>
 													)}
 													<Input
+														ref={commentInputRef}
 														value={newComment}
 														onChange={(e) => setNewComment(e.target.value)}
 														placeholder="Write a comment..."
@@ -908,6 +929,10 @@ export function PostCard({ post }: PostCardProps) {
 													onSelect={setSelectedCommentGif}
 													disabled={isSubmittingComment}
 													className="self-start"
+												/>
+												<EmojiPickerButton
+													onSelect={handleSelectCommentEmoji}
+													disabled={isSubmittingComment}
 												/>
 												<Button
 													type="submit"
