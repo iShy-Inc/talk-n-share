@@ -23,7 +23,7 @@ function SupportPageContent() {
 	const contacts = useMemo(() => SUPPORT_CONTACTS, []);
 
 	return (
-		<div className="space-y-5">
+		<div className="space-y-5 mt-12 md:mt-0">
 			<div className="rounded-2xl border border-amber-500/30 bg-amber-50/70 p-4 text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
 				<div className="flex items-start gap-3">
 					<IconAlertTriangle className="mt-0.5 size-5 shrink-0" />

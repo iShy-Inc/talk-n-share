@@ -169,7 +169,7 @@ export function ProfileSettingsPage() {
 	};
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 mt-12 md:mt-0">
 			<SettingsLayout
 				menuItems={settingsMenuItems}
 				activeItem={activeSection}
