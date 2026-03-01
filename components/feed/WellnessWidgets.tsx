@@ -29,7 +29,11 @@ import { useAmbientPlayer } from "@/hooks/useAmbientPlayer";
 
 const BREATHING_DURATION = 60;
 const BREATHING_CYCLE = 12;
-const MOOD_OPTIONS: { value: PlayerMood; label: string; compactLabel: string }[] = [
+const MOOD_OPTIONS: {
+	value: PlayerMood;
+	label: string;
+	compactLabel: string;
+}[] = [
 	{ value: "cafe", label: "Cafe", compactLabel: "Cafe" },
 	{ value: "piano", label: "Piano", compactLabel: "Pno" },
 	{ value: "rainy", label: "Rainy", compactLabel: "Rain" },
@@ -293,6 +297,8 @@ export function AmbientMusicWidget({ className }: { className?: string }) {
 						<div className="mt-2 inline-flex items-center rounded-full border border-border/60 bg-background/70 p-0.5">
 							{MOOD_OPTIONS.map((moodOption) => (
 								<button
+									aria-label={moodOption.label}
+									aria-pressed={selectedMood === moodOption.value}
 									key={moodOption.value}
 									type="button"
 									onClick={() => setMood(moodOption.value)}
@@ -303,8 +309,8 @@ export function AmbientMusicWidget({ className }: { className?: string }) {
 											: "text-muted-foreground hover:text-foreground",
 									)}
 									title={moodOption.label}
-									aria-pressed={selectedMood === moodOption.value}
 								>
+									<span className="hidden sr-only">{moodOption.label}</span>
 									{moodOption.compactLabel}
 								</button>
 							))}
