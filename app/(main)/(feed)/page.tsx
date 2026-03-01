@@ -99,7 +99,9 @@ export default function FeedPage() {
 			if (!user) return [];
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("id, display_name, avatar_url, location, gender, zodiac, relationship")
+				.select(
+					"id, display_name, avatar_url, location, gender, zodiac, relationship",
+				)
 				.eq("is_public", true)
 				.neq("id", user.id)
 				.limit(40);
@@ -115,13 +117,11 @@ export default function FeedPage() {
 			return (data ?? [])
 				.map((u: any) => {
 					let commonCount = 0;
-					if (current.location && u.location === current.location) commonCount += 1;
+					if (current.location && u.location === current.location)
+						commonCount += 1;
 					if (current.gender && u.gender === current.gender) commonCount += 1;
 					if (current.zodiac && u.zodiac === current.zodiac) commonCount += 1;
-					if (
-						current.relationship &&
-						u.relationship === current.relationship
-					) {
+					if (current.relationship && u.relationship === current.relationship) {
 						commonCount += 1;
 					}
 					return { ...u, commonCount };
@@ -161,8 +161,7 @@ export default function FeedPage() {
 
 		return posts.flatMap((post, index) => {
 			const items: Array<
-				| { type: "post"; post: (typeof posts)[number] }
-				| { type: "suggested" }
+				{ type: "post"; post: (typeof posts)[number] } | { type: "suggested" }
 			> = [{ type: "post", post }];
 
 			if (
@@ -224,7 +223,7 @@ export default function FeedPage() {
 						<PostCard post={post} />
 
 						{/* Comment toggle */}
-						<div className="px-1">
+						{/* <div className="px-1">
 							{visibleExpandedPostId === post.id ? (
 								<div className="mt-2 rounded-xl border border-border bg-card p-4">
 									<CommentList
@@ -256,7 +255,7 @@ export default function FeedPage() {
 									</button>
 								)
 							)}
-						</div>
+						</div> */}
 					</div>
 				);
 			})}

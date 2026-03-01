@@ -20,6 +20,7 @@ const POSTS_PER_PAGE = 9; // Số lượng tweet mỗi lần tải
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
 export const useDashboardPosts = () => {
+	const queryClient = useQueryClient();
 	const postsQuery = useInfiniteQuery({
 		queryKey: ["dashboard-posts", POSTS_PER_PAGE],
 		initialPageParam: 0,
@@ -43,7 +44,20 @@ export const useDashboardPosts = () => {
 			return allPages.length * POSTS_PER_PAGE;
 		},
 	});
-	const { updatePost, deletePost, approvePost } = usePosts();
+	const { updatePost, approvePost } = usePosts();
+
+	const deletePost = useMutation({
+		mutationFn: async (postId: string) => {
+			const { error } = await supabase.rpc("delete_post_for_moderation", {
+				target_post_id: postId,
+			});
+			if (error) throw error;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+			queryClient.invalidateQueries({ queryKey: ["dashboard-posts"] });
+		},
+	});
 
 	return { postsQuery, updatePost, deletePost, approvePost };
 };
@@ -129,10 +143,9 @@ export const useDashboardComments = () => {
 
 	const deleteComment = useMutation({
 		mutationFn: async (commentId: string) => {
-			const { error } = await supabase
-				.from("comments")
-				.delete()
-				.eq("id", commentId);
+			const { error } = await supabase.rpc("delete_comment_for_moderation", {
+				target_comment_id: commentId,
+			});
 			if (error) throw error;
 		},
 		onSuccess: () =>

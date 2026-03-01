@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Image as ImageIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ProfileVisibilityIcon } from "@/components/shared/ProfileVisibilityIcon";
 import { GiphyGif } from "@/components/shared/GiphyGif";
@@ -20,7 +21,11 @@ interface CommentItemProps {
 	gifProvider?: string;
 	timeAgo: string;
 	isAuthor?: boolean;
+	isEdited?: boolean;
 	onReply?: () => void;
+	onEdit?: () => void;
+	onDelete?: () => void;
+	onReport?: () => void;
 }
 
 export function CommentItem({
@@ -34,7 +39,11 @@ export function CommentItem({
 	gifProvider,
 	timeAgo,
 	isAuthor = false,
+	isEdited = false,
 	onReply,
+	onEdit,
+	onDelete,
+	onReport,
 }: CommentItemProps) {
 	const { data: maskedAuthorProfile = null } = useQuery({
 		queryKey: ["masked-comment-author-profile", authorId],
@@ -122,9 +131,14 @@ export function CommentItem({
 							Tác giả
 						</span>
 					)}
-					<span className="ml-auto text-xs text-foreground/70">
-						{timeAgo}
-					</span>
+					<div className="ml-auto flex items-center gap-2 text-xs text-foreground/70">
+						<span>{timeAgo}</span>
+						{isEdited ? (
+							<span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground/70">
+								Đã sửa
+							</span>
+						) : null}
+					</div>
 				</div>
 
 				{resolvedAuthorRole && (
@@ -134,10 +148,17 @@ export function CommentItem({
 				)}
 
 				{gifProvider === "giphy" && gifId && (
-					<GiphyGif
-						gifId={gifId}
-						className="mt-2 max-h-64 rounded-xl object-cover"
-					/>
+					<div className="mt-2 rounded-2xl border border-border/70 bg-muted/20 p-2">
+						<div className="relative flex min-h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-background/80 p-2">
+							<GiphyGif
+								gifId={gifId}
+								className="h-auto max-h-64 w-full rounded-xl object-contain"
+							/>
+							<span className="pointer-events-none absolute right-3 top-3 inline-flex items-center justify-center rounded-full bg-black/55 p-1.5 text-white/90 shadow-sm backdrop-blur-sm">
+								<ImageIcon className="size-3.5" />
+							</span>
+						</div>
+					</div>
 				)}
 				{content && (
 					<p className="mt-2 text-sm leading-relaxed text-foreground">
@@ -145,14 +166,40 @@ export function CommentItem({
 					</p>
 				)}
 
-				{onReply && (
-					<button
-						onClick={onReply}
-						className="mt-2 text-[13px] font-medium text-primary hover:underline"
-					>
-						Trả lời
-					</button>
-				)}
+				<div className="mt-2 flex flex-wrap items-center gap-3">
+					{onReply ? (
+						<button
+							onClick={onReply}
+							className="text-[13px] font-medium text-primary hover:underline"
+						>
+							Trả lời
+						</button>
+					) : null}
+					{onEdit ? (
+						<button
+							onClick={onEdit}
+							className="text-[13px] font-medium text-foreground/75 hover:text-foreground hover:underline"
+						>
+							Sửa
+						</button>
+					) : null}
+					{onDelete ? (
+						<button
+							onClick={onDelete}
+							className="text-[13px] font-medium text-destructive hover:underline"
+						>
+							Xóa
+						</button>
+					) : null}
+					{onReport ? (
+						<button
+							onClick={onReport}
+							className="text-[13px] font-medium text-foreground/75 hover:text-foreground hover:underline"
+						>
+							Báo cáo
+						</button>
+					) : null}
+				</div>
 			</div>
 		</div>
 	);

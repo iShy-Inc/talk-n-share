@@ -8,6 +8,7 @@ import {
 	Flag,
 	Trash2,
 	Pencil,
+	Expand,
 	X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ type CommentRow = {
 	parent_id: string | null;
 	content: string | null;
 	created_at: string;
+	edited_at: string | null;
 	gif_id: string | null;
 	gif_provider: string | null;
 	profiles?: {
@@ -96,12 +98,20 @@ type BaseCommentData = {
 	gifProvider?: string;
 	timeAgo: string;
 	isAuthor?: boolean;
+	isOwnComment?: boolean;
+	isEdited?: boolean;
 };
 
 type ThreadComment = BaseCommentData & {
 	parentId: string | null;
 	createdAt: string;
 	children: ThreadComment[];
+};
+
+type ReportTarget = {
+	type: "post" | "comment";
+	targetId: string;
+	reportedUserId: string | null;
 };
 
 const COMMENTS_PAGE_SIZE = 20;
@@ -120,7 +130,7 @@ export function PostCard({ post }: PostCardProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-	const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+	const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 	const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
 	const [reportReason, setReportReason] = useState("spam");
 	const [reportEvidenceUrl, setReportEvidenceUrl] = useState<string | null>(
@@ -129,11 +139,20 @@ export function PostCard({ post }: PostCardProps) {
 	const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
 	const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 	const [newComment, setNewComment] = useState("");
-	const [selectedCommentGif, setSelectedCommentGif] = useState<GifSelection | null>(
-		null,
-	);
+	const [selectedCommentGif, setSelectedCommentGif] =
+		useState<GifSelection | null>(null);
 	const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
 	const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+	const [editingThreadCommentId, setEditingThreadCommentId] = useState<
+		string | null
+	>(null);
+	const [editingThreadCommentContent, setEditingThreadCommentContent] =
+		useState("");
+	const [editingThreadCommentHasGif, setEditingThreadCommentHasGif] =
+		useState(false);
+	const [isSavingCommentEdit, setIsSavingCommentEdit] = useState(false);
+	const [commentPendingDelete, setCommentPendingDelete] =
+		useState<ThreadComment | null>(null);
 	const [isLiked, setIsLiked] = useState(false);
 	const [isTogglingLike, setIsTogglingLike] = useState(false);
 	const [isReposting, setIsReposting] = useState(false);
@@ -202,6 +221,26 @@ export function PostCard({ post }: PostCardProps) {
 		},
 	});
 
+	const { data: myPreviewCommentRows = [], refetch: refetchMyPreviewComments } =
+		useQuery({
+			queryKey: ["post-my-comments-preview", post.id, user?.id],
+			queryFn: async () => {
+				if (!user) return [];
+				const { data, error } = await supabase
+					.from("comments")
+					.select(
+						"id, author_id, parent_id, content, created_at, edited_at, gif_id, gif_provider, profiles(display_name, avatar_url, is_public)",
+					)
+					.eq("post_id", post.id)
+					.eq("author_id", user.id)
+					.order("created_at", { ascending: false })
+					.limit(3);
+				if (error) throw error;
+				return (data ?? []) as CommentRow[];
+			},
+			enabled: !!user && commentCount > 0,
+		});
+
 	useEffect(() => {
 		setIsLiked(likedByMe);
 	}, [likedByMe]);
@@ -248,7 +287,7 @@ export function PostCard({ post }: PostCardProps) {
 			const { data, error } = await supabase
 				.from("comments")
 				.select(
-					"id, author_id, parent_id, content, created_at, gif_id, gif_provider, profiles(display_name, avatar_url, is_public)",
+					"id, author_id, parent_id, content, created_at, edited_at, gif_id, gif_provider, profiles(display_name, avatar_url, is_public)",
 				)
 				.eq("post_id", post.id)
 				.order("created_at", { ascending: true })
@@ -279,6 +318,8 @@ export function PostCard({ post }: PostCardProps) {
 				content: c.content ?? "",
 				gifId: c.gif_id ?? undefined,
 				gifProvider: c.gif_provider ?? undefined,
+				isOwnComment: user?.id === c.author_id,
+				isEdited: Boolean(c.edited_at),
 				timeAgo: formatDistanceToNow(new Date(c.created_at), {
 					addSuffix: true,
 				}),
@@ -304,7 +345,33 @@ export function PostCard({ post }: PostCardProps) {
 		};
 		sortTree(roots);
 		return roots;
-	}, [commentsPages]);
+	}, [commentsPages, user?.id]);
+
+	const myPreviewComments = useMemo(
+		() =>
+			myPreviewCommentRows.map(
+				(comment) =>
+					({
+						id: comment.id,
+						authorId: comment.author_id,
+						parentId: comment.parent_id,
+						authorName: comment.profiles?.display_name ?? "Người dùng",
+						authorIsPublic: comment.profiles?.is_public ?? null,
+						authorAvatar: comment.profiles?.avatar_url ?? undefined,
+						content: comment.content ?? "",
+						gifId: comment.gif_id ?? undefined,
+						gifProvider: comment.gif_provider ?? undefined,
+						isOwnComment: true,
+						isEdited: Boolean(comment.edited_at),
+						timeAgo: formatDistanceToNow(new Date(comment.created_at), {
+							addSuffix: true,
+						}),
+						createdAt: comment.created_at,
+						children: [],
+					}) satisfies ThreadComment,
+			),
+		[myPreviewCommentRows],
+	);
 
 	useEffect(() => {
 		if (!isPostDetailOpen || !hasNextPage || !loadMoreRef.current) return;
@@ -419,7 +486,7 @@ export function PostCard({ post }: PostCardProps) {
 
 	const handleSubmitReport = async (event: React.FormEvent) => {
 		event.preventDefault();
-		if (!user) {
+		if (!user || !reportTarget) {
 			router.push("/login");
 			return;
 		}
@@ -428,9 +495,9 @@ export function PostCard({ post }: PostCardProps) {
 			setIsSubmittingReport(true);
 			const { error } = await supabase.from("reports").insert({
 				reporter_id: user.id,
-				reported_user_id: post.author_id,
-				target_id: post.id,
-				target_type: "post",
+				reported_user_id: reportTarget.reportedUserId,
+				target_id: reportTarget.targetId,
+				target_type: reportTarget.type,
 				reason: reportReason,
 				status: "pending",
 				evidence_image_url: reportEvidenceUrl,
@@ -438,7 +505,7 @@ export function PostCard({ post }: PostCardProps) {
 			if (error) throw error;
 
 			toast.success("Report submitted");
-			setIsReportDialogOpen(false);
+			setReportTarget(null);
 			setReportReason("spam");
 			setReportEvidenceUrl(null);
 		} catch {
@@ -505,7 +572,8 @@ export function PostCard({ post }: PostCardProps) {
 			router.push("/login");
 			return;
 		}
-		if ((!newComment.trim() && !selectedCommentGif) || isSubmittingComment) return;
+		if ((!newComment.trim() && !selectedCommentGif) || isSubmittingComment)
+			return;
 
 		try {
 			setIsSubmittingComment(true);
@@ -533,6 +601,7 @@ export function PostCard({ post }: PostCardProps) {
 			if (selectedCommentGif?.provider === "giphy") {
 				void registerGiphySend(selectedCommentGif.id);
 			}
+			await refetchMyPreviewComments();
 			await refetchComments();
 			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
 			queryClient.invalidateQueries({
@@ -561,6 +630,83 @@ export function PostCard({ post }: PostCardProps) {
 			commentInputRef.current?.focus({ preventScroll: true });
 			commentInputRef.current?.setSelectionRange(nextCursor, nextCursor);
 		});
+	};
+
+	const startEditingComment = (comment: ThreadComment) => {
+		setEditingThreadCommentId(comment.id);
+		setEditingThreadCommentContent(comment.content);
+		setEditingThreadCommentHasGif(
+			Boolean(comment.gifId && comment.gifProvider),
+		);
+	};
+
+	const handleSaveCommentEdit = async (commentId: string) => {
+		if (!user || isSavingCommentEdit) {
+			return;
+		}
+
+		const nextContent = editingThreadCommentContent.trim();
+		if (!nextContent && !editingThreadCommentHasGif) {
+			toast.error("Bình luận không thể để trống.");
+			return;
+		}
+
+		try {
+			setIsSavingCommentEdit(true);
+			const { error } = await supabase
+				.from("comments")
+				.update({
+					content: nextContent || null,
+				})
+				.eq("id", commentId)
+				.eq("author_id", user.id);
+			if (error) throw error;
+
+			setEditingThreadCommentId(null);
+			setEditingThreadCommentContent("");
+			setEditingThreadCommentHasGif(false);
+			await refetchMyPreviewComments();
+			await refetchComments();
+			toast.success("Đã cập nhật bình luận.");
+		} catch {
+			toast.error("Không thể cập nhật bình luận.");
+		} finally {
+			setIsSavingCommentEdit(false);
+		}
+	};
+
+	const handleDeleteComment = async () => {
+		if (!user || !commentPendingDelete) {
+			return;
+		}
+
+		try {
+			const { error } = await supabase.rpc("delete_comment_for_viewer", {
+				target_comment_id: commentPendingDelete.id,
+			});
+			if (error) throw error;
+
+			const nextCount = Math.max(commentCount - 1, 0);
+			setCommentCount(nextCount);
+			if (replyToCommentId === commentPendingDelete.id) {
+				setReplyToCommentId(null);
+			}
+			if (editingThreadCommentId === commentPendingDelete.id) {
+				setEditingThreadCommentId(null);
+				setEditingThreadCommentContent("");
+				setEditingThreadCommentHasGif(false);
+			}
+			setCommentPendingDelete(null);
+			await refetchMyPreviewComments();
+			await refetchComments();
+			queryClient.invalidateQueries({ queryKey: ["feed-posts"] });
+			queryClient.invalidateQueries({
+				queryKey: ["post-comment-count", post.id],
+			});
+			toast.success("Đã xóa bình luận.");
+		} catch {
+			toast.error("Không thể xóa bình luận này.");
+		}
 	};
 
 	const handleRepost = async (e: React.MouseEvent) => {
@@ -613,6 +759,43 @@ export function PostCard({ post }: PostCardProps) {
 	const getReplyTargetId = (comment: ThreadComment) =>
 		comment.parentId ?? comment.id;
 
+	const renderCommentInlineEditor = (commentId: string) => (
+		<div className="mt-2 rounded-xl border border-border/70 bg-card p-3">
+			<div className="space-y-3">
+				<Input
+					value={editingThreadCommentContent}
+					onChange={(event) =>
+						setEditingThreadCommentContent(event.target.value)
+					}
+					placeholder="Chỉnh sửa bình luận..."
+					className="border-border/80 bg-background"
+				/>
+				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onClick={() => {
+							setEditingThreadCommentId(null);
+							setEditingThreadCommentContent("");
+							setEditingThreadCommentHasGif(false);
+						}}
+					>
+						Hủy
+					</Button>
+					<Button
+						type="button"
+						size="sm"
+						onClick={() => handleSaveCommentEdit(commentId)}
+						disabled={isSavingCommentEdit}
+					>
+						{isSavingCommentEdit ? "Đang lưu..." : "Lưu"}
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
+
 	const renderThread = (items: ThreadComment[], depth = 0) =>
 		items.map((comment) => (
 			<div
@@ -630,8 +813,37 @@ export function PostCard({ post }: PostCardProps) {
 					gifId={comment.gifId}
 					gifProvider={comment.gifProvider}
 					timeAgo={comment.timeAgo}
+					isEdited={comment.isEdited}
 					onReply={() => setReplyToCommentId(getReplyTargetId(comment))}
+					onEdit={
+						comment.isOwnComment
+							? () => startEditingComment(comment)
+							: undefined
+					}
+					onDelete={
+						comment.isOwnComment
+							? () => setCommentPendingDelete(comment)
+							: undefined
+					}
+					onReport={
+						comment.isOwnComment
+							? undefined
+							: () => {
+									if (!user) {
+										router.push("/login");
+										return;
+									}
+									setReportTarget({
+										type: "comment",
+										targetId: comment.id,
+										reportedUserId: comment.authorId,
+									});
+								}
+					}
 				/>
+				{editingThreadCommentId === comment.id
+					? renderCommentInlineEditor(comment.id)
+					: null}
 				{comment.children.length > 0 &&
 					renderThread(comment.children, depth + 1)}
 			</div>
@@ -727,27 +939,42 @@ export function PostCard({ post }: PostCardProps) {
 					<button
 						type="button"
 						onClick={() => setIsPostDetailOpen(true)}
-						className="mt-4 block w-full overflow-hidden rounded-2xl"
+						className="group mt-4 block w-full overflow-hidden rounded-2xl border border-border/70 bg-muted/20 p-2 transition-transform duration-200 active:scale-[0.995]"
 					>
 						<span className="hidden sr-only">GIF</span>
-						<GiphyGif
-							gifId={post.gif_id!}
-							className="max-h-[34rem] w-full rounded-2xl object-cover"
-						/>
+						<div className="relative flex min-h-48 w-full items-center justify-center overflow-hidden rounded-xl bg-background/80 p-2">
+							<GiphyGif
+								gifId={post.gif_id!}
+								className="h-auto max-h-[24rem] w-full rounded-xl object-contain transition-transform duration-300 group-hover:scale-[1.01] sm:max-h-[28rem]"
+							/>
+							<div className="pointer-events-none absolute right-3 top-3">
+								<span className="inline-flex items-center justify-center rounded-full bg-black/60 p-1.5 text-white/95 opacity-90 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:scale-105 group-hover:opacity-100">
+									<Expand className="size-3.5" />
+								</span>
+							</div>
+						</div>
 					</button>
 				) : post.image_url ? (
 					<button
 						type="button"
 						onClick={() => setIsPostDetailOpen(true)}
-						className="relative mt-3 block h-64 w-full overflow-hidden rounded-lg"
+						className="group mt-3 block w-full overflow-hidden rounded-2xl border border-border/70 bg-muted/20 p-2 transition-transform duration-200 active:scale-[0.995]"
 					>
 						<span className="hidden sr-only">Ảnh</span>
-						<Image
-							src={post.image_url}
-							alt="Post content"
-							fill
-							className="object-cover transition-transform duration-200 hover:scale-[1.02]"
-						/>
+						<div className="relative flex min-h-48 w-full items-center justify-center overflow-hidden rounded-xl bg-background/80 p-2">
+							<Image
+								src={post.image_url}
+								alt="Post content"
+								width={1200}
+								height={1200}
+								className="h-auto max-h-[24rem] w-full object-contain transition-transform duration-300 group-hover:scale-[1.01] sm:max-h-[28rem]"
+							/>
+							<div className="pointer-events-none absolute right-3 top-3">
+								<span className="inline-flex items-center justify-center rounded-full bg-black/60 p-1.5 text-white/95 opacity-90 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:scale-105 group-hover:opacity-100">
+									<Expand className="size-3.5" />
+								</span>
+							</div>
+						</div>
 					</button>
 				) : null}
 			</div>
@@ -776,48 +1003,82 @@ export function PostCard({ post }: PostCardProps) {
 									<X className="size-4" />
 								</Button>
 								<div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1.35fr)_minmax(260px,0.65fr)] lg:grid-cols-[minmax(0,70%)_minmax(0,30%)] lg:grid-rows-[minmax(0,1fr)]">
-									<div className="min-h-0 bg-black">
+									<div className="min-h-0 bg-gradient-to-b from-black via-black/95 to-black p-3 sm:p-4">
 										{hasPostGif ? (
-											<div className="flex h-full w-full items-center justify-center bg-black p-4">
-												<GiphyGif
-													gifId={post.gif_id!}
-													className="max-h-full max-w-full rounded-xl object-contain"
-												/>
+											<div className="h-full w-full overflow-hidden rounded-3xl border border-white/10 bg-background/5 p-3 backdrop-blur-sm">
+												<div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-black/75 p-4">
+													<GiphyGif
+														gifId={post.gif_id!}
+														className="max-h-full max-w-full rounded-xl object-contain"
+													/>
+													{hasPostContent && (
+														<div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden bg-gradient-to-b from-black/55 via-black/80 to-black/95">
+															<ScrollArea className="h-[30dvh] min-h-28 w-full max-h-[45%]">
+																<div className="flex min-w-0 flex-col items-center p-5 text-sm text-white/95">
+																	<p className="mx-auto max-w-3xl whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
+																		{isDialogContentExpanded
+																			? postContent
+																			: dialogPreviewContent}
+																	</p>
+																	{shouldTruncateDialogContent && (
+																		<button
+																			type="button"
+																			onClick={() =>
+																				setIsDialogContentExpanded(
+																					(prev) => !prev,
+																				)
+																			}
+																			className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
+																		>
+																			{isDialogContentExpanded
+																				? "Thu gọn"
+																				: "Hiện thêm"}
+																		</button>
+																	)}
+																</div>
+															</ScrollArea>
+														</div>
+													)}
+												</div>
 											</div>
 										) : hasPostImage ? (
-											<div className="relative h-full w-full overflow-hidden bg-black">
-												<Image
-													src={post.image_url!}
-													alt="Post image preview"
-													fill
-													className="object-contain"
-												/>
-												{hasPostContent && (
-													<div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden bg-gradient-to-b from-black/55 via-black/80 to-black/95">
-														<ScrollArea className="h-[30dvh] min-h-28 w-full max-h-[45%]">
-															<div className="flex min-w-0 flex-col items-center p-5 text-sm text-white/95">
-																<p className="mx-auto max-w-3xl whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
-																	{isDialogContentExpanded
-																		? postContent
-																		: dialogPreviewContent}
-																</p>
-																{shouldTruncateDialogContent && (
-																	<button
-																		type="button"
-																		onClick={() =>
-																			setIsDialogContentExpanded((prev) => !prev)
-																		}
-																		className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
-																	>
+											<div className="h-full w-full overflow-hidden rounded-3xl border border-white/10 bg-background/5 p-3 backdrop-blur-sm">
+												<div className="relative h-full w-full overflow-hidden rounded-2xl bg-black/75">
+													<Image
+														src={post.image_url!}
+														alt="Post image preview"
+														fill
+														className="object-contain"
+													/>
+													{hasPostContent && (
+														<div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden bg-gradient-to-b from-black/55 via-black/80 to-black/95">
+															<ScrollArea className="h-[30dvh] min-h-28 w-full max-h-[45%]">
+																<div className="flex min-w-0 flex-col items-center p-5 text-sm text-white/95">
+																	<p className="mx-auto max-w-3xl whitespace-pre-wrap break-words text-center [overflow-wrap:anywhere] [word-break:break-word]">
 																		{isDialogContentExpanded
-																			? "Thu gọn"
-																			: "Hiện thêm"}
-																	</button>
-																)}
-															</div>
-														</ScrollArea>
-													</div>
-												)}
+																			? postContent
+																			: dialogPreviewContent}
+																	</p>
+																	{shouldTruncateDialogContent && (
+																		<button
+																			type="button"
+																			onClick={() =>
+																				setIsDialogContentExpanded(
+																					(prev) => !prev,
+																				)
+																			}
+																			className="mt-3 rounded-md px-2 py-1 text-sm font-semibold text-white hover:bg-white/15"
+																		>
+																			{isDialogContentExpanded
+																				? "Thu gọn"
+																				: "Hiện thêm"}
+																		</button>
+																	)}
+																</div>
+															</ScrollArea>
+														</div>
+													)}
+												</div>
 											</div>
 										) : (
 											<div className="h-full w-full bg-gradient-to-b from-black/75 via-black/85 to-black/95">
@@ -897,26 +1158,38 @@ export function PostCard({ post }: PostCardProps) {
 													</button>
 												</div>
 											)}
-											<form onSubmit={handleSubmitComment} className="flex gap-2">
+											<form
+												onSubmit={handleSubmitComment}
+												className="flex gap-2"
+											>
 												<div className="flex-1 space-y-2">
 													{selectedCommentGif && (
-														<div className="flex items-start gap-2 rounded-xl border border-border/70 bg-muted/30 p-2">
-															<img
-																src={selectedCommentGif.previewUrl}
-																alt={selectedCommentGif.title}
-																className="h-16 w-16 rounded-lg object-cover"
-															/>
-															<div className="flex min-w-0 flex-1 items-start justify-between gap-2">
-																<span className="text-xs text-muted-foreground">
-																	GIF đã chọn
-																</span>
-																<button
-																	type="button"
-																	onClick={() => setSelectedCommentGif(null)}
-																	className="text-xs font-medium text-primary"
-																>
-																	Xóa
-																</button>
+														<div className="rounded-2xl border border-border/70 bg-muted/20 p-2">
+															<div className="flex items-center gap-2 rounded-xl bg-background/80 p-2">
+																<div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-1.5">
+																	<img
+																		src={selectedCommentGif.previewUrl}
+																		alt={selectedCommentGif.title}
+																		className="h-full w-full rounded-lg object-contain"
+																	/>
+																</div>
+																<div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+																	<div className="min-w-0">
+																		<p className="text-xs font-medium text-foreground/80">
+																			GIF đã chọn
+																		</p>
+																		<p className="truncate text-[11px] text-muted-foreground">
+																			{selectedCommentGif.title}
+																		</p>
+																	</div>
+																	<button
+																		type="button"
+																		onClick={() => setSelectedCommentGif(null)}
+																		className="text-xs font-medium text-primary"
+																	>
+																		Xóa
+																	</button>
+																</div>
 															</div>
 														</div>
 													)}
@@ -989,19 +1262,41 @@ export function PostCard({ post }: PostCardProps) {
 				</DialogContent>
 			</Dialog>
 
-			<Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-				<DialogContent>
+			<Dialog
+				open={!!reportTarget}
+				onOpenChange={(open) => {
+					if (!open) {
+						setReportTarget(null);
+						setReportReason("spam");
+						setReportEvidenceUrl(null);
+					}
+				}}
+			>
+				<DialogContent
+					overlayClassName="z-[310] bg-black/80"
+					className="z-[320]"
+				>
 					<form onSubmit={handleSubmitReport}>
 						<DialogHeader>
-							<DialogTitle>Báo cáo bài viết</DialogTitle>
+							<DialogTitle>
+								{reportTarget?.type === "comment"
+									? "Báo cáo bình luận"
+									: "Báo cáo bài viết"}
+							</DialogTitle>
 							<DialogDescription>
-								Share why this post should be reviewed.
+								{reportTarget?.type === "comment"
+									? "Chia sẻ lý do vì sao bình luận này cần được xem xét."
+									: "Share why this post should be reviewed."}
 							</DialogDescription>
 						</DialogHeader>
 						<div className="py-4">
-							<Label htmlFor={`report-reason-${post.id}`}>Reason</Label>
+							<Label
+								htmlFor={`report-reason-${reportTarget?.targetId ?? post.id}`}
+							>
+								Reason
+							</Label>
 							<select
-								id={`report-reason-${post.id}`}
+								id={`report-reason-${reportTarget?.targetId ?? post.id}`}
 								title="Report reason"
 								value={reportReason}
 								onChange={(e) => setReportReason(e.target.value)}
@@ -1015,11 +1310,13 @@ export function PostCard({ post }: PostCardProps) {
 							</select>
 
 							<div className="mt-4">
-								<Label htmlFor={`report-evidence-${post.id}`}>
+								<Label
+									htmlFor={`report-evidence-${reportTarget?.targetId ?? post.id}`}
+								>
 									Evidence Image (optional)
 								</Label>
 								<Input
-									id={`report-evidence-${post.id}`}
+									id={`report-evidence-${reportTarget?.targetId ?? post.id}`}
 									type="file"
 									accept="image/*"
 									className="mt-2"
@@ -1094,6 +1391,34 @@ export function PostCard({ post }: PostCardProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
+			<AlertDialog
+				open={!!commentPendingDelete}
+				onOpenChange={(open) => {
+					if (!open) {
+						setCommentPendingDelete(null);
+					}
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Xóa bình luận này?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Hành động này sẽ gỡ bình luận của bạn khỏi cuộc trò chuyện và
+							không thể hoàn tác.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Hủy</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeleteComment}
+							className="border-transparent bg-red-500 text-white hover:bg-red-600 focus:ring-red-500"
+						>
+							Xóa bình luận
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
 			<div className="flex flex-wrap items-center gap-2 border-t pt-3">
 				<button
 					className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm transition-colors ${
@@ -1139,13 +1464,59 @@ export function PostCard({ post }: PostCardProps) {
 						title="Report"
 						onClick={(e) => {
 							if (!handleAuthAction(e)) return;
-							setIsReportDialogOpen(true);
+							setReportTarget({
+								type: "post",
+								targetId: post.id,
+								reportedUserId: post.author_id,
+							});
 						}}
 					>
 						<Flag size={18} />
 					</button>
 				)}
 			</div>
+
+			{myPreviewComments.length > 0 && (
+				<div className="mt-3 border-t border-border/70 pt-3">
+					<div className="mb-2 flex items-center justify-between gap-2">
+						<p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/60">
+							Bình luận của bạn
+						</p>
+						{commentCount > myPreviewComments.length ? (
+							<button
+								type="button"
+								onClick={() => setIsPostDetailOpen(true)}
+								className="text-xs font-medium text-primary hover:underline"
+							>
+								Xem tất cả
+							</button>
+						) : null}
+					</div>
+					<div className="space-y-2">
+						{myPreviewComments.map((comment) => (
+							<div key={comment.id}>
+								<CommentItem
+									authorName={comment.authorName}
+									authorId={comment.authorId}
+									authorIsPublic={comment.authorIsPublic}
+									authorAvatar={comment.authorAvatar}
+									content={comment.content}
+									gifId={comment.gifId}
+									gifProvider={comment.gifProvider}
+									timeAgo={comment.timeAgo}
+									isAuthor={comment.authorId === post.author_id}
+									isEdited={comment.isEdited}
+									onEdit={() => startEditingComment(comment)}
+									onDelete={() => setCommentPendingDelete(comment)}
+								/>
+								{editingThreadCommentId === comment.id
+									? renderCommentInlineEditor(comment.id)
+									: null}
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

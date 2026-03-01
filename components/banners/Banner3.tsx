@@ -15,9 +15,7 @@ export default function Banner3({ onDismiss }: BannerProps) {
 						Niềm vui của mọi người là món quà lớn nhất đối với chúng tôi
 					</span>
 				</div>
-				<span className="rounded-full border border-rose-200 bg-white/80 px-3 py-1 text-xs font-medium text-rose-800">
-					Lời nhắn từ team
-				</span>
+
 				<Button
 					type="button"
 					variant="ghost"

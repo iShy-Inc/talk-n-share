@@ -455,12 +455,12 @@ export function WellnessMobileSheet() {
 						className="border border-border/80 shadow-lg backdrop-blur"
 					>
 						<IconHealthRecognition className="mr-2 size-4" />
-						Cửa sổ hồi phục
+						Cửa sổ tinh thần
 					</Button>
 				</SheetTrigger>
 				<SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto">
 					<SheetHeader className="text-left">
-						<SheetTitle>Góc hồi phục nhanh</SheetTitle>
+						<SheetTitle>Hồi phục nhanh cho tâm hồn</SheetTitle>
 						<SheetDescription>
 							Một vài công cụ nhỏ để bạn chậm lại và tự chăm sóc mình.
 						</SheetDescription>

@@ -64,7 +64,9 @@ export const usePosts = () => {
 	// Delete post
 	const deletePost = useMutation({
 		mutationFn: async (postId: string) => {
-			const { error } = await supabase.from("posts").delete().eq("id", postId);
+			const { error } = await supabase.rpc("delete_post_for_viewer", {
+				target_post_id: postId,
+			});
 			if (error) throw error;
 		},
 		onSuccess: () => {

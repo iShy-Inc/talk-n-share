@@ -6,12 +6,13 @@ import Banner2 from "@/components/banners/Banner2";
 import Banner3 from "@/components/banners/Banner3";
 
 const ROTATION_INTERVAL_MS = 5 * 60 * 1000;
-const AUTO_DISMISS_MS = 15 * 1000;
+const AUTO_DISMISS_MS = 60 * 1000;
 const ANNOUNCEMENT_BANNERS = [Banner1, Banner2, Banner3] as const;
 
 const getBannerIndex = () =>
 	Math.floor(Date.now() / ROTATION_INTERVAL_MS) % ANNOUNCEMENT_BANNERS.length;
-const shouldShowBanner = () => Date.now() % ROTATION_INTERVAL_MS < AUTO_DISMISS_MS;
+const shouldShowBanner = () =>
+	Date.now() % ROTATION_INTERVAL_MS < AUTO_DISMISS_MS;
 
 export function AppAnnouncementBanner() {
 	const [activeIndex, setActiveIndex] = useState(getBannerIndex);
@@ -46,7 +47,8 @@ export function AppAnnouncementBanner() {
 			return;
 		}
 
-		const visibleTimeRemaining = AUTO_DISMISS_MS - (Date.now() % ROTATION_INTERVAL_MS);
+		const visibleTimeRemaining =
+			AUTO_DISMISS_MS - (Date.now() % ROTATION_INTERVAL_MS);
 		if (visibleTimeRemaining <= 0) {
 			return;
 		}
@@ -60,7 +62,8 @@ export function AppAnnouncementBanner() {
 		};
 	}, [activeIndex, isVisible]);
 
-	const ActiveBanner = ANNOUNCEMENT_BANNERS[activeIndex] ?? ANNOUNCEMENT_BANNERS[0];
+	const ActiveBanner =
+		ANNOUNCEMENT_BANNERS[activeIndex] ?? ANNOUNCEMENT_BANNERS[0];
 
 	if (!isVisible) {
 		return null;

@@ -44,34 +44,40 @@ export type Database = {
           author_id: string
           content: string | null
           created_at: string
+          edited_at: string | null
           gif_id: string | null
           gif_provider: string | null
           id: string
           is_approved: boolean
           parent_id: string | null
           post_id: string
+          updated_at: string
         }
         Insert: {
           author_id: string
           content?: string | null
           created_at?: string
+          edited_at?: string | null
           gif_id?: string | null
           gif_provider?: string | null
           id?: string
           is_approved?: boolean
           parent_id?: string | null
           post_id: string
+          updated_at?: string
         }
         Update: {
           author_id?: string
           content?: string | null
           created_at?: string
+          edited_at?: string | null
           gif_id?: string | null
           gif_provider?: string | null
           id?: string
           is_approved?: boolean
           parent_id?: string | null
           post_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -527,13 +533,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "reports_post_id_fkey"
-            columns: ["target_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reports_reported_user_id_fkey"
             columns: ["reported_user_id"]
             isOneToOne: false
@@ -557,6 +556,22 @@ export type Database = {
       create_or_get_direct_chat: {
         Args: { target_user_id: string }
         Returns: string
+      }
+      delete_comment_for_viewer: {
+        Args: { target_comment_id: string }
+        Returns: boolean
+      }
+      delete_comment_for_moderation: {
+        Args: { target_comment_id: string }
+        Returns: boolean
+      }
+      delete_post_for_viewer: {
+        Args: { target_post_id: string }
+        Returns: boolean
+      }
+      delete_post_for_moderation: {
+        Args: { target_post_id: string }
+        Returns: boolean
       }
       end_match_for_viewer: {
         Args: { target_session_id: string }
