@@ -9,7 +9,7 @@ export function FloatingAmbientPlayerControl() {
 	const { currentTrack, isPlaying, togglePlayback } = useAmbientPlayer();
 
 	return (
-		<div className="pointer-events-none fixed right-4 bottom-24 z-50 hidden md:block md:right-6 md:bottom-6">
+		<div className="pointer-events-none fixed right-4 bottom-24 z-50 hidden md:block md:right-6 md:bottom-6 group overflow-hidden">
 			<button
 				type="button"
 				onClick={() => {
@@ -27,7 +27,7 @@ export function FloatingAmbientPlayerControl() {
 				>
 					<Disc3 className="size-4.5" />
 				</span>
-				<span className="hidden max-w-28 truncate text-xs font-medium text-foreground sm:block">
+				<span className="transition-all duration-500 ease-in-out w-0 group-hover:w-fit -translate-x-[200%] group-hover:translate-x-0 max-w-28 truncate text-xs font-medium text-foreground">
 					{currentTrack.title}
 				</span>
 				<span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">

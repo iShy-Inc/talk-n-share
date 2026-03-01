@@ -337,86 +337,91 @@ export function CreatePost() {
 
 	return (
 		<>
-		<Sheet open={isComposerOpen} onOpenChange={handleComposerOpenChange}>
-			<SheetTrigger asChild>
-				<button
-					type="button"
-					className="animate-fade-up mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card text-left shadow-sm transition-all duration-300 hover:shadow-md"
-				>
-					<div className="flex items-center gap-3 px-4 py-4">
-						<div className="size-10 shrink-0 overflow-hidden rounded-full bg-secondary">
-							{profile?.avatar_url ? (
-								<Image
-									src={profile.avatar_url}
-									alt={profile.display_name || "Người dùng"}
-									width={40}
-									height={40}
-									className="size-10 object-cover"
-								/>
-							) : (
-								<div className="flex size-10 items-center justify-center text-sm font-semibold text-primary">
-									{profile?.display_name?.[0]?.toUpperCase() || "U"}
-								</div>
-							)}
-						</div>
-						<div className="flex-1 rounded-full bg-muted/55 px-4 py-3 text-sm text-muted-foreground">
-							{`Bạn đang nghĩ gì${
-								profile?.display_name ? `, ${profile.display_name}` : ""
-							}?`}
-						</div>
-					</div>
-					<div className="flex items-center gap-2 border-t border-border/70 px-4 py-3 text-sm text-muted-foreground">
-						<span className="inline-flex items-center gap-2 rounded-lg px-2 py-1">
-							<ImageIcon size={18} />
-							Ảnh
-						</span>
-						<span className="inline-flex items-center gap-2 rounded-lg px-2 py-1">
-							GIF
-						</span>
-						<span className="inline-flex items-center gap-2 rounded-lg px-2 py-1">
-							Emoji
-						</span>
-					</div>
-				</button>
-			</SheetTrigger>
-
-			<SheetContent
-				side="top"
-				className="h-dvh rounded-none border-0 p-0 sm:max-w-none"
-			>
-				<SheetHeader className="sr-only">
-					<SheetTitle>Tạo bài viết</SheetTitle>
-					<SheetDescription>Soạn bài viết mới toàn màn hình.</SheetDescription>
-				</SheetHeader>
-				{renderComposerForm()}
-			</SheetContent>
-		</Sheet>
-		<AlertDialog open={isDiscardAlertOpen} onOpenChange={setIsDiscardAlertOpen}>
-			<AlertDialogContent size="sm">
-				<AlertDialogHeader>
-					<AlertDialogTitle>Đóng khung tạo bài viết?</AlertDialogTitle>
-					<AlertDialogDescription>
-						Nếu bạn tắt bây giờ, nội dung, ảnh hoặc GIF bạn đã thêm sẽ bị mất.
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel disabled={isSubmitting}>
-						Tiếp tục chỉnh sửa
-					</AlertDialogCancel>
-					<AlertDialogAction
-						variant="destructive"
-						disabled={isSubmitting}
-						onClick={() => {
-							resetComposer();
-							setIsDiscardAlertOpen(false);
-							setIsComposerOpen(false);
-						}}
+			<Sheet open={isComposerOpen} onOpenChange={handleComposerOpenChange}>
+				<SheetTrigger asChild>
+					<button
+						type="button"
+						className="animate-fade-up mt-12 md:mt-0 mb-6 w-full overflow-hidden rounded-2xl border border-border/70 bg-card text-left shadow-sm transition-all duration-300 hover:shadow-md"
 					>
-						Tắt và bỏ nội dung
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
+						<div className="flex items-center gap-3 px-4 py-4">
+							<div className="size-10 shrink-0 overflow-hidden rounded-full bg-secondary">
+								{profile?.avatar_url ? (
+									<Image
+										src={profile.avatar_url}
+										alt={profile.display_name || "Người dùng"}
+										width={40}
+										height={40}
+										className="size-10 object-cover"
+									/>
+								) : (
+									<div className="flex size-10 items-center justify-center text-sm font-semibold text-primary">
+										{profile?.display_name?.[0]?.toUpperCase() || "U"}
+									</div>
+								)}
+							</div>
+							<div className="flex-1 rounded-full bg-muted/55 px-4 py-3 text-sm text-muted-foreground">
+								{`Bạn đang nghĩ gì${
+									profile?.display_name ? `, ${profile.display_name}` : ""
+								}?`}
+							</div>
+						</div>
+						<div className="flex items-center gap-2 border-t border-border/70 px-4 py-3 text-sm text-muted-foreground">
+							<span className="inline-flex items-center gap-2 rounded-lg px-2 py-1">
+								<ImageIcon size={18} />
+								Ảnh
+							</span>
+							<span className="inline-flex items-center gap-2 rounded-lg px-2 py-1">
+								GIF
+							</span>
+							<span className="inline-flex items-center gap-2 rounded-lg px-2 py-1">
+								Emoji
+							</span>
+						</div>
+					</button>
+				</SheetTrigger>
+
+				<SheetContent
+					side="top"
+					className="h-dvh rounded-none border-0 p-0 sm:max-w-none"
+				>
+					<SheetHeader className="sr-only">
+						<SheetTitle>Tạo bài viết</SheetTitle>
+						<SheetDescription>
+							Soạn bài viết mới toàn màn hình.
+						</SheetDescription>
+					</SheetHeader>
+					{renderComposerForm()}
+				</SheetContent>
+			</Sheet>
+			<AlertDialog
+				open={isDiscardAlertOpen}
+				onOpenChange={setIsDiscardAlertOpen}
+			>
+				<AlertDialogContent size="sm">
+					<AlertDialogHeader>
+						<AlertDialogTitle>Đóng khung tạo bài viết?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Nếu bạn tắt bây giờ, nội dung, ảnh hoặc GIF bạn đã thêm sẽ bị mất.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={isSubmitting}>
+							Tiếp tục chỉnh sửa
+						</AlertDialogCancel>
+						<AlertDialogAction
+							variant="destructive"
+							disabled={isSubmitting}
+							onClick={() => {
+								resetComposer();
+								setIsDiscardAlertOpen(false);
+								setIsComposerOpen(false);
+							}}
+						>
+							Tắt và bỏ nội dung
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</>
 	);
 }

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
+import { WellnessMobileSheet } from "@/components/feed/WellnessWidgets";
 import {
 	Sheet,
 	SheetClose,
@@ -32,6 +33,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { createClient } from "@/utils/supabase/client";
 import { IconLogout } from "@tabler/icons-react";
 import useProfile from "@/hooks/useProfile";
+import { AppLogo } from "./AppLogo";
 
 const navItems = [
 	{ href: "/", icon: IconHome, key: "home" },
@@ -44,124 +46,12 @@ const navItems = [
 
 export function MobileDock() {
 	const pathname = usePathname();
-	const user = useAuthStore((state) => state.user);
-	const { profile } = useProfile();
+
 	const { unreadCount: unreadMessageCount } = useUnreadMessages();
 	const { unreadCount: unreadNotificationCount } = useNotifications();
-	const { theme, resolvedTheme, setTheme } = useTheme();
-	const isDark = (resolvedTheme ?? theme) === "dark";
-	const canAccessDashboard =
-		profile?.role === "admin" || profile?.role === "moder";
-	const showHomeShortcut =
-		pathname === "/about" ||
-		pathname === "/contact" ||
-		pathname.startsWith("/match") ||
-		pathname.startsWith("/messages");
-	const supabase = createClient();
-
-	const handleLogout = async () => {
-		await supabase.auth.signOut();
-		window.location.href = "/login";
-	};
-	// Don't show on auth pages or dashboard
-	if (
-		pathname.startsWith("/login") ||
-		pathname.startsWith("/signup") ||
-		pathname.startsWith("/onboarding") ||
-		pathname.startsWith("/dashboard")
-	) {
-		return null;
-	}
 
 	return (
 		<div className="fixed bottom-0 left-0 right-0 z-50 animate-fade-in-soft lg:hidden">
-			<div className="pointer-events-none mx-auto w-full max-w-xl px-4">
-				<Sheet>
-					<SheetTrigger asChild>
-						<Button
-							type="button"
-							size="icon"
-							variant="outline"
-							className="pointer-events-auto fixed bottom-20 right-4 z-[60] size-11 rounded-full border border-border/80 shadow-lg backdrop-blur"
-							title="Mở menu nhanh"
-						>
-							<IconMenu2 className="size-5" />
-						</Button>
-					</SheetTrigger>
-					<SheetContent side="top" className="mx-auto max-w-xl">
-						<SheetHeader className="pr-10 text-left">
-							<SheetTitle>Menu nhanh</SheetTitle>
-							<SheetDescription>
-								Các thao tác điều hướng và tùy chọn nhanh cho mobile.
-							</SheetDescription>
-						</SheetHeader>
-
-						<div className="mt-4 grid gap-2">
-							{showHomeShortcut && (
-								<SheetClose asChild>
-									<Button
-										asChild
-										type="button"
-										variant="outline"
-										className="h-11 justify-start rounded-2xl"
-									>
-										<Link href="/">
-											<IconHome className="mr-2 size-4" />
-											Trang chủ
-										</Link>
-									</Button>
-								</SheetClose>
-							)}
-
-							<SheetClose asChild>
-								<Button
-									type="button"
-									variant="outline"
-									className="h-11 justify-start rounded-2xl"
-									onClick={() => setTheme(isDark ? "light" : "dark")}
-								>
-									{isDark ? (
-										<IconSun className="mr-2 size-4" />
-									) : (
-										<IconMoon className="mr-2 size-4" />
-									)}
-									{isDark ? "Chuyển sang sáng" : "Chuyển sang tối"}
-								</Button>
-							</SheetClose>
-
-							{user && canAccessDashboard && (
-								<SheetClose asChild>
-									<Button
-										asChild
-										type="button"
-										variant="outline"
-										className="h-11 justify-start rounded-2xl"
-									>
-										<Link href="/dashboard">
-											<IconLayoutDashboard className="mr-2 size-4" />
-											Dashboard
-										</Link>
-									</Button>
-								</SheetClose>
-							)}
-
-							{user && (
-								<SheetClose asChild>
-									<Button
-										type="button"
-										variant="outline"
-										onClick={handleLogout}
-										className="h-11 justify-start rounded-2xl text-red-600"
-									>
-										<IconLogout className="mr-2 size-4" />
-										Đăng xuất
-									</Button>
-								</SheetClose>
-							)}
-						</div>
-					</SheetContent>
-				</Sheet>
-			</div>
 			<div className="border-t border-border/70 bg-background/95 backdrop-blur">
 				<nav className="mx-auto flex h-16 w-full max-w-xl items-center justify-around px-1">
 					{navItems.map((item) => {
@@ -205,5 +95,142 @@ export function MobileDock() {
 				</nav>
 			</div>
 		</div>
+	);
+}
+
+export function MobileMenu() {
+	const user = useAuthStore((state) => state.user);
+	const { profile } = useProfile();
+	const pathname = usePathname();
+	const canAccessDashboard =
+		profile?.role === "admin" || profile?.role === "moder";
+	const showHomeShortcut =
+		pathname === "/about" ||
+		pathname === "/contact" ||
+		pathname.startsWith("/match") ||
+		pathname.startsWith("/messages");
+	const { theme, resolvedTheme, setTheme } = useTheme();
+	const supabase = createClient();
+
+	const isDark = (resolvedTheme ?? theme) === "dark";
+	const handleLogout = async () => {
+		await supabase.auth.signOut();
+		window.location.href = "/login";
+	};
+	// Don't show on auth pages or dashboard
+	if (
+		pathname.startsWith("/login") ||
+		pathname.startsWith("/signup") ||
+		pathname.startsWith("/onboarding") ||
+		pathname.startsWith("/dashboard")
+	) {
+		return null;
+	}
+	return (
+		<header className="border-t border-border/60 bg-background/85 backdrop-blur-md fixed top-0 left-0 w-full right-0 z-[50] animate-fade-in-soft lg:hidden">
+			<div className="mx-auto h-12 flex w-full max-w-2xl items-center justify-between gap-4 px-4">
+				<Link
+					href="/"
+					className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-card"
+				>
+					<AppLogo showText={false} imageClassName="h-9 w-auto" />
+					<div className="space-y-0.5">
+						<h1 className="text-md font-semibold text-foreground">
+							Talk N Share
+						</h1>
+					</div>
+				</Link>
+				<div className="pointer-events-none flex items-center gap-4 px-4">
+					<Sheet>
+						<SheetTrigger asChild>
+							<Button
+								type="button"
+								size="icon"
+								variant="ghost"
+								className="pointer-events-auto size-11 shadow-lg backdrop-blur"
+								title="Mở menu nhanh"
+							>
+								<IconMenu2 className="size-5" />
+							</Button>
+						</SheetTrigger>
+						<SheetContent side="bottom" className="mx-auto max-w-xl z-[60]">
+							<SheetHeader className="pr-10 text-left">
+								<SheetTitle>Menu nhanh</SheetTitle>
+								<SheetDescription>
+									Các thao tác điều hướng và tùy chọn nhanh cho mobile.
+								</SheetDescription>
+							</SheetHeader>
+
+							<div className="mt-4 grid gap-2">
+								{showHomeShortcut && (
+									<SheetClose asChild>
+										<Button
+											asChild
+											type="button"
+											variant="outline"
+											className="h-11 justify-start rounded-2xl"
+										>
+											<Link href="/">
+												<IconHome className="mr-2 size-4" />
+												Trang chủ
+											</Link>
+										</Button>
+									</SheetClose>
+								)}
+
+								<SheetClose asChild>
+									<WellnessMobileSheet />
+								</SheetClose>
+								<SheetClose asChild>
+									<Button
+										type="button"
+										variant="outline"
+										className="h-11 justify-start rounded-2xl"
+										onClick={() => setTheme(isDark ? "light" : "dark")}
+									>
+										{isDark ? (
+											<IconSun className="mr-2 size-4" />
+										) : (
+											<IconMoon className="mr-2 size-4" />
+										)}
+										{isDark ? "Giao diện sáng" : "Giao diện tối"}
+									</Button>
+								</SheetClose>
+
+								{user && canAccessDashboard && (
+									<SheetClose asChild>
+										<Button
+											asChild
+											type="button"
+											variant="outline"
+											className="h-11 justify-start rounded-2xl"
+										>
+											<Link href="/dashboard">
+												<IconLayoutDashboard className="mr-2 size-4" />
+												Dashboard
+											</Link>
+										</Button>
+									</SheetClose>
+								)}
+
+								{user && (
+									<SheetClose asChild>
+										<Button
+											type="button"
+											variant="outline"
+											onClick={handleLogout}
+											className="h-11 justify-start rounded-2xl text-red-600"
+										>
+											<IconLogout className="mr-2 size-4" />
+											Đăng xuất
+										</Button>
+									</SheetClose>
+								)}
+							</div>
+						</SheetContent>
+					</Sheet>
+				</div>
+			</div>
+		</header>
 	);
 }

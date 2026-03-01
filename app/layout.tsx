@@ -13,6 +13,7 @@ import { ScrollToTopButton } from "@/components/shared/ScrollToTopButton";
 import { AppAnnouncementBanner } from "@/components/shared/AppAnnouncementBanner";
 import { FloatingAmbientPlayerControl } from "@/components/shared/FloatingAmbientPlayerControl";
 import { AmbientPlayerProvider } from "@/hooks/useAmbientPlayer";
+import { MobileMenu } from "@/components/shared/MobileDock";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -57,6 +58,7 @@ export default function RootLayout({
 								{children}
 								<FloatingAmbientPlayerControl />
 								<ScrollToTopButton />
+								<MobileMenu />
 								<MobileDock />
 								<Toaster position="bottom-right" />
 							</AmbientPlayerProvider>

@@ -155,7 +155,7 @@ export function EmojiPickerButton({
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<Popover open={isOpen} onOpenChange={setIsOpen}>
+		<Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
 			<PopoverTrigger asChild>
 				<Button
 					type="button"
@@ -173,34 +173,34 @@ export function EmojiPickerButton({
 				align="end"
 				side={panelSide === "top" ? "top" : "bottom"}
 			>
-					<div className="mb-2 text-xs font-medium text-muted-foreground">
-						Chọn emoji
-					</div>
-					<div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-						{EMOJI_GROUPS.map((group) => (
-							<div key={group.label}>
-								<div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-									{group.label}
-								</div>
-								<div className="grid grid-cols-8 gap-1">
-									{group.items.map((emoji) => (
-										<button
-											key={emoji}
-											type="button"
-											onClick={() => {
-												onSelect(emoji);
-												setIsOpen(false);
-											}}
-											className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition hover:bg-muted"
-											aria-label={`Chèn ${emoji}`}
-										>
-											{emoji}
-										</button>
-									))}
-								</div>
+				<div className="mb-2 text-xs font-medium text-muted-foreground">
+					Chọn emoji
+				</div>
+				<div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+					{EMOJI_GROUPS.map((group) => (
+						<div key={group.label}>
+							<div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+								{group.label}
 							</div>
-						))}
-					</div>
+							<div className="grid grid-cols-8 gap-1">
+								{group.items.map((emoji) => (
+									<button
+										key={emoji}
+										type="button"
+										onClick={() => {
+											onSelect(emoji);
+											setIsOpen(false);
+										}}
+										className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition hover:bg-muted"
+										aria-label={`Chèn ${emoji}`}
+									>
+										{emoji}
+									</button>
+								))}
+							</div>
+						</div>
+					))}
+				</div>
 			</PopoverContent>
 		</Popover>
 	);

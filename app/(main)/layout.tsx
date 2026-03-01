@@ -12,7 +12,6 @@ import {
 	AppLeftSidebar,
 	AppRightSidebar,
 } from "@/components/shared";
-import { WellnessMobileSheet } from "@/components/feed/WellnessWidgets";
 import { FeedRouteSplash } from "@/components/shared/FeedRouteSplash";
 import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
 
@@ -49,7 +48,9 @@ export default function MainRoutesLayout({
 			if (!user) return [];
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("id, display_name, avatar_url, location, gender, zodiac, relationship")
+				.select(
+					"id, display_name, avatar_url, location, gender, zodiac, relationship",
+				)
 				.eq("is_public", true)
 				.neq("id", user?.id ?? "")
 				.limit(40);
@@ -65,13 +66,11 @@ export default function MainRoutesLayout({
 			const withCommon = (data ?? [])
 				.map((u: any) => {
 					let commonCount = 0;
-					if (current.location && u.location === current.location) commonCount += 1;
+					if (current.location && u.location === current.location)
+						commonCount += 1;
 					if (current.gender && u.gender === current.gender) commonCount += 1;
 					if (current.zodiac && u.zodiac === current.zodiac) commonCount += 1;
-					if (
-						current.relationship &&
-						u.relationship === current.relationship
-					) {
+					if (current.relationship && u.relationship === current.relationship) {
 						commonCount += 1;
 					}
 					return { ...u, commonCount };
@@ -97,11 +96,12 @@ export default function MainRoutesLayout({
 	return (
 		<>
 			<FeedRouteSplash />
-			{!isMessagesPage && <WellnessMobileSheet />}
 			<AppHeaderNav />
 			<MainLayout
 				hideSidebars={isMessagesPage}
-				leftSidebar={isMessagesPage ? null : <AppLeftSidebar profile={profile} />}
+				leftSidebar={
+					isMessagesPage ? null : <AppLeftSidebar profile={profile} />
+				}
 				rightSidebar={
 					isMessagesPage ? null : (
 						<AppRightSidebar suggestedFriends={suggestedFriends} />

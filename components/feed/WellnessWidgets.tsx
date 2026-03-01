@@ -291,7 +291,7 @@ export function AmbientMusicWidget({ className }: { className?: string }) {
 						{MOOD_OPTIONS.map((moodOption) => (
 							<button
 								aria-label={moodOption.label}
-								aria-pressed={selectedMood === moodOption.value}
+								// aria-pressed={selectedMood === moodOption.value}
 								key={moodOption.value}
 								type="button"
 								onClick={() => setMood(moodOption.value)}
@@ -446,32 +446,33 @@ export function AmbientMusicWidget({ className }: { className?: string }) {
 
 export function WellnessMobileSheet() {
 	return (
-		<div className="fixed bottom-20 left-4 z-[60] lg:hidden">
-			<Sheet>
-				<SheetTrigger asChild>
-					<Button
-						type="button"
-						variant="outline"
-						className="border border-border/80 shadow-lg backdrop-blur"
-					>
-						<IconHealthRecognition className="mr-2 size-4" />
-						Cửa sổ tinh thần
-					</Button>
-				</SheetTrigger>
-				<SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto">
-					<SheetHeader className="text-left">
-						<SheetTitle>Hồi phục nhanh cho tâm hồn</SheetTitle>
-						<SheetDescription>
-							Một vài công cụ nhỏ để bạn chậm lại và tự chăm sóc mình.
-						</SheetDescription>
-					</SheetHeader>
+		<Sheet>
+			<SheetTrigger asChild>
+				<Button
+					type="button"
+					variant="secondary"
+					className="h-11 justify-start rounded-2xl"
+				>
+					<IconHealthRecognition className="mr-2 size-4" />
+					Cửa sổ tinh thần
+				</Button>
+			</SheetTrigger>
+			<SheetContent
+				side="bottom"
+				className="max-h-[85dvh] overflow-y-auto z-[80]"
+			>
+				<SheetHeader className="text-left">
+					<SheetTitle>Hồi phục nhanh cho tâm hồn</SheetTitle>
+					<SheetDescription>
+						Một vài công cụ nhỏ để bạn chậm lại và tự chăm sóc mình.
+					</SheetDescription>
+				</SheetHeader>
 
-					<div className="mt-4 space-y-4">
-						<AmbientMusicWidget />
-						<BreathingPauseWidget />
-					</div>
-				</SheetContent>
-			</Sheet>
-		</div>
+				<div className="mt-4 space-y-4">
+					<AmbientMusicWidget />
+					<BreathingPauseWidget />
+				</div>
+			</SheetContent>
+		</Sheet>
 	);
 }
