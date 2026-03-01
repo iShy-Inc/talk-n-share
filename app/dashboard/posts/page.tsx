@@ -62,6 +62,9 @@ export default function PostsPage() {
 	const [filter, setFilter] = useState<"all" | "approved" | "pending">("all");
 
 	const posts = postsQuery.data?.pages.flat() ?? [];
+	const hasGifPreview = !!selectedGif;
+	const hasImagePreview = !!editForm.image_url;
+	const hasAnyPreview = hasGifPreview || hasImagePreview;
 
 	const filteredPosts = posts.filter((post) => {
 		const matchesSearch =
@@ -244,12 +247,6 @@ export default function PostsPage() {
 								className="min-h-[120px] w-full resize-none rounded-2xl border border-transparent bg-muted/55 px-4 py-3 text-[15px] leading-relaxed placeholder:text-muted-foreground/80 focus:border-border focus:outline-none"
 								placeholder="Chỉnh sửa nội dung bài viết..."
 							/>
-							<div className="mt-3 flex justify-end border-t border-border/70 pt-3">
-								<EmojiPickerButton
-									onSelect={handleSelectEmoji}
-									panelSide="top"
-								/>
-							</div>
 						</div>
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<div className="space-y-2">
@@ -293,41 +290,22 @@ export default function PostsPage() {
 						</div>
 						<div className="space-y-3">
 							<div className="overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/20 shadow-sm">
-								<div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center">
+								<div className="grid grid-cols-1 gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
 									<div className="space-y-4">
-										<div className="flex flex-wrap items-center gap-2">
-											<Badge
-												variant={selectedGif ? "default" : "outline"}
-												className="rounded-full px-3 py-1"
-											>
-												{selectedGif ? "GIF đã chọn" : "Chưa có GIF"}
-											</Badge>
-											<Badge
-												variant="secondary"
-												className="rounded-full px-3 py-1"
-											>
-												GIPHY
-											</Badge>
-										</div>
-										<div className="space-y-2">
-											<div>
-												<p className="text-sm font-medium">GIF Preview</p>
-												<p className="mt-1 text-sm text-muted-foreground">
-													Sử dụng bộ chọn có sẵn để đổi GIF nhanh
-												</p>
-											</div>
-											<div className="rounded-2xl border border-border/60 bg-background/70 p-3">
-												<p className="text-sm font-medium text-foreground">
-													{selectedGif?.title || "Chưa có GIF được gán"}
-												</p>
-												<p className="mt-1 text-xs text-muted-foreground">
-													{selectedGif
-														? "GIF hiện tại sẽ được lưu cùng bài viết khi bạn nhấn Save Changes."
-														: "Bạn có thể để trống nếu bài viết chỉ cần nội dung văn bản hoặc ảnh."}
-												</p>
-											</div>
+										<div className="space-y-1">
+											<p className="text-sm font-semibold text-foreground">
+												Media Preview
+											</p>
+											<p className="text-sm text-muted-foreground">
+												Chọn emoji, GIF hoặc nhập ảnh để xem trước ngay trong
+												trình chỉnh sửa.
+											</p>
 										</div>
 										<div className="flex flex-wrap items-center gap-2">
+											<EmojiPickerButton
+												onSelect={handleSelectEmoji}
+												panelSide="top"
+											/>
 											<GifPickerButton
 												onSelect={setSelectedGif}
 												className="rounded-full px-4"
@@ -344,53 +322,82 @@ export default function PostsPage() {
 												</Button>
 											)}
 										</div>
+										<div className="flex flex-wrap items-center gap-2">
+											<Badge
+												variant={hasGifPreview ? "default" : "outline"}
+												className="rounded-full px-3 py-1"
+											>
+												{hasGifPreview ? "GIF đã chọn" : "Chưa có GIF"}
+											</Badge>
+											<Badge
+												variant={hasImagePreview ? "secondary" : "outline"}
+												className="rounded-full px-3 py-1"
+											>
+												{hasImagePreview ? "Ảnh URL" : "Chưa có ảnh"}
+											</Badge>
+										</div>
+										<div className="rounded-2xl border border-border/60 bg-background/70 p-3">
+											<p className="text-sm font-medium text-foreground">
+												{hasGifPreview
+													? selectedGif?.title || "GIF hiện tại"
+													: hasImagePreview
+														? "Ảnh từ đường dẫn hiện tại"
+														: "Chưa có media được gán"}
+											</p>
+											<p className="mt-1 text-xs text-muted-foreground">
+												{hasGifPreview
+													? "GIF được ưu tiên hiển thị khi bài viết có cả GIF và ảnh."
+													: hasImagePreview
+														? "Ảnh xem trước được lấy trực tiếp từ Image URL."
+														: "Thêm GIF hoặc nhập ảnh để xem trước tại đây."}
+											</p>
+										</div>
 									</div>
-									<div className="flex justify-center lg:justify-end">
-										{selectedGif ? (
-											<div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-[0_20px_45px_-24px_rgba(15,23,42,0.5)]">
-												<div className="relative">
+									<div className="lg:pl-2">
+										<div className="flex min-h-56 items-center justify-center rounded-2xl border border-border/60 bg-background/70 p-3">
+											{hasGifPreview ? (
+												<div className="w-full space-y-3">
 													<img
 														src={selectedGif.previewUrl}
 														alt={selectedGif.title}
-														className="size-72 object-cover"
+														className="mx-auto h-auto max-h-[min(50dvh,28rem)] w-full object-contain"
 													/>
-													<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-													<div className="absolute inset-x-0 bottom-0 space-y-1 px-4 py-4">
-														<p className="truncate text-sm font-semibold text-white">
+													<div className="rounded-xl bg-muted/35 px-3 py-2 text-center">
+														<p className="truncate text-sm font-medium text-foreground">
 															{selectedGif.title || "GIF"}
 														</p>
-														<p className="text-xs text-white/80">
-															Dang xem truoc trong post editor
+														<p className="mt-1 text-xs text-muted-foreground">
+															Đang xem trước GIF trong post editor
 														</p>
 													</div>
 												</div>
-											</div>
-										) : (
-											<div className="flex size-72 flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-border/70 bg-background/60 px-6 text-center shadow-inner">
-												<div className="space-y-1">
-													<p className="text-sm font-medium text-foreground/85">
-														Chua chon GIF
+											) : hasImagePreview ? (
+												<img
+													src={editForm.image_url}
+													alt="Post preview"
+													className="mx-auto h-auto max-h-[min(50dvh,28rem)] w-full object-contain"
+												/>
+											) : (
+												<div className="flex flex-col items-center justify-center px-6 text-center">
+													<IconPhoto className="size-10 text-muted-foreground/40" />
+													<p className="mt-3 text-sm font-medium text-foreground/85">
+														Chưa có media
 													</p>
-													<p className="text-xs text-muted-foreground">
-														Nhan nut GIF de mo picker va xem truoc tai day.
+													<p className="mt-1 text-xs text-muted-foreground">
+														Thêm GIF hoặc nhập ảnh để xem trước tại đây.
 													</p>
 												</div>
-											</div>
+											)}
+										</div>
+										{!hasAnyPreview ? null : (
+											<p className="mt-2 text-center text-xs text-muted-foreground">
+												Media được hiển thị đầy đủ để dễ kiểm tra trước khi lưu.
+											</p>
 										)}
 									</div>
 								</div>
 							</div>
 						</div>
-						{editForm.image_url && (
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Image Preview</label>
-								<img
-									src={editForm.image_url}
-									alt="Post preview"
-									className="h-56 w-full rounded-xl border border-border/70 object-cover"
-								/>
-							</div>
-						)}
 						<div className="flex flex-col-reverse gap-2 border-t border-border/70 pt-4 sm:flex-row sm:justify-end">
 							<Button
 								variant="outline"

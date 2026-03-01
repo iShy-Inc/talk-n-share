@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { IconHeart, IconX } from "@tabler/icons-react";
 
 interface BannerProps {
@@ -14,17 +15,18 @@ export default function Banner3({ onDismiss }: BannerProps) {
 						Niềm vui của mọi người là món quà lớn nhất đối với chúng tôi
 					</span>
 				</div>
-				<span className="shrink-0 rounded-full border border-rose-200 bg-white/80 px-3 py-1 text-xs font-medium text-rose-800">
+				<span className="rounded-full border border-rose-200 bg-white/80 px-3 py-1 text-xs font-medium text-rose-800">
 					Lời nhắn từ team
 				</span>
-				<button
+				<Button
 					type="button"
+					variant="ghost"
 					onClick={onDismiss}
 					aria-label="Tắt thông báo"
 					className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-rose-700/80 transition-colors hover:bg-rose-200/60 hover:text-rose-950"
 				>
 					<IconX className="size-4 stroke-2" />
-				</button>
+				</Button>
 			</div>
 		</div>
 	);

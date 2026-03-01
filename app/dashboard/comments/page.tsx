@@ -56,6 +56,7 @@ export default function CommentsPage() {
 	});
 
 	const comments = commentsQuery.data ?? [];
+	const hasGifPreview = !!selectedGif;
 	const filteredComments = comments.filter(
 		(comment) =>
 			(comment.content ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -225,50 +226,24 @@ export default function CommentsPage() {
 								className="min-h-[110px] w-full resize-none rounded-2xl border border-transparent bg-muted/55 px-4 py-3 text-[15px] leading-relaxed placeholder:text-muted-foreground/80 focus:border-border focus:outline-none"
 								placeholder="Chỉnh sửa nội dung bình luận..."
 							/>
-							<div className="mt-3 flex justify-end border-t border-border/70 pt-3">
-								<EmojiPickerButton
-									onSelect={handleSelectEmoji}
-									panelSide="top"
-								/>
-							</div>
 						</div>
 						<div className="overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/20 shadow-sm">
-							<div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center">
+							<div className="grid grid-cols-1 gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
 								<div className="space-y-4">
-									<div className="flex flex-wrap items-center gap-2">
-										<Badge
-											variant={selectedGif ? "default" : "outline"}
-											className="rounded-full px-3 py-1"
-										>
-											{selectedGif ? "GIF đã chọn" : "Chưa có GIF"}
-										</Badge>
-										<Badge
-											variant="secondary"
-											className="rounded-full px-3 py-1"
-										>
-											GIPHY
-										</Badge>
-									</div>
-									<div className="space-y-2">
-										<div>
-											<p className="text-sm font-medium">GIF Preview</p>
-											<p className="mt-1 text-sm text-muted-foreground">
-												Chọn GIF ngay trong form sửa comment và xem trước bên
-												cạnh để thao tác nhanh hơn.
-											</p>
-										</div>
-										<div className="rounded-2xl border border-border/60 bg-background/70 p-3">
-											<p className="text-sm font-medium text-foreground">
-												{selectedGif?.title || "Chưa có GIF được gán"}
-											</p>
-											<p className="mt-1 text-xs text-muted-foreground">
-												{selectedGif
-													? "GIF này sẽ thay thế media hiện tại của comment khi lưu."
-													: "Nếu không cần media, bạn có thể giữ comment ở dạng văn bản."}
-											</p>
-										</div>
+									<div className="space-y-1">
+										<p className="text-sm font-semibold text-foreground">
+											Media Preview
+										</p>
+										<p className="text-sm text-muted-foreground">
+											Chèn emoji hoặc chọn GIF và xem trước ngay trong form sửa
+											comment.
+										</p>
 									</div>
 									<div className="flex flex-wrap items-center gap-2">
+										<EmojiPickerButton
+											onSelect={handleSelectEmoji}
+											panelSide="top"
+										/>
 										<GifPickerButton
 											onSelect={setSelectedGif}
 											className="rounded-full px-4"
@@ -285,39 +260,62 @@ export default function CommentsPage() {
 											</Button>
 										)}
 									</div>
+									<div className="flex flex-wrap items-center gap-2">
+										<Badge
+											variant={hasGifPreview ? "default" : "outline"}
+											className="rounded-full px-3 py-1"
+										>
+											{hasGifPreview ? "GIF đã chọn" : "Chưa có GIF"}
+										</Badge>
+										<Badge
+											variant="secondary"
+											className="rounded-full px-3 py-1"
+										>
+											GIPHY
+										</Badge>
+									</div>
+									<div className="rounded-2xl border border-border/60 bg-background/70 p-3">
+										<p className="text-sm font-medium text-foreground">
+											{selectedGif?.title || "Chưa có GIF được gán"}
+										</p>
+										<p className="mt-1 text-xs text-muted-foreground">
+											{selectedGif
+												? "GIF này sẽ thay thế media hiện tại của comment khi lưu."
+												: "Nếu không cần media, bạn có thể giữ comment ở dạng văn bản."}
+										</p>
+									</div>
 								</div>
-								<div className="flex justify-center lg:justify-end">
-									{selectedGif ? (
-										<div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-[0_20px_45px_-24px_rgba(15,23,42,0.5)]">
-											<div className="relative">
+								<div className="lg:pl-2">
+									<div className="flex min-h-56 items-center justify-center rounded-2xl border border-border/60 bg-background/70 p-3">
+										{selectedGif ? (
+											<div className="w-full space-y-3">
 												<img
 													src={selectedGif.previewUrl}
 													alt={selectedGif.title}
-													className="size-72 object-cover"
+													className="mx-auto h-auto max-h-[min(50dvh,28rem)] w-full object-contain"
 												/>
-												<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-												<div className="absolute inset-x-0 bottom-0 space-y-1 px-4 py-4">
-													<p className="truncate text-sm font-semibold text-white">
+												<div className="rounded-xl bg-muted/35 px-3 py-2 text-center">
+													<p className="truncate text-sm font-medium text-foreground">
 														{selectedGif.title || "GIF"}
 													</p>
-													<p className="text-xs text-white/80">
+													<p className="mt-1 text-xs text-muted-foreground">
 														Đang xem trước trong comment editor
 													</p>
 												</div>
 											</div>
-										</div>
-									) : (
-										<div className="flex size-72 flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-border/70 bg-background/60 px-6 text-center shadow-inner">
-											<div className="space-y-1">
-												<p className="text-sm font-medium text-foreground/85">
-													Chưa chọn GIF
-												</p>
-												<p className="text-xs text-muted-foreground">
-													Nhấn nút GIF để mở picker và xem trước tại đây.
-												</p>
+										) : (
+											<div className="flex flex-col items-center justify-center px-6 text-center">
+												<div className="space-y-1">
+													<p className="text-sm font-medium text-foreground/85">
+														Chưa chọn GIF
+													</p>
+													<p className="text-xs text-muted-foreground">
+														Nhấn nút GIF để mở picker và xem trước tại đây.
+													</p>
+												</div>
 											</div>
-										</div>
-									)}
+										)}
+									</div>
 								</div>
 							</div>
 						</div>
