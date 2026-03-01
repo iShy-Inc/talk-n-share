@@ -14,6 +14,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { createEmailAuthClient } from "@/utils/supabase/email-client";
+import { AuthHomeLink } from "@/components/shared/AuthHomeLink";
 
 const supabase = createEmailAuthClient();
 
@@ -116,7 +117,8 @@ function AuthCompleteContent() {
 	}, [next, queryError, router]);
 
 	return (
-		<div className="flex min-h-screen w-full items-center justify-center p-4">
+		<div className="relative flex min-h-screen w-full items-center justify-center p-4">
+			<AuthHomeLink className="absolute top-4 left-4 md:top-6 md:left-6" />
 			<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm">
 				<CardHeader className="text-center">
 					<CardTitle className="text-2xl font-bold tracking-tight">
@@ -153,7 +155,8 @@ export default function AuthCompletePage() {
 	return (
 		<Suspense
 			fallback={
-				<div className="flex min-h-screen w-full items-center justify-center p-4">
+				<div className="relative flex min-h-screen w-full items-center justify-center p-4">
+					<AuthHomeLink className="absolute top-4 left-4 md:top-6 md:left-6" />
 					<Card className="w-full max-w-md border-muted/60 bg-background/80 shadow-xl backdrop-blur-sm">
 						<CardHeader className="text-center">
 							<CardTitle className="text-2xl font-bold tracking-tight">

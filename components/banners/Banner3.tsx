@@ -1,18 +1,30 @@
-import { IconHeart } from "@tabler/icons-react";
+import { IconHeart, IconX } from "@tabler/icons-react";
 
-export default function Banner3() {
+interface BannerProps {
+	onDismiss?: () => void;
+}
+
+export default function Banner3({ onDismiss }: BannerProps) {
 	return (
-		<div className="border-b bg-background">
-			<div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-3 text-center">
-				<div className="flex items-center gap-4">
-					<IconHeart className="size-5 stroke-2 shrink-0" />
-					<span className="font-medium text-sm">
+		<div className="border-b border-rose-200/50 bg-rose-50 text-rose-950">
+			<div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
+				<div className="flex min-w-0 items-center gap-4">
+					<IconHeart className="size-5 shrink-0 stroke-2 text-rose-700" />
+					<span className="text-sm font-medium leading-5">
 						Niềm vui của mọi người là món quà lớn nhất đối với chúng tôi
 					</span>
 				</div>
-				<span className="rounded-full border border-border/60 bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+				<span className="shrink-0 rounded-full border border-rose-200 bg-white/80 px-3 py-1 text-xs font-medium text-rose-800">
 					Lời nhắn từ team
 				</span>
+				<button
+					type="button"
+					onClick={onDismiss}
+					aria-label="Tắt thông báo"
+					className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-rose-700/80 transition-colors hover:bg-rose-200/60 hover:text-rose-950"
+				>
+					<IconX className="size-4 stroke-2" />
+				</button>
 			</div>
 		</div>
 	);
