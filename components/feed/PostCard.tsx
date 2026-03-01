@@ -610,6 +610,9 @@ export function PostCard({ post }: PostCardProps) {
 		? `${postContent.slice(0, POST_DIALOG_PREVIEW_CHAR_LIMIT).trimEnd()}...`
 		: postContent;
 
+	const getReplyTargetId = (comment: ThreadComment) =>
+		comment.parentId ?? comment.id;
+
 	const renderThread = (items: ThreadComment[], depth = 0) =>
 		items.map((comment) => (
 			<div
@@ -627,7 +630,7 @@ export function PostCard({ post }: PostCardProps) {
 					gifId={comment.gifId}
 					gifProvider={comment.gifProvider}
 					timeAgo={comment.timeAgo}
-					onReply={() => setReplyToCommentId(comment.id)}
+					onReply={() => setReplyToCommentId(getReplyTargetId(comment))}
 				/>
 				{comment.children.length > 0 &&
 					renderThread(comment.children, depth + 1)}

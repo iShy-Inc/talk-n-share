@@ -36,10 +36,10 @@ export function ScrollToTopButton() {
 		<Button
 			type="button"
 			size="icon"
-			variant="secondary"
+			variant="default"
 			onClick={scrollToTop}
 			aria-label="Cuộn lên đầu trang"
-			className={`fixed bottom-36 right-4 z-[70] rounded-full border border-border/80 bg-background/95 shadow-md backdrop-blur transition-all duration-300 md:bottom-24 lg:bottom-6 lg:right-6 ${
+			className={`fixed bottom-36 right-4 z-[70] rounded-full border border-border/80 shadow-md backdrop-blur transition-all duration-300 md:bottom-24 lg:right-6 ${
 				isVisible
 					? "translate-y-0 opacity-100"
 					: "pointer-events-none translate-y-4 opacity-0"
