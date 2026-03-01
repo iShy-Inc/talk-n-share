@@ -12,6 +12,8 @@ import {
 	AppLeftSidebar,
 	AppRightSidebar,
 } from "@/components/shared";
+import { WellnessMobileSheet } from "@/components/feed/WellnessWidgets";
+import { FeedRouteSplash } from "@/components/shared/FeedRouteSplash";
 import { SuggestedFriend } from "@/components/shared/SuggestedFriends";
 
 const supabase = createClient();
@@ -94,6 +96,8 @@ export default function MainRoutesLayout({
 
 	return (
 		<>
+			<FeedRouteSplash />
+			{!isMessagesPage && <WellnessMobileSheet />}
 			<AppHeaderNav />
 			<MainLayout
 				hideSidebars={isMessagesPage}

@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SidebarProfileCard } from "./SidebarProfileCard";
 import { UserProfile } from "@/hooks/useProfile";
+import { AmbientMusicWidget } from "@/components/feed/WellnessWidgets";
 import {
 	IconHome,
 	IconUser,
@@ -27,8 +29,23 @@ const navItems = [
 
 export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 	const { unreadCount } = useUnreadMessages();
-
+	const [shouldRenderPlayer, setShouldRenderPlayer] = useState(false);
 	const pathname = usePathname();
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia("(min-width: 1024px)");
+		const updateMatch = () => {
+			setShouldRenderPlayer(mediaQuery.matches);
+		};
+
+		updateMatch();
+		mediaQuery.addEventListener("change", updateMatch);
+
+		return () => {
+			mediaQuery.removeEventListener("change", updateMatch);
+		};
+	}, []);
+
 	return (
 		<aside className={cn("hidden animate-fade-up lg:block", className)}>
 			<div className="sticky top-6 space-y-4">
@@ -87,6 +104,8 @@ export function AppLeftSidebar({ profile, className }: AppLeftSidebarProps) {
 						);
 					})}
 				</nav>
+
+				{shouldRenderPlayer ? <AmbientMusicWidget /> : null}
 			</div>
 		</aside>
 	);
