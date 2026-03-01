@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import {
+	createElement,
+	createContext,
+	useContext,
+	useEffect,
+	useId,
+	useRef,
+	useState,
+	type ReactNode,
+} from "react";
 
 const MUSIC_TRACK_STORAGE_KEY = "talk-n-share-ambient-track-id";
 const MUSIC_MOOD_STORAGE_KEY = "talk-n-share-ambient-mood";
@@ -345,7 +354,7 @@ interface AmbientPlayerSyncDetail {
 	repeatEnabled?: boolean;
 }
 
-export function useAmbientPlayer() {
+function useAmbientPlayerController() {
 	const initialMood = getStoredMood();
 	const initialTrackId = getStoredTrackId(initialMood);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -650,6 +659,103 @@ export function useAmbientPlayer() {
 		});
 	}, [currentTrack.id, isPlaying]);
 
+	useEffect(() => {
+		if (typeof window === "undefined" || !("mediaSession" in navigator)) {
+			return;
+		}
+
+		const handlePlay = () => {
+			const audio = audioRef.current;
+			if (!audio) {
+				return;
+			}
+
+			void audio.play()
+				.then(() => {
+					setIsPlaying(true);
+				})
+				.catch(() => {
+					setIsPlaying(false);
+				});
+		};
+
+		const handlePause = () => {
+			const audio = audioRef.current;
+			if (!audio) {
+				return;
+			}
+
+			audio.pause();
+			setIsPlaying(false);
+		};
+
+		const handleNextTrack = () => {
+			const tracksForMood = getTracksForMood(selectedMood);
+			setCurrentTrackId((current) => {
+				const nextTrackId = getNextTrackId(
+					tracksForMood,
+					current,
+					isShuffleEnabled,
+				);
+				if (isShuffleEnabled && nextTrackId !== current) {
+					shuffleHistoryRef.current.push(current);
+					setHasShuffleHistory(true);
+				}
+				return nextTrackId;
+			});
+		};
+
+		const handlePreviousTrack = () => {
+			const tracksForMood = getTracksForMood(selectedMood);
+
+			if (isShuffleEnabled && shuffleHistoryRef.current.length > 0) {
+				const previousTrackId = shuffleHistoryRef.current.pop();
+				setHasShuffleHistory(shuffleHistoryRef.current.length > 0);
+				if (typeof previousTrackId === "string") {
+					setCurrentTrackId(previousTrackId);
+					return;
+				}
+			}
+
+			const currentIndex = tracksForMood.findIndex(
+				(track) => track.id === currentTrack.id,
+			);
+			if (currentIndex < 0) {
+				setCurrentTrackId(tracksForMood[0]?.id ?? RELAXING_TRACKS[0].id);
+				return;
+			}
+
+			setCurrentTrackId(
+				tracksForMood[
+					(currentIndex - 1 + tracksForMood.length) % tracksForMood.length
+				]?.id ?? RELAXING_TRACKS[0].id,
+			);
+		};
+
+		navigator.mediaSession.metadata = new MediaMetadata({
+			title: currentTrack.title,
+			artist: currentTrack.artist,
+			album: selectedMood === "rainy" ? "Rainy Session" : currentTrack.group,
+		});
+		navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+
+		navigator.mediaSession.setActionHandler("play", handlePlay);
+		navigator.mediaSession.setActionHandler("pause", handlePause);
+		navigator.mediaSession.setActionHandler("nexttrack", handleNextTrack);
+		navigator.mediaSession.setActionHandler("previoustrack", handlePreviousTrack);
+
+		return () => {
+			if (!("mediaSession" in navigator)) {
+				return;
+			}
+
+			navigator.mediaSession.setActionHandler("play", null);
+			navigator.mediaSession.setActionHandler("pause", null);
+			navigator.mediaSession.setActionHandler("nexttrack", null);
+			navigator.mediaSession.setActionHandler("previoustrack", null);
+		};
+	}, [currentTrack, isPlaying, isShuffleEnabled, selectedMood]);
+
 	const togglePlayback = async () => {
 		const audio = audioRef.current;
 		if (!audio) {
@@ -775,4 +881,36 @@ export function useAmbientPlayer() {
 		showHint,
 		setMood,
 	};
+}
+
+type AmbientPlayerController = ReturnType<typeof useAmbientPlayerController>;
+
+const AmbientPlayerContext = createContext<AmbientPlayerController | null>(null);
+
+export function AmbientPlayerProvider({ children }: { children: ReactNode }) {
+	const player = useAmbientPlayerController();
+
+	return createElement(
+		AmbientPlayerContext.Provider,
+		{ value: player },
+		children,
+		createElement(
+			"audio",
+			{ ref: player.audioRef, preload: "none" },
+			createElement("source", {
+				src: player.currentTrack.url,
+				type: "audio/mpeg",
+			}),
+		),
+	);
+}
+
+export function useAmbientPlayer() {
+	const context = useContext(AmbientPlayerContext);
+
+	if (!context) {
+		throw new Error("useAmbientPlayer must be used within AmbientPlayerProvider");
+	}
+
+	return context;
 }

@@ -5,6 +5,7 @@ import type { ComponentType, ReactNode } from "react";
 import {
 	IconArrowsShuffle,
 	IconBrain,
+	IconHealthRecognition,
 	IconPlayerPause,
 	IconPlayerPlay,
 	IconPlayerTrackNext,
@@ -185,7 +186,6 @@ export function BreathingPauseWidget({ className }: { className?: string }) {
 
 export function AmbientMusicWidget({ className }: { className?: string }) {
 	const {
-		audioRef,
 		currentTrack,
 		currentTime,
 		duration,
@@ -220,235 +220,227 @@ export function AmbientMusicWidget({ className }: { className?: string }) {
 	};
 
 	return (
-		<>
-			<audio ref={audioRef} preload="none">
-				<source src={currentTrack.url} type="audio/mpeg" />
-			</audio>
-
-			<div
-				className={cn(
-					"rounded-[1.75rem] border border-border/60 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.35))] p-3.5 transition-all duration-300",
-					isPlaying && "shadow-lg shadow-primary/8 ring-1 ring-primary/10",
-					className,
-				)}
-			>
-				<div className="flex items-center gap-3">
+		<div
+			className={cn(
+				"rounded-[1.75rem] border border-border/60 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.35))] p-3.5 transition-all duration-300",
+				isPlaying && "shadow-lg shadow-primary/8 ring-1 ring-primary/10",
+				className,
+			)}
+		>
+			<div className="flex items-center gap-3">
+				<div
+					className={cn(
+						"relative flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border/60",
+						currentTrack.coverClassName,
+						isPlaying && "shadow-md shadow-primary/10 ring-1 ring-primary/10",
+					)}
+				>
+					<div className="absolute inset-1 rounded-[1rem] border border-white/5" />
+					<div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.14),transparent_42%)]" />
 					<div
 						className={cn(
-							"relative flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border/60",
-							currentTrack.coverClassName,
-							isPlaying && "shadow-md shadow-primary/10 ring-1 ring-primary/10",
+							"relative flex size-7 items-center justify-center rounded-full bg-background/90 text-primary transition-transform duration-500",
+							isPlaying && "scale-110 animate-[spin_10s_linear_infinite]",
 						)}
 					>
-						<div className="absolute inset-1 rounded-[1rem] border border-white/5" />
-						<div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.14),transparent_42%)]" />
-						<div
-							className={cn(
-								"relative flex size-7 items-center justify-center rounded-full bg-background/90 text-primary transition-transform duration-500",
-								isPlaying && "scale-110 animate-[spin_10s_linear_infinite]",
-							)}
-						>
-							<Disc3 className="size-6" />
-						</div>
+						<Disc3 className="size-6" />
 					</div>
+				</div>
 
-					<div className="min-w-0 flex-1">
-						<div className="mb-1 flex items-center gap-2">
-							<div className="flex h-3 items-end gap-0.5">
-								<span
-									className={cn(
-										"inline-block w-0.5 rounded-full bg-primary/55 transition-all duration-300",
-										isPlaying
-											? "h-2 animate-[music-bars_0.9s_ease-in-out_infinite]"
-											: "h-1",
-									)}
-								/>
-								<span
-									className={cn(
-										"inline-block w-0.5 rounded-full bg-primary/70 transition-all duration-300",
-										isPlaying
-											? "h-3 animate-[music-bars_0.9s_ease-in-out_infinite]"
-											: "h-1.5",
-									)}
-									style={isPlaying ? { animationDelay: "120ms" } : undefined}
-								/>
-								<span
-									className={cn(
-										"inline-block w-0.5 rounded-full bg-primary transition-all duration-300",
-										isPlaying
-											? "h-2.5 animate-[music-bars_0.9s_ease-in-out_infinite]"
-											: "h-1",
-									)}
-									style={isPlaying ? { animationDelay: "240ms" } : undefined}
-								/>
-							</div>
-							<span className="text-[11px] font-medium text-muted-foreground">
-								{selectedMood === "rainy"
-									? "Rainy Session"
-									: currentTrack.group}
-							</span>
+				<div className="min-w-0 flex-1">
+					<div className="mb-1 flex items-center gap-2">
+						<div className="flex h-3 items-end gap-0.5">
+							<span
+								className={cn(
+									"inline-block w-0.5 rounded-full bg-primary/55 transition-all duration-300",
+									isPlaying
+										? "h-2 animate-[music-bars_0.9s_ease-in-out_infinite]"
+										: "h-1",
+								)}
+							/>
+							<span
+								className={cn(
+									"inline-block w-0.5 rounded-full bg-primary/70 transition-all duration-300",
+									isPlaying
+										? "h-3 animate-[music-bars_0.9s_ease-in-out_infinite]"
+										: "h-1.5",
+								)}
+								style={isPlaying ? { animationDelay: "120ms" } : undefined}
+							/>
+							<span
+								className={cn(
+									"inline-block w-0.5 rounded-full bg-primary transition-all duration-300",
+									isPlaying
+										? "h-2.5 animate-[music-bars_0.9s_ease-in-out_infinite]"
+										: "h-1",
+								)}
+								style={isPlaying ? { animationDelay: "240ms" } : undefined}
+							/>
 						</div>
-						<p className="truncate text-sm font-semibold text-foreground">
-							{currentTrack.title}
-						</p>
-						<p className="truncate text-xs text-muted-foreground">
-							{currentTrack.artist}
-						</p>
-						<div className="mt-2 inline-flex items-center rounded-full border border-border/60 bg-background/70 p-0.5">
-							{MOOD_OPTIONS.map((moodOption) => (
-								<button
-									aria-label={moodOption.label}
-									aria-pressed={selectedMood === moodOption.value}
-									key={moodOption.value}
-									type="button"
-									onClick={() => setMood(moodOption.value)}
-									className={cn(
-										"h-5 rounded-full px-2 text-[9px] font-medium transition-colors",
-										selectedMood === moodOption.value
-											? "bg-foreground text-background"
-											: "text-muted-foreground hover:text-foreground",
-									)}
-									title={moodOption.label}
-								>
-									<span className="hidden sr-only">{moodOption.label}</span>
-									{moodOption.compactLabel}
-								</button>
-							))}
-						</div>
-					</div>
-
-					<span className="shrink-0 rounded-full border border-border/60 bg-background/80 px-2 py-1 text-[10px] font-medium text-muted-foreground">
-						{currentTrack.durationLabel}
-					</span>
-				</div>
-
-				<div className="mt-4 h-1.5 overflow-hidden rounded-full bg-border/70">
-					<div
-						className="h-full rounded-full bg-primary transition-[width] duration-300"
-						style={{ width: `${Math.min(progress, 100)}%` }}
-					/>
-				</div>
-
-				<div className="mt-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-					<span>{formatTime(currentTime)}</span>
-					<span>{formatTime(duration || 0)}</span>
-				</div>
-
-				<div className="mt-4 flex items-center justify-center gap-2">
-					<div className="group relative">
-						<Button
-							type="button"
-							size="icon-sm"
-							variant={isShuffleEnabled ? "secondary" : "ghost"}
-							onClick={() => {
-								toggleShuffle();
-								showHint("shuffle");
-							}}
-							className="rounded-full"
-							title="Bật/Tắt phát ngẫu nhiên"
-						>
-							<IconArrowsShuffle className="size-4" />
-						</Button>
-						<span
-							className={cn(
-								"pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-2 py-1 text-[10px] font-medium whitespace-nowrap text-background opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100",
-								visibleHint === "shuffle" && "opacity-100",
-							)}
-						>
-							{isShuffleEnabled ? "Shuffle On" : "Shuffle"}
+						<span className="text-[11px] font-medium text-muted-foreground">
+							{selectedMood === "rainy" ? "Rainy Session" : currentTrack.group}
 						</span>
 					</div>
+					<p className="truncate text-sm font-semibold text-foreground">
+						{currentTrack.title}
+					</p>
+					<p className="truncate text-xs text-muted-foreground">
+						{currentTrack.artist}
+					</p>
+					<div className="mt-2 inline-flex items-center rounded-full border border-border/60 bg-background/70 p-0.5">
+						{MOOD_OPTIONS.map((moodOption) => (
+							<button
+								aria-label={moodOption.label}
+								aria-pressed={selectedMood === moodOption.value}
+								key={moodOption.value}
+								type="button"
+								onClick={() => setMood(moodOption.value)}
+								className={cn(
+									"h-5 rounded-full px-2 text-[9px] font-medium transition-colors",
+									selectedMood === moodOption.value
+										? "bg-foreground text-background"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+								title={moodOption.label}
+							>
+								<span className="hidden sr-only">{moodOption.label}</span>
+								{moodOption.compactLabel}
+							</button>
+						))}
+					</div>
+				</div>
 
+				<span className="shrink-0 rounded-full border border-border/60 bg-background/80 px-2 py-1 text-[10px] font-medium text-muted-foreground">
+					{currentTrack.durationLabel}
+				</span>
+			</div>
+
+			<div className="mt-4 h-1.5 overflow-hidden rounded-full bg-border/70">
+				<div
+					className="h-full rounded-full bg-primary transition-[width] duration-300"
+					style={{ width: `${Math.min(progress, 100)}%` }}
+				/>
+			</div>
+
+			<div className="mt-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+				<span>{formatTime(currentTime)}</span>
+				<span>{formatTime(duration || 0)}</span>
+			</div>
+
+			<div className="mt-4 flex items-center justify-center gap-2">
+				<div className="group relative">
 					<Button
 						type="button"
 						size="icon-sm"
-						variant="ghost"
-						onClick={playNextTrack}
+						variant={isShuffleEnabled ? "secondary" : "ghost"}
+						onClick={() => {
+							toggleShuffle();
+							showHint("shuffle");
+						}}
 						className="rounded-full"
-						title="Chuyển bài"
+						title="Bật/Tắt phát ngẫu nhiên"
 					>
-						<IconPlayerTrackNext className="size-4" />
+						<IconArrowsShuffle className="size-4" />
 					</Button>
-
-					<Button
-						type="button"
-						size="icon"
-						onClick={togglePlayback}
+					<span
 						className={cn(
-							"rounded-full shadow-sm",
-							isPlaying && "shadow-primary/15",
+							"pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-2 py-1 text-[10px] font-medium whitespace-nowrap text-background opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100",
+							visibleHint === "shuffle" && "opacity-100",
 						)}
-						title={isPlaying ? "Tạm dừng" : "Phát nhạc"}
 					>
-						{isPlaying ? (
-							<IconPlayerPause className="size-4.5" />
-						) : (
-							<IconPlayerPlay className="size-4.5" />
-						)}
-					</Button>
+						{isShuffleEnabled ? "Shuffle On" : "Shuffle"}
+					</span>
+				</div>
 
+				<Button
+					type="button"
+					size="icon-sm"
+					variant="ghost"
+					onClick={playNextTrack}
+					className="rounded-full"
+					title="Chuyển bài"
+				>
+					<IconPlayerTrackNext className="size-4" />
+				</Button>
+
+				<Button
+					type="button"
+					size="icon"
+					onClick={togglePlayback}
+					className={cn(
+						"rounded-full shadow-sm",
+						isPlaying && "shadow-primary/15",
+					)}
+					title={isPlaying ? "Tạm dừng" : "Phát nhạc"}
+				>
+					{isPlaying ? (
+						<IconPlayerPause className="size-4.5" />
+					) : (
+						<IconPlayerPlay className="size-4.5" />
+					)}
+				</Button>
+
+				<Button
+					type="button"
+					size="icon-sm"
+					variant="ghost"
+					onClick={toggleMute}
+					className="rounded-full"
+					title={volume <= 0 ? "Bật tiếng" : "Tắt tiếng"}
+				>
+					{volume <= 0 ? (
+						<IconVolumeOff className="size-4" />
+					) : (
+						<IconVolume className="size-4" />
+					)}
+				</Button>
+
+				<div className="group relative">
 					<Button
 						type="button"
 						size="icon-sm"
-						variant="ghost"
-						onClick={toggleMute}
+						variant={isRepeatEnabled ? "secondary" : "ghost"}
+						onClick={() => {
+							toggleRepeat();
+							showHint("repeat");
+						}}
 						className="rounded-full"
-						title={volume <= 0 ? "Bật tiếng" : "Tắt tiếng"}
+						title="Bật/Tắt lặp lại"
 					>
-						{volume <= 0 ? (
-							<IconVolumeOff className="size-4" />
-						) : (
-							<IconVolume className="size-4" />
-						)}
+						<IconRepeat className="size-4" />
 					</Button>
-
-					<div className="group relative">
-						<Button
-							type="button"
-							size="icon-sm"
-							variant={isRepeatEnabled ? "secondary" : "ghost"}
-							onClick={() => {
-								toggleRepeat();
-								showHint("repeat");
-							}}
-							className="rounded-full"
-							title="Bật/Tắt lặp lại"
-						>
-							<IconRepeat className="size-4" />
-						</Button>
-						<span
-							className={cn(
-								"pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-2 py-1 text-[10px] font-medium whitespace-nowrap text-background opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100",
-								visibleHint === "repeat" && "opacity-100",
-							)}
-						>
-							{isRepeatEnabled ? "Repeat On" : "Repeat"}
-						</span>
-					</div>
-				</div>
-
-				<div className="mt-4 flex items-center gap-3 rounded-2xl bg-background/70 px-3 py-2">
-					<span className="text-[11px] font-medium text-muted-foreground">
-						Vol
-					</span>
-					<input
-						type="range"
-						min={0}
-						max={1}
-						step={0.05}
-						value={volume}
-						onChange={(event) =>
-							handleVolumeChange(Number(event.currentTarget.value))
-						}
-						className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border/70 accent-primary"
-						aria-label="Âm lượng"
-					/>
-					<span className="w-9 text-right text-[11px] font-medium text-muted-foreground">
-						{Math.round(volume * 100)}%
+					<span
+						className={cn(
+							"pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-2 py-1 text-[10px] font-medium whitespace-nowrap text-background opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100",
+							visibleHint === "repeat" && "opacity-100",
+						)}
+					>
+						{isRepeatEnabled ? "Repeat On" : "Repeat"}
 					</span>
 				</div>
 			</div>
-		</>
+
+			<div className="mt-4 flex items-center gap-3 rounded-2xl bg-background/70 px-3 py-2">
+				<span className="text-[11px] font-medium text-muted-foreground">
+					Vol
+				</span>
+				<input
+					type="range"
+					min={0}
+					max={1}
+					step={0.05}
+					value={volume}
+					onChange={(event) =>
+						handleVolumeChange(Number(event.currentTarget.value))
+					}
+					className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border/70 accent-primary"
+					aria-label="Âm lượng"
+				/>
+				<span className="w-9 text-right text-[11px] font-medium text-muted-foreground">
+					{Math.round(volume * 100)}%
+				</span>
+			</div>
+		</div>
 	);
 }
 
@@ -459,11 +451,11 @@ export function WellnessMobileSheet() {
 				<SheetTrigger asChild>
 					<Button
 						type="button"
-						variant="secondary"
-						className="rounded-full border border-border/80 bg-background/95 px-4 shadow-lg backdrop-blur"
+						variant="outline"
+						className="border border-border/80 shadow-lg backdrop-blur"
 					>
-						<IconSparkles className="mr-2 size-4" />
-						Chăm sóc bạn
+						<IconHealthRecognition className="mr-2 size-4" />
+						Cửa sổ hồi phục
 					</Button>
 				</SheetTrigger>
 				<SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto">

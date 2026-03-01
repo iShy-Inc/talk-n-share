@@ -12,7 +12,7 @@ export function AuthHomeLink({ className }: { className?: string }) {
 			variant="outline"
 			size="sm"
 			className={cn(
-				"hidden rounded-full border-border/70 bg-background/90 backdrop-blur-sm md:inline-flex",
+				"rounded-full border-border/70 bg-background/90 backdrop-blur-sm",
 				className,
 			)}
 		>

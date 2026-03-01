@@ -11,6 +11,8 @@ import { MobileDock } from "@/components/shared";
 import { RouteProgressBar } from "@/components/shared/RouteProgressBar";
 import { ScrollToTopButton } from "@/components/shared/ScrollToTopButton";
 import { AppAnnouncementBanner } from "@/components/shared/AppAnnouncementBanner";
+import { FloatingAmbientPlayerControl } from "@/components/shared/FloatingAmbientPlayerControl";
+import { AmbientPlayerProvider } from "@/hooks/useAmbientPlayer";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -47,14 +49,17 @@ export default function RootLayout({
 				>
 					<ThemeStyleProvider>
 						<Providers>
-							<Suspense fallback={null}>
-								<RouteProgressBar />
-							</Suspense>
-							<AppAnnouncementBanner />
-							{children}
-							<ScrollToTopButton />
-							<MobileDock />
-							<Toaster position="bottom-right" />
+							<AmbientPlayerProvider>
+								<Suspense fallback={null}>
+									<RouteProgressBar />
+								</Suspense>
+								<AppAnnouncementBanner />
+								{children}
+								<FloatingAmbientPlayerControl />
+								<ScrollToTopButton />
+								<MobileDock />
+								<Toaster position="bottom-right" />
+							</AmbientPlayerProvider>
 						</Providers>
 					</ThemeStyleProvider>
 				</ThemeProvider>
