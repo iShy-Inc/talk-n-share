@@ -49,7 +49,10 @@ import { PresenceDot } from "@/components/shared/PresenceDot";
 import type { GifSelection } from "@/lib/giphy";
 
 const supabase = createClient();
-type PickerUser = Pick<Profile, "id" | "display_name" | "avatar_url" | "is_public">;
+type PickerUser = Pick<
+	Profile,
+	"id" | "display_name" | "avatar_url" | "is_public"
+>;
 type ActiveChatSession =
 	Database["public"]["Functions"]["get_chat_session_for_viewer"]["Returns"][number];
 type ArchivedChatSession =
@@ -429,10 +432,9 @@ function MessagesPageContent() {
 	const handleEndCurrentMatch = async () => {
 		if (!activeSessionId || !isMatchSession) return;
 
-		const { error } = await supabase
-			.rpc("end_match_for_viewer", {
-				target_session_id: activeSessionId,
-			});
+		const { error } = await supabase.rpc("end_match_for_viewer", {
+			target_session_id: activeSessionId,
+		});
 		if (error) {
 			toast.error("Không thể kết thúc cuộc trò chuyện.");
 			return;
@@ -474,9 +476,12 @@ function MessagesPageContent() {
 	};
 
 	const handleRestoreSession = async (sessionId: string) => {
-		const { data, error } = await supabase.rpc("restore_chat_session_for_viewer", {
-			target_session_id: sessionId,
-		});
+		const { data, error } = await supabase.rpc(
+			"restore_chat_session_for_viewer",
+			{
+				target_session_id: sessionId,
+			},
+		);
 		if (error || !data) {
 			toast.error("Không thể khôi phục cuộc trò chuyện.");
 			return;
@@ -515,7 +520,9 @@ function MessagesPageContent() {
 			enabled: !!activeSessionId,
 		});
 
-	const activeContact = contacts.find((contact) => contact.id === activeSessionId);
+	const activeContact = contacts.find(
+		(contact) => contact.id === activeSessionId,
+	);
 	const activeContactName =
 		activeSession?.display_name ??
 		activeContact?.name ??
@@ -538,12 +545,16 @@ function MessagesPageContent() {
 		null;
 	const isActiveContactOnline = useIsUserOnline(activeContactUserId);
 	const isMatchSession = activeSession?.session_type === "match";
-	const isAnonymousMatchSession = isMatchSession && activeSession?.is_revealed === false;
+	const isAnonymousMatchSession =
+		isMatchSession && activeSession?.is_revealed === false;
 	const isDraftDirectConversation = !activeSessionId && !!draftDirectContact;
 	const isEndedSession =
-		isMatchSession && !!activeSession?.status && activeSession.status !== "active";
+		isMatchSession &&
+		!!activeSession?.status &&
+		activeSession.status !== "active";
 	const canHideFromHistory =
-		activeSession?.session_type === "direct" || (isMatchSession && isEndedSession);
+		activeSession?.session_type === "direct" ||
+		(isMatchSession && isEndedSession);
 	const partnerLiked = isMatchSession
 		? user?.id === activeSession?.user1_id
 			? (activeSession?.user2_liked ?? false)
@@ -615,7 +626,9 @@ function MessagesPageContent() {
 				(payload) => {
 					if (payload.eventType === "DELETE") {
 						if (user?.id) {
-							queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+							queryClient.invalidateQueries({
+								queryKey: ["chat-sessions", user.id],
+							});
 						}
 						queryClient.removeQueries({
 							queryKey: ["active-chat-session", activeSessionId],
@@ -629,11 +642,13 @@ function MessagesPageContent() {
 						queryKey: ["active-chat-session", activeSessionId],
 					});
 					if (user?.id) {
-						queryClient.invalidateQueries({ queryKey: ["chat-sessions", user.id] });
+						queryClient.invalidateQueries({
+							queryKey: ["chat-sessions", user.id],
+						});
 					}
 				},
-				)
-				.subscribe();
+			)
+			.subscribe();
 
 		return () => {
 			supabase.removeChannel(channel);
@@ -859,7 +874,7 @@ function MessagesPageContent() {
 
 	return (
 		<>
-			<div className="mb-2 hidden sm:block">
+			<div className="mb-2 hidden sm:block ">
 				<Button asChild variant="outline" size="sm" className="rounded-xl">
 					<Link href="/">
 						<IconArrowLeft className="mr-2 size-4" />
@@ -867,7 +882,7 @@ function MessagesPageContent() {
 					</Link>
 				</Button>
 			</div>
-			<div className="mx-auto rounded-xl h-[calc(100dvh-8.8rem)] min-h-[620px] w-full overflow-hidden border-border border-1 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
+			<div className="mt-12 md:mt-0 mx-auto rounded-xl h-[calc(100dvh-8.8rem)] min-h-[620px] w-full overflow-hidden border-border border-1 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
 				<div className="flex h-full">
 					<div
 						className={`h-full border-r border-border/60 bg-card lg:block lg:shrink-0 lg:w-[var(--chat-list-width)] ${
@@ -972,8 +987,8 @@ function MessagesPageContent() {
 												<ProfileVisibilityIcon
 													isPublic={activeContactIsPublic}
 												/>
-												{isMatchSession && (
-													activeSession?.is_revealed ? (
+												{isMatchSession &&
+													(activeSession?.is_revealed ? (
 														<span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:text-green-300">
 															<IconUserCheck className="size-3" />
 															Matched
@@ -982,8 +997,7 @@ function MessagesPageContent() {
 														<span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
 															Ẩn danh
 														</span>
-													)
-												)}
+													))}
 											</div>
 											{isMatchSession && (
 												<p className="text-[11px] text-muted-foreground">
@@ -1021,7 +1035,10 @@ function MessagesPageContent() {
 															aria-label="Bấm thích để hiện danh tính"
 														>
 															<IconHeart
-																className={cn("size-4", userLiked && "fill-current")}
+																className={cn(
+																	"size-4",
+																	userLiked && "fill-current",
+																)}
 															/>
 														</Button>
 													</>
@@ -1053,7 +1070,8 @@ function MessagesPageContent() {
 
 								{isAnonymousMatchSession && !isEndedSession && (
 									<div className="border-b border-border/70 bg-muted/30 px-4 py-2 text-center text-xs text-muted-foreground">
-										Hãy cùng bấm thích để hiện danh tính và lưu cuộc trò chuyện này.
+										Hãy cùng bấm thích để hiện danh tính và lưu cuộc trò chuyện
+										này.
 									</div>
 								)}
 
@@ -1111,25 +1129,25 @@ function MessagesPageContent() {
 						)}
 					</div>
 
-						{showConversation && (
-							<div className="hidden w-[300px] border-l border-border/70 bg-card p-4 xl:block">
-								{conversationInfoContent}
-							</div>
-						)}
-					</div>
+					{showConversation && (
+						<div className="hidden w-[300px] border-l border-border/70 bg-card p-4 xl:block">
+							{conversationInfoContent}
+						</div>
+					)}
 				</div>
-				<Dialog open={isMobileInfoOpen} onOpenChange={setIsMobileInfoOpen}>
-					<DialogContent
-						showCloseButton={false}
-						className="top-auto left-0 bottom-0 max-w-none translate-x-0 translate-y-0 gap-0 rounded-b-none rounded-t-[1.75rem] p-4 sm:max-w-none xl:hidden"
-					>
-						<DialogHeader className="sr-only">
-							<DialogTitle>Thông tin cuộc trò chuyện</DialogTitle>
-						</DialogHeader>
-						{conversationInfoContent}
-					</DialogContent>
-				</Dialog>
-				<Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+			</div>
+			<Dialog open={isMobileInfoOpen} onOpenChange={setIsMobileInfoOpen}>
+				<DialogContent
+					showCloseButton={false}
+					className="top-auto left-0 bottom-0 max-w-none translate-x-0 translate-y-0 gap-0 rounded-b-none rounded-t-[1.75rem] p-4 sm:max-w-none xl:hidden"
+				>
+					<DialogHeader className="sr-only">
+						<DialogTitle>Thông tin cuộc trò chuyện</DialogTitle>
+					</DialogHeader>
+					{conversationInfoContent}
+				</DialogContent>
+			</Dialog>
+			<Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
 				<DialogContent>
 					<form onSubmit={handleSubmitContactReport}>
 						<DialogHeader>

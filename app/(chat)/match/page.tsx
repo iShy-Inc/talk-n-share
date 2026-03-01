@@ -50,7 +50,9 @@ const describeError = (error: unknown) => {
 };
 
 const clearMatchingQueueForUser = async (userId: string) => {
-	const { data, error } = await supabase.rpc("remove_matching_queue_for_viewer");
+	const { data, error } = await supabase.rpc(
+		"remove_matching_queue_for_viewer",
+	);
 	if (!error && data) {
 		return;
 	}
@@ -164,10 +166,12 @@ export default function MatchPage() {
 		let session: MatchSessionView | null = null;
 
 		for (let attempt = 0; attempt < MATCH_SESSION_RETRY_COUNT; attempt += 1) {
-			const { data, error: sessionError } = await supabase
-				.rpc("get_chat_session_for_viewer", {
+			const { data, error: sessionError } = await supabase.rpc(
+				"get_chat_session_for_viewer",
+				{
 					target_session_id: matchedId,
-				});
+				},
+			);
 			if (sessionError) {
 				throw sessionError;
 			}
@@ -350,27 +354,27 @@ export default function MatchPage() {
 			if (isDisposed) return;
 			setElapsedSeconds(elapsed);
 
-				if (elapsed >= MIN_WAIT_SECONDS) {
-					isDisposed = true;
-					window.clearInterval(pollId);
-					window.clearInterval(tickerId);
-					void (async () => {
-						try {
-							await clearMatchingQueueForUser(user.id);
-						} catch (error) {
-							console.error("Failed to clear matching queue after timeout:", {
-								error,
-								userId: user.id,
-								errorMessage: describeError(error),
-							});
-						}
-						toast("Không tìm thấy người phù hợp trong 60 giây. Hãy thử lại.");
-						setStatus("options");
-						setPendingCriteria(null);
-						setElapsedSeconds(0);
-					})();
-				}
-			}, 1000);
+			if (elapsed >= MIN_WAIT_SECONDS) {
+				isDisposed = true;
+				window.clearInterval(pollId);
+				window.clearInterval(tickerId);
+				void (async () => {
+					try {
+						await clearMatchingQueueForUser(user.id);
+					} catch (error) {
+						console.error("Failed to clear matching queue after timeout:", {
+							error,
+							userId: user.id,
+							errorMessage: describeError(error),
+						});
+					}
+					toast("Không tìm thấy người phù hợp trong 60 giây. Hãy thử lại.");
+					setStatus("options");
+					setPendingCriteria(null);
+					setElapsedSeconds(0);
+				})();
+			}
+		}, 1000);
 
 		return () => {
 			isDisposed = true;
@@ -383,10 +387,9 @@ export default function MatchPage() {
 	const handleEndChat = async () => {
 		if (!sessionId) return;
 
-		const { error } = await supabase
-			.rpc("end_match_for_viewer", {
-				target_session_id: sessionId,
-			});
+		const { error } = await supabase.rpc("end_match_for_viewer", {
+			target_session_id: sessionId,
+		});
 		if (error) {
 			toast.error("Không thể kết thúc cuộc trò chuyện.");
 			return;
@@ -482,10 +485,10 @@ export default function MatchPage() {
 					void loadMatchSession(sessionId);
 					if (nextSession.is_revealed && !sessionData?.is_revealed) {
 						toast.success("Ghép đôi thành công! Danh tính đã được hiển thị.");
-						}
-					},
-				)
-				.subscribe();
+					}
+				},
+			)
+			.subscribe();
 
 		return () => {
 			supabase.removeChannel(channel);
@@ -498,13 +501,16 @@ export default function MatchPage() {
 	};
 
 	// Handle Sending Message
-	const handleMatchSendMessage = (content: string, gif?: GifSelection | null) => {
+	const handleMatchSendMessage = (
+		content: string,
+		gif?: GifSelection | null,
+	) => {
 		if (!user) return;
 		sendMessage(content, user.id, "text", gif);
 	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-background p-4 md:p-8">
+		<div className="flex min-h-screen items-center justify-center bg-background p-4 md:p-8 mt-12 md:mt-0">
 			<div className="relative mx-auto h-[600px] w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
 				<div className="pointer-events-none fixed left-0 right-0 top-4 z-10 flex items-center justify-end px-4 sm:justify-between">
 					<Button

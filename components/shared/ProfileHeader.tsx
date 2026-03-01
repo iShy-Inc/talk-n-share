@@ -82,7 +82,7 @@ export function ProfileHeader({
 		: normalizedBio;
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+		<div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm mt-12 md:mt-0">
 			<div className="relative z-0 h-28 w-full overflow-hidden bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.45),transparent_55%),radial-gradient(circle_at_80%_10%,hsl(var(--ring)/0.35),transparent_50%),linear-gradient(135deg,hsl(var(--primary)/0.18),hsl(var(--background)))] md:h-36">
 				<div
 					className="absolute inset-0 bg-cover bg-center"
@@ -123,10 +123,7 @@ export function ProfileHeader({
 							</div>
 						)}
 						{userId && (
-							<PresenceDot
-								isOnline={isOnline}
-								className="size-4 md:size-5"
-							/>
+							<PresenceDot isOnline={isOnline} className="size-4 md:size-5" />
 						)}
 					</div>
 				</div>

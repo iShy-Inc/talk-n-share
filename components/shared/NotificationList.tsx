@@ -32,7 +32,7 @@ export function NotificationList({
 	const unreadCount = notifications.filter((item) => !item.isRead).length;
 
 	return (
-		<Card className="overflow-hidden border shadow-sm">
+		<Card className="overflow-hidden border shadow-sm mt-12 md:mt-0">
 			<CardHeader className="flex flex-row items-center justify-between border-b border-border px-5 py-4">
 				<CardTitle className="text-base">Thông báo</CardTitle>
 				<Button

@@ -183,7 +183,7 @@ export default function FeedPage() {
 					<StoryIdeasSection />
 				</>
 			) : (
-				<div className="mb-6 rounded-xl border border-border bg-card p-6 text-center shadow-sm">
+				<div className="mb-6 rounded-xl border border-border bg-card p-6 text-center shadow-sm mt-12 md:mt-0">
 					<h3 className="text-lg font-semibold">Tham gia cuộc trò chuyện</h3>
 					<p className="mb-4 text-sm text-muted-foreground">
 						Đăng nhập để chia sẻ suy nghĩ và kết nối với mọi người.

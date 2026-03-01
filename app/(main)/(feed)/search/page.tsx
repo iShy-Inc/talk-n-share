@@ -92,7 +92,9 @@ function SearchPageContent() {
 			if (!user) return [];
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("id, display_name, avatar_url, location, gender, zodiac, relationship")
+				.select(
+					"id, display_name, avatar_url, location, gender, zodiac, relationship",
+				)
 				.eq("is_public", true)
 				.neq("id", user.id)
 				.limit(40);
@@ -108,13 +110,11 @@ function SearchPageContent() {
 			const scored = (data ?? [])
 				.map((u: any) => {
 					let commonCount = 0;
-					if (current.location && u.location === current.location) commonCount += 1;
+					if (current.location && u.location === current.location)
+						commonCount += 1;
 					if (current.gender && u.gender === current.gender) commonCount += 1;
 					if (current.zodiac && u.zodiac === current.zodiac) commonCount += 1;
-					if (
-						current.relationship &&
-						u.relationship === current.relationship
-					) {
+					if (current.relationship && u.relationship === current.relationship) {
 						commonCount += 1;
 					}
 					return { ...u, commonCount };
@@ -126,11 +126,11 @@ function SearchPageContent() {
 				: scored;
 
 			return picked.slice(0, 5).map((u: any) => ({
-					id: u.id,
-					name: u.display_name ?? "Người dùng",
-					title: u.location ?? "Thành viên Talk N Share",
-					avatar: u.avatar_url ?? undefined,
-				})) as SuggestedFriend[];
+				id: u.id,
+				name: u.display_name ?? "Người dùng",
+				title: u.location ?? "Thành viên Talk N Share",
+				avatar: u.avatar_url ?? undefined,
+			})) as SuggestedFriend[];
 		},
 		enabled: !!user && !!profile,
 	});
@@ -170,7 +170,7 @@ function SearchPageContent() {
 
 	return (
 		<>
-			<div className="space-y-6">
+			<div className="space-y-6 mt-12 md:mt-0">
 				{/* Search Bar */}
 				<form onSubmit={handleSearch} className="relative">
 					<IconSearch className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
@@ -284,22 +284,22 @@ function SearchPageContent() {
 								) : people.length > 0 ? (
 									<div className="grid gap-4">
 										{people.map((person) => (
-										<UserResultCard
-											key={person.id}
-											id={person.id}
-											username={person.display_name || "User"}
-											role={person.role}
-											isPublic={person.is_public}
-											title={
-												person.is_public
-													? (person.location ?? undefined)
-													: undefined
-											}
-											avatarUrl={person.avatar_url ?? undefined}
-											onSendMessage={handleSendMessage}
-										/>
-									))}
-								</div>
+											<UserResultCard
+												key={person.id}
+												id={person.id}
+												username={person.display_name || "User"}
+												role={person.role}
+												isPublic={person.is_public}
+												title={
+													person.is_public
+														? (person.location ?? undefined)
+														: undefined
+												}
+												avatarUrl={person.avatar_url ?? undefined}
+												onSendMessage={handleSendMessage}
+											/>
+										))}
+									</div>
 								) : (
 									activeTab === "people" && (
 										<p className="text-center text-muted-foreground">
