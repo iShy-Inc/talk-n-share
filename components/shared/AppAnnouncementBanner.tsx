@@ -77,6 +77,25 @@ const BANNERS = [
 			</div>
 		),
 	},
+	{
+		id: "banner-4",
+		style: {
+			"--normal-bg": "#050505",
+			"--normal-text": "#ffe4e6",
+			"--normal-border": "rgba(254,205,211,0.25)",
+		} as React.CSSProperties,
+		content: (
+			<div className="flex items-center gap-3">
+				<IconHeart className="size-4 shrink-0 stroke-2" />
+				<span className="text-sm font-medium leading-5">
+					Bạn có bất kỳ câu hỏi hoặc phản hồi nào? Hãy liên hệ với chúng tôi
+				</span>
+				<Button variant="secondary" size="sm" className="shrink-0" asChild>
+					<Link href="/contact">Get In Touch</Link>
+				</Button>
+			</div>
+		),
+	},
 ] as const;
 
 export function AppAnnouncementBanner() {
