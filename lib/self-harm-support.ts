@@ -118,9 +118,9 @@ export const SUPPORT_CONTACTS: SupportContact[] = [
 		name: "Câu lạc bộ tâm lý trực thuộc ĐH FPT Hà Nội",
 		type: "community",
 		description:
-			"Nhóm hỗ trợ ngang hàng, chia sẻ an toàn và định hướng dịch vụ chuyên môn khi cần.",
+			"Nhóm hỗ trợ đồng đẳng, chia sẻ an toàn và định hướng dịch vụ chuyên môn khi cần.",
 		email: "fptupsyclub@gmail.com",
-		phone: "Đang cập nhật...",
+		// phone: "Đang cập nhật...",
 		hours: "Hàng ngày, 08:00 - 22:00",
 		website: "https://www.facebook.com/FPT.Psy",
 	},
